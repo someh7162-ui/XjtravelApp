@@ -29,6 +29,13 @@
       }
     },
     {
+      "path": "pages/ai-assistant/index",
+      "style": {
+        "navigationBarTitleText": "AI旅游助手",
+        "navigationStyle": "custom"
+      }
+    },
+    {
       "path": "pages/destination-detail/index",
       "style": {
         "navigationBarTitleText": "目的地详情",
