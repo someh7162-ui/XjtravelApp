@@ -13,7 +13,8 @@
   border-radius: 1rem;
 }
 .tab-item[data-v-8715b27c] {
-  width: 25%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,7 +34,7 @@
   align-items: center;
   justify-content: center;
   background: rgba(212, 165, 116, 0.16);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 700;
 }
 .tab-item.active .tab-icon[data-v-8715b27c] {
@@ -42,6 +43,7 @@
 }
 .tab-label[data-v-8715b27c] {
   font-size: 0.6875rem;
+  white-space: nowrap;
 }
 .cached-image[data-v-7d2a8804] {
   width: 100%;
