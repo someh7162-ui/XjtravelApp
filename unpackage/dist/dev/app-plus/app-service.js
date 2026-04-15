@@ -1085,7 +1085,7 @@ if (uni.restoreGlobal) {
     2
     /* HookFlags.PAGE */
   );
-  const AMAP_WEB_KEY = "请在这里填入你的高德Web服务Key";
+  const AMAP_WEB_KEY = "b16ee0a6a8f641e974a51521ca00b6f0";
   function hasAmapKey() {
     return Boolean(AMAP_WEB_KEY) && !AMAP_WEB_KEY.includes("请在这里填入");
   }
@@ -1141,6 +1141,41 @@ if (uni.restoreGlobal) {
     }
     return data.lives[0];
   }
+  async function getDrivingRoute(origin, destination) {
+    var _a, _b;
+    if (!hasAmapKey() || !origin || !destination) {
+      return null;
+    }
+    const data = await request("https://restapi.amap.com/v3/direction/driving", {
+      key: AMAP_WEB_KEY,
+      origin: `${origin.longitude},${origin.latitude}`,
+      destination: `${destination.longitude},${destination.latitude}`,
+      strategy: 0,
+      extensions: "all"
+    });
+    if (data.status !== "1" || !((_b = (_a = data.route) == null ? void 0 : _a.paths) == null ? void 0 : _b.length)) {
+      throw new Error(data.info || "驾车路线获取失败");
+    }
+    return {
+      ...data.route.paths[0],
+      taxiCost: data.route.taxi_cost || ""
+    };
+  }
+  async function getWalkingRoute(origin, destination) {
+    var _a, _b;
+    if (!hasAmapKey() || !origin || !destination) {
+      return null;
+    }
+    const data = await request("https://restapi.amap.com/v3/direction/walking", {
+      key: AMAP_WEB_KEY,
+      origin: `${origin.longitude},${origin.latitude}`,
+      destination: `${destination.longitude},${destination.latitude}`
+    });
+    if (data.status !== "1" || !((_b = (_a = data.route) == null ? void 0 : _a.paths) == null ? void 0 : _b.length)) {
+      throw new Error(data.info || "步行路线获取失败");
+    }
+    return data.route.paths[0];
+  }
   async function getCurrentLocation() {
     return new Promise((resolve, reject) => {
       uni.getLocation({
@@ -1155,12 +1190,17 @@ if (uni.restoreGlobal) {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
+      const routeModeOptions = [
+        { label: "驾车", value: "driving" },
+        { label: "步行", value: "walking" },
+        { label: "打车", value: "taxi" }
+      ];
       const currentId = vue.ref("");
       const destination = vue.computed(() => getDestinationById(currentId.value));
       const locationReady = vue.ref(false);
       const locationStatusText = vue.ref("未定位");
-      const currentAddress = vue.ref("尚未获取定位");
-      const currentCoords = vue.ref(null);
+      const routeMode = vue.ref("driving");
+      const routeData = vue.ref(null);
       const liveWeatherData = vue.ref(null);
       const weatherError = vue.ref("");
       const liveWeather = vue.computed(() => {
@@ -1185,16 +1225,35 @@ if (uni.restoreGlobal) {
         if (liveWeatherData.value) {
           return "高德实时天气";
         }
-        return hasAmapKey() ? "定位或接口失败，已降级为预设天气" : "待填写高德 Key 后自动切换为实时天气";
+        return hasAmapKey() ? "天气接口失败，已降级为预设天气" : "待填写高德 Key 后自动切换为实时天气";
       });
-      const currentLocationText = vue.computed(() => currentAddress.value);
       const scenicLocationText = vue.computed(() => {
-        var _a;
-        const coords = (_a = destination.value) == null ? void 0 : _a.coordinates;
-        if (!coords) {
-          return "暂无景区坐标";
+        if (!destination.value) {
+          return "暂无景区信息";
         }
-        return `${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`;
+        const coords = destination.value.coordinates;
+        if (!coords) {
+          return destination.value.location;
+        }
+        return `${destination.value.location} · ${coords.latitude.toFixed(4)}, ${coords.longitude.toFixed(4)}`;
+      });
+      const routeDurationText = vue.computed(() => {
+        var _a;
+        return formatDuration((_a = routeData.value) == null ? void 0 : _a.duration);
+      });
+      const routeDistanceText = vue.computed(() => {
+        var _a;
+        return formatDistance((_a = routeData.value) == null ? void 0 : _a.distance);
+      });
+      const taxiCostText = vue.computed(() => {
+        var _a;
+        if (routeMode.value !== "taxi") {
+          return "";
+        }
+        if ((_a = routeData.value) == null ? void 0 : _a.taxiCost) {
+          return `约 ${routeData.value.taxiCost} 元`;
+        }
+        return hasAmapKey() ? "定位后自动估算" : "待填写高德 Key 后可估算";
       });
       const mapImageUrl = vue.computed(() => {
         var _a;
@@ -1205,13 +1264,9 @@ if (uni.restoreGlobal) {
         const markers = [
           { longitude: coords.longitude, latitude: coords.latitude, label: "景" }
         ];
-        const center = currentCoords.value || coords;
-        if (currentCoords.value) {
-          markers.unshift({ longitude: currentCoords.value.longitude, latitude: currentCoords.value.latitude, label: "我" });
-        }
         return getStaticMapUrl({
-          longitude: center.longitude,
-          latitude: center.latitude,
+          longitude: coords.longitude,
+          latitude: coords.latitude,
           markers
         });
       });
@@ -1220,45 +1275,90 @@ if (uni.restoreGlobal) {
         await refreshLocationAndWeather();
       });
       async function refreshLocationAndWeather() {
-        var _a, _b, _c;
+        var _a;
         if (!destination.value) {
           return;
         }
         weatherError.value = "";
         locationStatusText.value = hasAmapKey() ? "定位中" : "待 Key";
+        routeData.value = null;
         liveWeatherData.value = null;
         if (!hasAmapKey()) {
           locationReady.value = false;
-          currentAddress.value = "尚未填写高德 Web 服务 Key，暂时无法显示实时定位";
           return;
         }
+        const scenicCoords = destination.value.coordinates;
         try {
-          const scenicCoords = destination.value.coordinates;
           const scenicRegeo = scenicCoords ? await reverseGeocode(scenicCoords.longitude, scenicCoords.latitude) : null;
           const scenicAdcode = (_a = scenicRegeo == null ? void 0 : scenicRegeo.addressComponent) == null ? void 0 : _a.adcode;
           const weather = scenicAdcode ? await getLiveWeather(scenicAdcode) : null;
-          const location = await getCurrentLocation();
-          const regeo = await reverseGeocode(location.longitude, location.latitude);
-          if (location) {
-            currentCoords.value = {
-              longitude: location.longitude,
-              latitude: location.latitude
-            };
-            locationReady.value = true;
-            locationStatusText.value = "已定位";
-          }
-          if (regeo) {
-            currentAddress.value = regeo.formatted_address || `${((_b = regeo.addressComponent) == null ? void 0 : _b.city) || ""}${((_c = regeo.addressComponent) == null ? void 0 : _c.district) || ""}`;
-          }
           if (weather) {
             liveWeatherData.value = weather;
           }
         } catch (error) {
+          weatherError.value = "实时天气获取失败，当前显示预设天气。";
+        }
+        try {
+          const location = await getCurrentLocation();
+          const route = await loadRoute(location, scenicCoords, routeMode.value);
+          if (location) {
+            locationReady.value = true;
+            locationStatusText.value = "已定位";
+          }
+          if (route) {
+            routeData.value = route;
+          }
+        } catch (error) {
           locationReady.value = false;
           locationStatusText.value = "定位失败";
-          weatherError.value = "未能获取实时定位/天气，请检查定位授权或稍后重试。";
-          currentAddress.value = destination.value.location;
         }
+      }
+      async function changeRouteMode(mode) {
+        if (routeMode.value === mode) {
+          return;
+        }
+        routeMode.value = mode;
+        await refreshLocationAndWeather();
+      }
+      async function loadRoute(origin, destinationCoords, mode) {
+        if (mode === "walking") {
+          return getWalkingRoute(origin, destinationCoords);
+        }
+        return getDrivingRoute(origin, destinationCoords);
+      }
+      function formatDuration(duration) {
+        if (duration) {
+          const totalMinutes = Math.round(Number(duration) / 60);
+          if (totalMinutes < 60) {
+            return `约 ${totalMinutes} 分钟`;
+          }
+          const hours = Math.floor(totalMinutes / 60);
+          const minutes = totalMinutes % 60;
+          return minutes ? `约 ${hours} 小时 ${minutes} 分钟` : `约 ${hours} 小时`;
+        }
+        if (!hasAmapKey()) {
+          return "待填写高德 Key 后可估算";
+        }
+        if (locationStatusText.value === "定位失败") {
+          return "定位失败，暂时无法估算";
+        }
+        return "定位后自动估算";
+      }
+      function formatDistance(distance) {
+        if (distance) {
+          const distanceNum = Number(distance);
+          if (distanceNum < 1e3) {
+            return `约 ${Math.round(distanceNum)} 米`;
+          }
+          return `约 ${(distanceNum / 1e3).toFixed(1)} 公里`;
+        }
+        if (!hasAmapKey()) {
+          return "待填写高德 Key 后可估算";
+        }
+        if (locationStatusText.value === "定位失败") {
+          return "定位失败，暂时无法估算";
+        }
+        return "定位后自动估算";
       }
       function goBack() {
         const pages = getCurrentPages();
@@ -1309,6 +1409,18 @@ if (uni.restoreGlobal) {
         if (!coords) {
           return;
         }
+        const amapUrl = `amapuri://route/plan/?dlat=${coords.latitude}&dlon=${coords.longitude}&dname=${encodeURIComponent(destination.value.name)}&dev=0&t=0`;
+        if (typeof plus !== "undefined" && plus.runtime && plus.runtime.openURL) {
+          plus.runtime.openURL(amapUrl, () => {
+            uni.openLocation({
+              longitude: coords.longitude,
+              latitude: coords.latitude,
+              name: destination.value.name,
+              address: destination.value.location
+            });
+          });
+          return;
+        }
         uni.openLocation({
           longitude: coords.longitude,
           latitude: coords.latitude,
@@ -1316,7 +1428,7 @@ if (uni.restoreGlobal) {
           address: destination.value.location
         });
       }
-      const __returned__ = { currentId, destination, locationReady, locationStatusText, currentAddress, currentCoords, liveWeatherData, weatherError, liveWeather, hasRealWeather, weatherSourceText, currentLocationText, scenicLocationText, mapImageUrl, refreshLocationAndWeather, goBack, openDouyinSearch, copyKeyword, openScenicLocation, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { routeModeOptions, currentId, destination, locationReady, locationStatusText, routeMode, routeData, liveWeatherData, weatherError, liveWeather, hasRealWeather, weatherSourceText, scenicLocationText, routeDurationText, routeDistanceText, taxiCostText, mapImageUrl, refreshLocationAndWeather, changeRouteMode, loadRoute, formatDuration, formatDistance, goBack, openDouyinSearch, copyKeyword, openScenicLocation, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
       }, CachedImage, get getDestinationById() {
         return getDestinationById;
@@ -1324,10 +1436,14 @@ if (uni.restoreGlobal) {
         return getDouyinSearchUrl;
       }, get getCurrentLocation() {
         return getCurrentLocation;
+      }, get getDrivingRoute() {
+        return getDrivingRoute;
       }, get getLiveWeather() {
         return getLiveWeather;
       }, get getStaticMapUrl() {
         return getStaticMapUrl;
+      }, get getWalkingRoute() {
+        return getWalkingRoute;
       }, get reverseGeocode() {
         return reverseGeocode;
       }, get hasAmapKey() {
@@ -1393,8 +1509,8 @@ if (uni.restoreGlobal) {
           vue.createElementVNode("view", { class: "map-card card" }, [
             vue.createElementVNode("view", { class: "map-head" }, [
               vue.createElementVNode("view", null, [
-                vue.createElementVNode("text", { class: "map-title" }, "你与景区的位置关系"),
-                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "优先显示你当前定位，没有授权时展示景区默认位置")
+                vue.createElementVNode("text", { class: "map-title" }, "景区位置与导航"),
+                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "展示景区地图位置，并可估算当前出发的时间和距离")
               ]),
               vue.createElementVNode(
                 "view",
@@ -1407,17 +1523,7 @@ if (uni.restoreGlobal) {
               )
             ]),
             vue.createElementVNode("view", { class: "location-meta" }, [
-              vue.createElementVNode("text", { class: "meta-label" }, "当前位置"),
-              vue.createElementVNode(
-                "text",
-                { class: "meta-value" },
-                vue.toDisplayString($setup.currentLocationText),
-                1
-                /* TEXT */
-              )
-            ]),
-            vue.createElementVNode("view", { class: "location-meta scenic-meta" }, [
-              vue.createElementVNode("text", { class: "meta-label" }, "景区坐标"),
+              vue.createElementVNode("text", { class: "meta-label" }, "景区位置"),
               vue.createElementVNode(
                 "text",
                 { class: "meta-value" },
@@ -1426,6 +1532,59 @@ if (uni.restoreGlobal) {
                 /* TEXT */
               )
             ]),
+            vue.createElementVNode("view", { class: "location-meta scenic-meta" }, [
+              vue.createElementVNode("text", { class: "meta-label" }, "路线方式"),
+              vue.createElementVNode("view", { class: "route-mode-group" }, [
+                (vue.openBlock(), vue.createElementBlock(
+                  vue.Fragment,
+                  null,
+                  vue.renderList($setup.routeModeOptions, (item) => {
+                    return vue.createElementVNode("view", {
+                      key: item.value,
+                      class: vue.normalizeClass(["route-mode-chip", { active: $setup.routeMode === item.value }]),
+                      onClick: ($event) => $setup.changeRouteMode(item.value)
+                    }, vue.toDisplayString(item.label), 11, ["onClick"]);
+                  }),
+                  64
+                  /* STABLE_FRAGMENT */
+                ))
+              ])
+            ]),
+            vue.createElementVNode("view", { class: "route-summary card-lite scenic-meta" }, [
+              vue.createElementVNode("view", { class: "route-summary-item" }, [
+                vue.createElementVNode("text", { class: "meta-label" }, "预计时间"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "route-highlight" },
+                  vue.toDisplayString($setup.routeDurationText),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode("view", { class: "route-summary-item" }, [
+                vue.createElementVNode("text", { class: "meta-label" }, "预计距离"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "route-highlight" },
+                  vue.toDisplayString($setup.routeDistanceText),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              $setup.routeMode === "taxi" ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "route-summary-item route-summary-wide"
+              }, [
+                vue.createElementVNode("text", { class: "meta-label" }, "打车预估"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "meta-value" },
+                  vue.toDisplayString($setup.taxiCostText),
+                  1
+                  /* TEXT */
+                )
+              ])) : vue.createCommentVNode("v-if", true)
+            ]),
             $setup.mapImageUrl ? (vue.openBlock(), vue.createElementBlock("view", {
               key: 0,
               class: "map-preview"
@@ -1433,27 +1592,23 @@ if (uni.restoreGlobal) {
               vue.createVNode($setup["CachedImage"], {
                 src: $setup.mapImageUrl,
                 "image-class": "cover-image"
-              }, null, 8, ["src"]),
-              vue.createElementVNode("view", { class: "map-legend" }, [
-                vue.createElementVNode("text", null, "我"),
-                vue.createElementVNode("text", null, "景")
-              ])
+              }, null, 8, ["src"])
             ])) : (vue.openBlock(), vue.createElementBlock("view", {
               key: 1,
               class: "map-fallback"
             }, [
               vue.createElementVNode("text", { class: "map-fallback-title" }, "等待高德地图 Key"),
-              vue.createElementVNode("text", { class: "map-fallback-desc muted-text" }, "你给我高德 Web 服务 Key 后，这里会显示静态地图、定位点和景区点。")
+              vue.createElementVNode("text", { class: "map-fallback-desc muted-text" }, "填入高德 Web 服务 Key 后，这里会显示景区静态地图并支持驾车时间估算。")
             ])),
             vue.createElementVNode("view", { class: "map-actions" }, [
               vue.createElementVNode("view", {
                 class: "primary-btn",
-                onClick: $setup.refreshLocationAndWeather
-              }, "刷新定位"),
+                onClick: $setup.openScenicLocation
+              }, "地图导航"),
               vue.createElementVNode("view", {
                 class: "secondary-btn",
-                onClick: $setup.openScenicLocation
-              }, "打开地图导航")
+                onClick: $setup.refreshLocationAndWeather
+              }, "刷新路线")
             ])
           ])
         ]),
