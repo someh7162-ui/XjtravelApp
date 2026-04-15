@@ -31,6 +31,7 @@ if (uni.restoreGlobal) {
 }
 (function(vue) {
   "use strict";
+  const ON_SHOW = "onShow";
   const ON_LOAD = "onLoad";
   function formatAppLog(type, filename, ...args) {
     if (uni.__log__) {
@@ -42,6 +43,11 @@ if (uni.restoreGlobal) {
   const createLifeCycleHook = (lifecycle, flag = 0) => (hook, target = vue.getCurrentInstance()) => {
     !vue.isInSSRComponentSetup && vue.injectHook(lifecycle, hook, target);
   };
+  const onShow = /* @__PURE__ */ createLifeCycleHook(
+    ON_SHOW,
+    1 | 2
+    /* HookFlags.PAGE */
+  );
   const onLoad = /* @__PURE__ */ createLifeCycleHook(
     ON_LOAD,
     2
@@ -68,8 +74,7 @@ if (uni.restoreGlobal) {
       const items = [
         { path: "/pages/home/index", label: "首页", short: "H" },
         { path: "/pages/destinations/index", label: "目的地", short: "D" },
-        { path: "/pages/guides/index", label: "指南", short: "G" },
-        { path: "/pages/ai-assistant/index", label: "AI助手", short: "AI" },
+        { path: "/pages/guides/index", label: "攻略指南", short: "G" },
         { path: "/pages/account/index", label: "我的", short: "A" }
       ];
       function go(path) {
@@ -117,7 +122,7 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-8715b27c"], ["__file", "E:/XjtravelApp/components/AppTabBar.vue"]]);
+  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
   const _sfc_main$7 = {
     __name: "CachedImage",
     props: {
@@ -234,7 +239,7 @@ if (uni.restoreGlobal) {
       /* CLASS */
     );
   }
-  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-7d2a8804"], ["__file", "E:/XjtravelApp/components/CachedImage.vue"]]);
+  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
   function createScenicSpot({
     id,
     name,
@@ -1782,7 +1787,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/home/index" })
     ]);
   }
-  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-4978fed5"], ["__file", "E:/XjtravelApp/pages/home/index.vue"]]);
+  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
   const defaultVisibleCount = 5;
   const _sfc_main$5 = {
     __name: "index",
@@ -2023,74 +2028,317 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/destinations/index" })
     ]);
   }
-  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-9dd01296"], ["__file", "E:/XjtravelApp/pages/destinations/index.vue"]]);
-  const quickTips = [
+  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
+  const guideList = [
     {
-      short: "季",
-      title: "最佳季节",
-      description: "5 月到 10 月更适合出行，天气舒适、景色层次也更丰富。"
-    },
-    {
-      short: "语",
-      title: "语言沟通",
-      description: "准备一些常用普通话表达，部分地区也能接触到维吾尔语。"
-    },
-    {
-      short: "费",
-      title: "预算规划",
-      description: "常规出行建议按每日 300 到 700 元预估住宿、餐饮与交通。"
-    }
-  ];
-  const guides = [
-    {
-      id: 1,
-      title: "什么时候最适合去新疆",
+      id: "first-time-xinjiang",
+      title: "第一次来新疆，7 天怎么安排更顺路",
       category: "行程规划",
-      readTime: "5 分钟阅读",
-      image: "https://images.unsplash.com/photo-1698253542757-dcafef34a137?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxLYW5hcyUyMGxha2UlMjBhdXR1bW4lMjBsYW5kc2NhcGV8ZW58MXx8fHwxNzc2MjQ2MzMzfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      excerpt: "按季节挑选目的地，提前避开极端天气和旺季高峰，旅程会更轻松。"
-    },
-    {
-      id: 2,
-      title: "丝路美食不踩雷指南",
-      category: "吃喝推荐",
-      readTime: "8 分钟阅读",
-      image: "https://images.unsplash.com/photo-1756363886854-b51467278a52?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxiYXphYXIlMjBtYXJrZXQlMjBzcGljZXMlMjBjb2xvcmZ1bHxlbnwxfHx8fDE3NzYyNDYzMzN8MA&ixlib=rb-4.1.0&q=80&w=1080",
-      excerpt: "从抓饭、烤包子到羊肉串，帮你快速找到新疆旅行中的高频美味。"
-    },
-    {
-      id: 3,
-      title: "沙漠穿越安全提醒",
-      category: "安全提示",
       readTime: "6 分钟阅读",
-      image: "https://images.unsplash.com/photo-1623336343731-1582577b8250?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxUYWtsYW1ha2FuJTIwZGVzZXJ0JTIwc2FuZCUyMGR1bmVzfGVufDF8fHx8MTc3NjI0NjMzMnww&ixlib=rb-4.1.0&q=80&w=1080",
-      excerpt: "做好补水、防晒和路线确认，沙漠项目更需要团队协作与专业安排。"
+      author: "遇见新疆编辑部",
+      publishDate: "2026-04-15",
+      views: "2.3k",
+      likes: "318",
+      location: "北疆经典线",
+      image: "https://upload.wikimedia.org/wikipedia/commons/d/d1/Nalati_Grassland_2.jpg",
+      excerpt: "适合第一次来新疆的用户，从乌鲁木齐出发，串联赛里木湖、伊犁草原和独库沿线。",
+      highlights: ["路线顺", "适合第一次来", "风景密度高"],
+      sections: [
+        {
+          title: "推荐节奏",
+          paragraphs: [
+            "如果你是第一次来新疆，建议不要一上来就铺太大范围。7 天时间更适合集中体验北疆经典风景线，减少每天换城市的疲惫感。",
+            "常见走法是乌鲁木齐进出，沿赛里木湖、霍城、伊宁、那拉提、独库公路北段或巴音布鲁克做一个顺时针闭环。"
+          ]
+        },
+        {
+          title: "行程拆分",
+          paragraphs: [
+            "第 1 天落地乌鲁木齐，适应节奏，晚上可以去大巴扎或新疆博物馆。",
+            "第 2 到 3 天重点走赛里木湖、果子沟、霍城一线，第 4 到 5 天进入伊犁草原景区，第 6 到 7 天根据通车情况安排独库沿线或返回乌鲁木齐。"
+          ]
+        },
+        {
+          title: "适合人群",
+          paragraphs: [
+            "适合第一次来新疆、想看代表性风景、又不想每天都在赶路的游客。",
+            "如果你更偏爱人文、老城和集市，可以把第一次行程改成南疆线。"
+          ]
+        }
+      ],
+      tips: ["旺季住宿至少提前 5 到 10 天预订", "独库公路通车时间要提前确认", "每天车程控制在 4 到 6 小时体验更好"]
     },
     {
-      id: 4,
-      title: "天山徒步装备清单",
-      category: "户外探险",
+      id: "self-drive-checklist",
+      title: "新疆自驾前，这份准备清单先收好",
+      category: "自驾建议",
+      readTime: "5 分钟阅读",
+      author: "遇见新疆编辑部",
+      publishDate: "2026-04-15",
+      views: "1.8k",
+      likes: "246",
+      location: "全疆通用",
+      image: "https://bkimg.cdn.bcebos.com/pic/78310a55b319ebc4b7452225007dd8fc1e178a82b84e?x-bce-process=image/resize,m_lfit,w_536,limit_1/quality,Q_70",
+      excerpt: "新疆路程长、景点分散，自驾前确认证件、车辆状态、导航和补给，比临时做决定更重要。",
+      highlights: ["证件准备", "路线确认", "补给提醒"],
+      sections: [
+        {
+          title: "出发前检查",
+          paragraphs: [
+            "建议提前确认驾驶证、身份证、租车订单或保险资料，手机里同时准备离线地图和酒店订单截图。",
+            "车辆方面优先检查轮胎、刹车、玻璃水、备胎和手机充电接口，长线自驾不要忽略这些基础项。"
+          ]
+        },
+        {
+          title: "路线判断",
+          paragraphs: [
+            "新疆不是每一段都适合临时起意，特别是独库公路、山口、沙漠边缘路线和牧区道路。建议提前确认天气、施工和通行情况。",
+            "如果单日车程超过 600 公里，建议中间插入休息城市，否则体验会明显下降。"
+          ]
+        },
+        {
+          title: "补给重点",
+          paragraphs: [
+            "矿泉水、轻食、防晒、纸巾和应急药品最好固定放在车内一个收纳袋里。",
+            "进入长距离路段前，尽量在县城或服务区把油量和饮水都补满。"
+          ]
+        }
+      ],
+      tips: ["山路和长下坡不要连续疲劳驾驶", "尊重限速与检查站规定", "别把导航预计时长当成真实到达时长"]
+    },
+    {
+      id: "food-guide",
+      title: "新疆吃什么不容易踩雷",
+      category: "吃喝推荐",
       readTime: "7 分钟阅读",
-      image: "https://images.unsplash.com/photo-1766823282156-7e2de7f9f922?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxUaWFuY2hpJTIwaGVhdmVubHklMjBsYWtlJTIwWGluamlhbmclMjBtb3VudGFpbnN8ZW58MXx8fHwxNzc2MjQ2MzMxfDA&ixlib=rb-4.1.0&q=80&w=1080",
-      excerpt: "保暖、鞋服、路餐和应急物资缺一不可，高海拔徒步更要提前准备。"
+      author: "遇见新疆编辑部",
+      publishDate: "2026-04-15",
+      views: "3.1k",
+      likes: "402",
+      location: "城市与古城",
+      image: "https://upload.wikimedia.org/wikipedia/commons/f/fc/East_gate_of_the_Ancient_City_of_Kashi_%2820230923104429%29.jpg",
+      excerpt: "抓饭、拌面、烤包子、馕和酸奶都值得尝，但点单方式和就餐时段也会影响体验。",
+      highlights: ["高频美食", "点单建议", "夜市提醒"],
+      sections: [
+        {
+          title: "第一次可以先吃什么",
+          paragraphs: [
+            "第一次来新疆，比较稳妥的入门组合是抓饭、烤肉、拌面、烤包子和酸奶。既能快速感受地方风味，也不容易因为口味太重而不适应。",
+            "如果你在喀什或库车，可以把古城散步和夜市安排在同一晚，体验会更完整。"
+          ]
+        },
+        {
+          title: "点单建议",
+          paragraphs: [
+            "新疆很多餐厅分量偏大，2 个人点 3 道主食型菜已经足够，建议先少点再加。",
+            "烤肉、抓饭、馕坑肉这类热菜尽量趁热吃，口感差异很明显。"
+          ]
+        },
+        {
+          title: "小提醒",
+          paragraphs: [
+            "景区内餐饮更适合应急补给，想认真吃一顿通常还是回到市区或县城更稳。",
+            "如果肠胃比较敏感，饮品和冰品不要一次性尝太多种。"
+          ]
+        }
+      ],
+      tips: ["夜市更适合边走边吃，不用一次点太多", "热门老店高峰期要排队", "早餐可以多试试奶茶、包子、馕"]
+    },
+    {
+      id: "desert-safety",
+      title: "去沙漠玩之前，一定先看这 6 条提醒",
+      category: "安全提醒",
+      readTime: "5 分钟阅读",
+      author: "遇见新疆编辑部",
+      publishDate: "2026-04-15",
+      views: "1.5k",
+      likes: "228",
+      location: "吐鲁番/南疆",
+      image: "https://upload.wikimedia.org/wikipedia/commons/1/1d/%E4%B8%AD%E5%9B%BD%E6%96%B0%E7%96%86%E9%84%AF%E5%96%84%E5%8E%BF%E5%BA%93%E6%9C%A8%E5%A1%94%E6%A0%BC%E6%B2%99%E6%BC%A0_China_Xinjiang%2C_Piqan_County_Desert_Chi_-_panoramio.jpg",
+      excerpt: "不论是库木塔格还是沙漠公路边体验项目，补水、防晒、结伴和服从景区安排都是底线。",
+      highlights: ["防晒", "补水", "别单独深入"],
+      sections: [
+        {
+          title: "为什么沙漠更需要准备",
+          paragraphs: [
+            "沙漠环境看起来开阔，但高温、风沙和缺少遮挡会让体感消耗远快于普通景区。",
+            "特别是正午时段，拍照 20 分钟和暴晒 20 分钟，感受完全不是一回事。"
+          ]
+        },
+        {
+          title: "最重要的 3 件事",
+          paragraphs: [
+            "第一是补水，第二是防晒，第三是不要脱离既定路线。无论是徒步、越野还是娱乐项目，都要把这三点放在最前面。",
+            "如果带老人和孩子，尽量把沙漠活动安排在日落前后。"
+          ]
+        },
+        {
+          title: "拍照和游玩建议",
+          paragraphs: [
+            "拍照衣服可以选择纯色或亮色，但鞋子更重要，最好穿能防沙、包裹脚背的款式。",
+            "如果遇到大风天，优先缩短停留时间，不要硬撑。"
+          ]
+        }
+      ],
+      tips: ["至少准备 1 到 2 瓶饮水", "不要轻易离开观景和活动区域", "风沙大时优先保护眼睛和电子设备"]
+    },
+    {
+      id: "tianshan-hiking",
+      title: "天山徒步装备，不想漏东西就照着带",
+      category: "户外探险",
+      readTime: "6 分钟阅读",
+      author: "遇见新疆编辑部",
+      publishDate: "2026-04-15",
+      views: "1.2k",
+      likes: "173",
+      location: "天山/草原线",
+      image: "https://upload.wikimedia.org/wikipedia/commons/8/87/%E5%A4%A9%E5%B1%B1%E5%A4%A9%E6%B1%A02_-_panoramio.jpg",
+      excerpt: "高山景区看起来温柔，实际天气和地形变化很快，鞋服、保暖层和应急物品不能省。",
+      highlights: ["保暖层", "徒步鞋", "轻量应急"],
+      sections: [
+        {
+          title: "基础装备",
+          paragraphs: [
+            "鞋子优先级最高，徒步鞋或抓地更好的运动鞋比拍照鞋更重要。",
+            "衣物建议按排汗层、保暖层、外层防风来准备，这样更适合新疆昼夜温差大的情况。"
+          ]
+        },
+        {
+          title: "随身物品",
+          paragraphs: [
+            "水、能量棒、防晒、充电宝、纸巾和简单药品建议都放进一个轻量双肩包。",
+            "如果行程里包含骑马或长距离观景车，衣物耐脏和防风也会比好看更重要。"
+          ]
+        },
+        {
+          title: "不建议省掉的项目",
+          paragraphs: [
+            "帽子、墨镜和外套不要因为天气预报晴朗就省掉。",
+            "山里天气说变就变，提前带上比临时后悔更划算。"
+          ]
+        }
+      ],
+      tips: ["不要穿新鞋上长线", "高海拔别忽视保暖", "雨具和一次性雨披可以备一个"]
+    },
+    {
+      id: "stay-where",
+      title: "新疆住宿怎么选，住景区还是住县城",
+      category: "住宿建议",
+      readTime: "5 分钟阅读",
+      author: "遇见新疆编辑部",
+      publishDate: "2026-04-15",
+      views: "1.6k",
+      likes: "201",
+      location: "全疆通用",
+      image: "https://upload.wikimedia.org/wikipedia/commons/3/3f/%E6%96%B0%E7%96%86-%E7%A6%BE%E6%9C%A8.%E9%BB%84%E6%98%8F_-_panoramio.jpg",
+      excerpt: "如果你更看重晨雾、日出和景区氛围，就住景区；如果更看重舒适度和性价比，住县城会更稳。",
+      highlights: ["景区住宿", "县城住宿", "预订时机"],
+      sections: [
+        {
+          title: "住景区的优点",
+          paragraphs: [
+            "像禾木、喀纳斯、那拉提这类地方，住进去的最大优势是早晚时段更自由，能避开一部分日间人流。",
+            "如果你想拍晨雾、日出或者夜空，景区住宿通常更值。"
+          ]
+        },
+        {
+          title: "住县城的优点",
+          paragraphs: [
+            "县城通常选择更多，洗漱、餐饮、停车和补给也更方便，适合自驾用户和带老人孩子的家庭。",
+            "缺点是第二天需要更早出发，才能赶在合适时段进入景区。"
+          ]
+        },
+        {
+          title: "预订建议",
+          paragraphs: [
+            "旺季先锁定核心节点住宿，再反推整体路线，会比先排路线再找房更稳。",
+            "如果是 7 到 8 月、十一或暑期亲子时段，尽量提前预订可取消房型。"
+          ]
+        }
+      ],
+      tips: ["核心景区旺季房量紧张", "自驾尽量关注停车条件", "景区住宿更适合拍早晚景色"]
     }
   ];
-  const essentialInfo = [
-    { label: "货币", value: "人民币（CNY）" },
-    { label: "时区", value: "UTC+8，北京时间" },
-    { label: "语言", value: "普通话、维吾尔语、哈萨克语等" },
-    { label: "气候", value: "大陆性气候明显，夏季较热、昼夜温差较大" }
-  ];
+  function getGuideList() {
+    return guideList;
+  }
+  function getGuideById(id) {
+    return guideList.find((item) => item.id === id);
+  }
+  const GUIDE_API_BASE = "";
+  function hasGuideApi() {
+    return Boolean(GUIDE_API_BASE);
+  }
+  function request(url, data = {}) {
+    return new Promise((resolve, reject) => {
+      uni.request({
+        url,
+        method: "GET",
+        data,
+        success: (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}`));
+            return;
+          }
+          resolve(res.data);
+        },
+        fail: reject
+      });
+    });
+  }
+  async function getGuideFeed(params = {}) {
+    if (!hasGuideApi()) {
+      return getGuideList();
+    }
+    const data = await request(`${GUIDE_API_BASE}/guides`, params);
+    return Array.isArray(data == null ? void 0 : data.list) ? data.list : [];
+  }
+  async function getGuideDetail(id) {
+    if (!hasGuideApi()) {
+      return getGuideById(id);
+    }
+    const data = await request(`${GUIDE_API_BASE}/guides/${encodeURIComponent(id)}`);
+    return (data == null ? void 0 : data.data) || null;
+  }
   const _sfc_main$4 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
-      const __returned__ = { AppTabBar, CachedImage, get essentialInfo() {
-        return essentialInfo;
-      }, get guides() {
-        return guides;
-      }, get quickTips() {
-        return quickTips;
+      const quickTips = [
+        {
+          short: "线",
+          title: "先定线路",
+          description: "新疆范围大，先定北疆、伊犁、南疆还是自驾线，再去补景点。"
+        },
+        {
+          short: "住",
+          title: "先锁住宿",
+          description: "旺季核心景区房量紧，先锁住关键夜晚，比后面再补更稳。"
+        },
+        {
+          short: "安",
+          title: "重视安全",
+          description: "山口、沙漠、长途自驾和昼夜温差，都是新疆出行里最常见的变量。"
+        }
+      ];
+      const interfaceNotes = [
+        { label: "列表接口", value: "已预留 `getGuideFeed()`，当前先走本地数据，后续可直接切接口" },
+        { label: "详情接口", value: "已预留 `getGuideDetail(id)`，详情页已按接口返回结构设计" },
+        { label: "当前策略", value: "先用原创攻略占位，后面接你自己的内容源或后台都方便" }
+      ];
+      const guides = vue.ref([]);
+      onShow(async () => {
+        guides.value = await getGuideFeed();
+      });
+      function openGuide(id) {
+        uni.navigateTo({
+          url: `/pages/guide-detail/index?id=${encodeURIComponent(id)}`
+        });
+      }
+      const __returned__ = { quickTips, interfaceNotes, guides, openGuide, ref: vue.ref, get onShow() {
+        return onShow;
+      }, AppTabBar, CachedImage, get getGuideFeed() {
+        return getGuideFeed;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -2100,17 +2348,17 @@ if (uni.restoreGlobal) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient top-banner section" }, [
-          vue.createElementVNode("text", { class: "banner-title" }, "旅行指南"),
-          vue.createElementVNode("text", { class: "banner-subtitle" }, "行前准备、玩法建议与新疆旅行常识都在这里")
+          vue.createElementVNode("text", { class: "banner-title" }, "攻略指南"),
+          vue.createElementVNode("text", { class: "banner-subtitle" }, "先看预览，再点进详情，后面也能无缝切到接口数据")
         ]),
         vue.createElementVNode("view", { class: "tips-shell section" }, [
           vue.createElementVNode("text", { class: "section-title" }, "出发前速览"),
           vue.createElementVNode("view", { class: "tips-list" }, [
-            (vue.openBlock(true), vue.createElementBlock(
+            (vue.openBlock(), vue.createElementBlock(
               vue.Fragment,
               null,
               vue.renderList($setup.quickTips, (item) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
+                return vue.createElementVNode("view", {
                   key: item.title,
                   class: "card tip-item"
                 }, [
@@ -2139,59 +2387,121 @@ if (uni.restoreGlobal) {
                   ])
                 ]);
               }),
-              128
-              /* KEYED_FRAGMENT */
+              64
+              /* STABLE_FRAGMENT */
             ))
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "精选攻略"),
-          vue.createElementVNode("view", { class: "guide-list" }, [
+          vue.createElementVNode("view", { class: "section-head" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "精选攻略预览"),
+            vue.createElementVNode("text", { class: "section-note" }, "仿信息流预览，点击即可查看详情")
+          ]),
+          vue.createElementVNode("view", { class: "guide-feed" }, [
             (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
               null,
               vue.renderList($setup.guides, (item) => {
                 return vue.openBlock(), vue.createElementBlock("view", {
                   key: item.id,
-                  class: "card guide-card"
+                  class: "card feed-card",
+                  onClick: ($event) => $setup.openGuide(item.id)
                 }, [
-                  vue.createElementVNode("view", { class: "guide-image-wrap" }, [
-                    vue.createVNode($setup["CachedImage"], {
-                      src: item.image,
-                      "image-class": "cover-image"
-                    }, null, 8, ["src"]),
+                  vue.createElementVNode("view", { class: "feed-top" }, [
+                    vue.createElementVNode("view", { class: "author-badge" }, "攻"),
+                    vue.createElementVNode("view", { class: "feed-top-text" }, [
+                      vue.createElementVNode(
+                        "text",
+                        { class: "feed-author" },
+                        vue.toDisplayString(item.author),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "feed-meta muted-text" },
+                        vue.toDisplayString(item.publishDate) + " · " + vue.toDisplayString(item.location),
+                        1
+                        /* TEXT */
+                      )
+                    ]),
                     vue.createElementVNode(
                       "view",
-                      { class: "guide-tag" },
+                      { class: "feed-tag" },
                       vue.toDisplayString(item.category),
                       1
                       /* TEXT */
                     )
                   ]),
-                  vue.createElementVNode("view", { class: "guide-body" }, [
+                  vue.createElementVNode("view", { class: "feed-body" }, [
+                    vue.createElementVNode("view", { class: "feed-copy" }, [
+                      vue.createElementVNode(
+                        "text",
+                        { class: "feed-title" },
+                        vue.toDisplayString(item.title),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "feed-desc muted-text" },
+                        vue.toDisplayString(item.excerpt),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode("view", { class: "highlight-list" }, [
+                        (vue.openBlock(true), vue.createElementBlock(
+                          vue.Fragment,
+                          null,
+                          vue.renderList(item.highlights, (tag) => {
+                            return vue.openBlock(), vue.createElementBlock(
+                              "text",
+                              {
+                                key: tag,
+                                class: "highlight-chip"
+                              },
+                              "# " + vue.toDisplayString(tag),
+                              1
+                              /* TEXT */
+                            );
+                          }),
+                          128
+                          /* KEYED_FRAGMENT */
+                        ))
+                      ])
+                    ]),
+                    vue.createElementVNode("view", { class: "feed-image-wrap" }, [
+                      vue.createVNode($setup["CachedImage"], {
+                        src: item.image,
+                        "image-class": "cover-image"
+                      }, null, 8, ["src"])
+                    ])
+                  ]),
+                  vue.createElementVNode("view", { class: "feed-footer" }, [
                     vue.createElementVNode(
                       "text",
-                      { class: "guide-title" },
-                      vue.toDisplayString(item.title),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "text",
-                      { class: "guide-desc muted-text" },
-                      vue.toDisplayString(item.excerpt),
-                      1
-                      /* TEXT */
-                    ),
-                    vue.createElementVNode(
-                      "text",
-                      { class: "guide-time muted-text" },
+                      { class: "feed-stat" },
                       vue.toDisplayString(item.readTime),
                       1
                       /* TEXT */
-                    )
+                    ),
+                    vue.createElementVNode(
+                      "text",
+                      { class: "feed-stat" },
+                      "浏览 " + vue.toDisplayString(item.views),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "text",
+                      { class: "feed-stat" },
+                      "收藏感 " + vue.toDisplayString(item.likes),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode("text", { class: "feed-link" }, "查看详情")
                   ])
-                ]);
+                ], 8, ["onClick"]);
               }),
               128
               /* KEYED_FRAGMENT */
@@ -2200,13 +2510,13 @@ if (uni.restoreGlobal) {
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
           vue.createElementVNode("view", { class: "info-panel" }, [
-            vue.createElementVNode("text", { class: "section-title" }, "旅行基础信息"),
+            vue.createElementVNode("text", { class: "section-title" }, "接口预留说明"),
             vue.createElementVNode("view", { class: "info-list" }, [
-              (vue.openBlock(true), vue.createElementBlock(
+              (vue.openBlock(), vue.createElementBlock(
                 vue.Fragment,
                 null,
-                vue.renderList($setup.essentialInfo, (item) => {
-                  return vue.openBlock(), vue.createElementBlock("view", {
+                vue.renderList($setup.interfaceNotes, (item) => {
+                  return vue.createElementVNode("view", {
                     key: item.label,
                     class: "info-row"
                   }, [
@@ -2229,8 +2539,8 @@ if (uni.restoreGlobal) {
                     ])
                   ]);
                 }),
-                128
-                /* KEYED_FRAGMENT */
+                64
+                /* STABLE_FRAGMENT */
               ))
             ])
           ])
@@ -2240,8 +2550,196 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/guides/index" })
     ]);
   }
-  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-4aabec35"], ["__file", "E:/XjtravelApp/pages/guides/index.vue"]]);
+  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
   const _sfc_main$3 = {
+    __name: "index",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const guide = vue.ref(null);
+      onLoad(async (options) => {
+        const id = (options == null ? void 0 : options.id) || "";
+        guide.value = await getGuideDetail(id);
+      });
+      function goBack() {
+        if (getCurrentPages().length > 1) {
+          uni.navigateBack();
+          return;
+        }
+        uni.reLaunch({ url: "/pages/guides/index" });
+      }
+      const __returned__ = { guide, goBack, ref: vue.ref, get onLoad() {
+        return onLoad;
+      }, CachedImage, get getGuideDetail() {
+        return getGuideDetail;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
+      $setup.guide ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "page-scroll"
+      }, [
+        vue.createElementVNode("view", { class: "hero-card" }, [
+          vue.createVNode($setup["CachedImage"], {
+            src: $setup.guide.image,
+            "image-class": "cover-image"
+          }, null, 8, ["src"]),
+          vue.createElementVNode("view", { class: "hero-mask" }),
+          vue.createElementVNode("view", { class: "detail-topbar" }, [
+            vue.createElementVNode("view", {
+              class: "back-btn",
+              onClick: $setup.goBack
+            }, [
+              vue.createElementVNode("text", null, "返回")
+            ])
+          ]),
+          vue.createElementVNode("view", { class: "hero-info" }, [
+            vue.createElementVNode(
+              "view",
+              { class: "hero-tag" },
+              vue.toDisplayString($setup.guide.category),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode(
+              "text",
+              { class: "hero-title" },
+              vue.toDisplayString($setup.guide.title),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode(
+              "text",
+              { class: "hero-meta" },
+              vue.toDisplayString($setup.guide.author) + " · " + vue.toDisplayString($setup.guide.publishDate) + " · " + vue.toDisplayString($setup.guide.readTime),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode(
+              "text",
+              { class: "hero-desc" },
+              vue.toDisplayString($setup.guide.excerpt),
+              1
+              /* TEXT */
+            )
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "section section-block" }, [
+          vue.createElementVNode("text", { class: "section-title" }, "攻略亮点"),
+          vue.createElementVNode("view", { class: "highlight-list" }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.guide.highlights, (item) => {
+                return vue.openBlock(), vue.createElementBlock(
+                  "view",
+                  {
+                    key: item,
+                    class: "highlight-item card-lite"
+                  },
+                  "# " + vue.toDisplayString(item),
+                  1
+                  /* TEXT */
+                );
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "section section-block" }, [
+          vue.createElementVNode("text", { class: "section-title" }, "正文详情"),
+          vue.createElementVNode("view", { class: "content-card card" }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.guide.sections, (section) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: section.title,
+                  class: "content-section"
+                }, [
+                  vue.createElementVNode(
+                    "text",
+                    { class: "content-title" },
+                    vue.toDisplayString(section.title),
+                    1
+                    /* TEXT */
+                  ),
+                  (vue.openBlock(true), vue.createElementBlock(
+                    vue.Fragment,
+                    null,
+                    vue.renderList(section.paragraphs, (paragraph) => {
+                      return vue.openBlock(), vue.createElementBlock(
+                        "text",
+                        {
+                          key: paragraph,
+                          class: "content-paragraph"
+                        },
+                        vue.toDisplayString(paragraph),
+                        1
+                        /* TEXT */
+                      );
+                    }),
+                    128
+                    /* KEYED_FRAGMENT */
+                  ))
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "section section-block" }, [
+          vue.createElementVNode("text", { class: "section-title" }, "实用提醒"),
+          vue.createElementVNode("view", { class: "tips-list" }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.guide.tips, (tip) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: tip,
+                  class: "tip-card card"
+                }, [
+                  vue.createElementVNode("view", { class: "tip-dot" }),
+                  vue.createElementVNode(
+                    "text",
+                    { class: "tip-text" },
+                    vue.toDisplayString(tip),
+                    1
+                    /* TEXT */
+                  )
+                ]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "section section-block" }, [
+          vue.createElementVNode("view", { class: "info-panel" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "接口预留"),
+            vue.createElementVNode("text", { class: "info-copy muted-text" }, "当前详情页通过 `getGuideDetail(id)` 获取数据，后续接你自己的内容接口时，保留 `id/title/image/excerpt/highlights/sections/tips` 这些字段即可直接复用。")
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "bottom-space" })
+      ])) : (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "empty-shell section"
+      }, [
+        vue.createElementVNode("text", { class: "section-title" }, "攻略不存在"),
+        vue.createElementVNode("view", {
+          class: "primary-btn narrow-btn",
+          onClick: $setup.goBack
+        }, "返回上一页")
+      ]))
+    ]);
+  }
+  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  const _sfc_main$2 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2267,7 +2765,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient profile-banner section" }, [
@@ -2423,620 +2921,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/account/index" })
     ]);
   }
-  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-3c1b446f"], ["__file", "E:/XjtravelApp/pages/account/index.vue"]]);
-  const AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
-  const AI_MODEL = "qwen3.6-plus";
-  const AI_API_KEY = "";
-  const AI_API_KEY_PLACEHOLDER = "请在本地保存百炼API Key";
-  const AI_API_KEY_STORAGE = "meet-xinjiang-ai-api-key";
-  const AI_MESSAGE_STORAGE = "meet-xinjiang-ai-messages";
-  function hasBundledAiKey() {
-    return Boolean(AI_API_KEY) && AI_API_KEY !== AI_API_KEY_PLACEHOLDER;
-  }
-  function getAiApiKey() {
-    if (hasBundledAiKey()) {
-      return AI_API_KEY;
-    }
-    const value = uni.getStorageSync(AI_API_KEY_STORAGE);
-    return typeof value === "string" ? value.trim() : "";
-  }
-  function saveAiApiKey(value) {
-    const trimmed = typeof value === "string" ? value.trim() : "";
-    if (!trimmed) {
-      uni.removeStorageSync(AI_API_KEY_STORAGE);
-      return "";
-    }
-    uni.setStorageSync(AI_API_KEY_STORAGE, trimmed);
-    return trimmed;
-  }
-  const SYSTEM_PROMPT = `你是“遇见新疆”App 内的 AI 旅游助手。你的主要职责是回答新疆旅行相关问题，并优先基于应用内已有景点、攻略和基础信息给出建议。
-
-回答要求：
-1. 优先围绕新疆旅游、目的地推荐、出行季节、玩法、预算、装备、安全与美食给建议。
-2. 回答尽量简洁、实用、可执行，优先给清单或短段落。
-3. 如果用户问题明显超出旅游场景，可以正常回答，但不要偏离“实用助手”风格。
-4. 不要编造“已预订”“已联网查询到”之类不存在的事实；没有实时数据时明确说明是基于应用内资料给建议。
-5. 如果用户问行程建议，优先给 2 到 5 天的简洁安排。`;
-  function request(url, data) {
-    return new Promise((resolve, reject) => {
-      uni.request({
-        url,
-        method: "POST",
-        timeout: 3e4,
-        header: {
-          Authorization: `Bearer ${getAiApiKey()}`,
-          "Content-Type": "application/json"
-        },
-        data,
-        success: (res) => {
-          var _a, _b, _c;
-          if (res.statusCode !== 200) {
-            const message = ((_b = (_a = res.data) == null ? void 0 : _a.error) == null ? void 0 : _b.message) || ((_c = res.data) == null ? void 0 : _c.message) || "请求失败";
-            const prefix = `HTTP ${res.statusCode}`;
-            const fullMessage = message.startsWith(prefix) ? message : `${prefix}: ${message}`;
-            reject(new Error(fullMessage));
-            return;
-          }
-          resolve(res.data);
-        },
-        fail: reject
-      });
-    });
-  }
-  function buildDestinationSummary() {
-    return destinationList.map((item) => {
-      const tips = item.tips.join("；");
-      const weather = `${item.weather.condition}，${item.weather.temperature}，${item.weather.wind}`;
-      return `${item.name}（${item.location}，${item.category}，评分${item.rating}）：${item.description}。建议：${item.suggestion}。提示：${tips}。示例天气：${weather}。`;
-    }).join("\n");
-  }
-  function buildGuideSummary() {
-    const guideText = guides.map((item) => `${item.title}（${item.category}）：${item.excerpt}`).join("\n");
-    const tipText = quickTips.map((item) => `${item.title}：${item.description}`).join("\n");
-    const infoText = essentialInfo.map((item) => `${item.label}：${item.value}`).join("\n");
-    return `${guideText}
-${tipText}
-${infoText}`;
-  }
-  function buildTravelContext(extraContext = "") {
-    const sections = [
-      "应用内目的地资料：",
-      buildDestinationSummary(),
-      "应用内攻略与基础信息：",
-      buildGuideSummary()
-    ];
-    if (extraContext) {
-      sections.push(`补充上下文：${extraContext}`);
-    }
-    return sections.join("\n\n");
-  }
-  function normalizeMessages(messages = []) {
-    return messages.filter((item) => (item == null ? void 0 : item.role) && (item == null ? void 0 : item.content)).slice(-8).map((item) => ({
-      role: item.role,
-      content: item.content
-    }));
-  }
-  function getAssistantText(content) {
-    if (typeof content === "string") {
-      return content.trim();
-    }
-    if (Array.isArray(content)) {
-      return content.map((item) => (item == null ? void 0 : item.text) || "").join("\n").trim();
-    }
-    return "";
-  }
-  function formatErrorMessage(error) {
-    const message = (error == null ? void 0 : error.message) || "AI 服务调用失败";
-    if (message.includes("401")) {
-      return "API Key 无效或已失效，请更新本地保存的百炼 Key。";
-    }
-    if (message.includes("429")) {
-      return "请求过于频繁或额度受限，请稍后再试。";
-    }
-    return message;
-  }
-  function getTravelAssistantPresetQuestions() {
-    return [
-      "第一次去新疆怎么玩比较合适？",
-      "喀纳斯适合安排几天？",
-      "乌鲁木齐夜游推荐什么？",
-      "沙漠穿越要准备哪些装备？"
-    ];
-  }
-  async function testTravelAssistantConnection() {
-    var _a, _b, _c;
-    const apiKey = getAiApiKey();
-    if (!apiKey) {
-      throw new Error("请先在本页保存百炼 API Key，再开始测试。");
-    }
-    const start = Date.now();
-    const payload = {
-      model: AI_MODEL,
-      messages: [
-        {
-          role: "user",
-          content: "你好，请只回复“连接成功”。"
-        }
-      ],
-      enable_thinking: false,
-      temperature: 0.1,
-      max_tokens: 32
-    };
-    try {
-      const data = await request(`${AI_BASE_URL}/chat/completions`, payload);
-      const text = getAssistantText((_c = (_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.message) == null ? void 0 : _c.content);
-      if (!text) {
-        throw new Error("模型没有返回有效内容。");
-      }
-      return {
-        text,
-        elapsedMs: Date.now() - start,
-        model: (data == null ? void 0 : data.model) || AI_MODEL,
-        id: (data == null ? void 0 : data.id) || ""
-      };
-    } catch (error) {
-      throw new Error(formatErrorMessage(error));
-    }
-  }
-  async function chatWithTravelAssistant(messages, context = "") {
-    var _a, _b, _c;
-    const apiKey = getAiApiKey();
-    if (!apiKey) {
-      throw new Error("请先在本页保存百炼 API Key，再开始提问。");
-    }
-    const payload = {
-      model: AI_MODEL,
-      messages: [
-        { role: "system", content: SYSTEM_PROMPT },
-        { role: "system", content: buildTravelContext(context) },
-        ...normalizeMessages(messages)
-      ],
-      enable_thinking: false,
-      temperature: 0.6,
-      max_tokens: 800
-    };
-    try {
-      const data = await request(`${AI_BASE_URL}/chat/completions`, payload);
-      const text = getAssistantText((_c = (_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.message) == null ? void 0 : _c.content);
-      if (!text) {
-        throw new Error("模型没有返回有效内容。");
-      }
-      return text;
-    } catch (error) {
-      throw new Error(formatErrorMessage(error));
-    }
-  }
-  const _sfc_main$2 = {
-    __name: "index",
-    setup(__props, { expose: __expose }) {
-      __expose();
-      const presetQuestions = getTravelAssistantPresetQuestions();
-      const savedApiKey = vue.ref(getAiApiKey());
-      const apiKeyInput = vue.ref(savedApiKey.value);
-      const draft = vue.ref("");
-      const sending = vue.ref(false);
-      const testing = vue.ref(false);
-      const errorMessage = vue.ref("");
-      const testResult = vue.ref(null);
-      const messages = vue.ref(loadMessages());
-      const hasApiKey = vue.computed(() => Boolean(savedApiKey.value));
-      const canSend = vue.computed(() => Boolean(draft.value.trim()) && !sending.value && hasApiKey.value);
-      function loadMessages() {
-        try {
-          const stored = uni.getStorageSync(AI_MESSAGE_STORAGE);
-          const parsed = JSON.parse(stored || "[]");
-          return Array.isArray(parsed) ? parsed : [];
-        } catch (error) {
-          return [];
-        }
-      }
-      function persistMessages() {
-        uni.setStorageSync(AI_MESSAGE_STORAGE, JSON.stringify(messages.value));
-      }
-      function createMessage(role, content) {
-        return {
-          id: `${role}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          role,
-          content,
-          createdAt: Date.now()
-        };
-      }
-      function saveApiKeyToStorage() {
-        const value = saveAiApiKey(apiKeyInput.value);
-        savedApiKey.value = value;
-        apiKeyInput.value = value;
-        errorMessage.value = "";
-        testResult.value = null;
-        uni.showToast({
-          title: value ? "已保存到本机" : "已清除本地 Key",
-          icon: "none"
-        });
-      }
-      async function runConnectionTest() {
-        if (testing.value) {
-          return;
-        }
-        if (!hasApiKey.value) {
-          errorMessage.value = "请先保存百炼 API Key，再开始测试。";
-          testResult.value = null;
-          return;
-        }
-        testing.value = true;
-        errorMessage.value = "";
-        testResult.value = null;
-        try {
-          const result = await testTravelAssistantConnection();
-          testResult.value = {
-            ok: true,
-            message: `模型返回：${result.text}`,
-            meta: `模型：${result.model} ｜ 耗时：${result.elapsedMs}ms`
-          };
-        } catch (error) {
-          testResult.value = {
-            ok: false,
-            message: error.message || "连接测试失败",
-            meta: "请先确认 Key 是否完整、当前网络是否可访问百炼接口。"
-          };
-        } finally {
-          testing.value = false;
-        }
-      }
-      function clearConversation() {
-        messages.value = [];
-        persistMessages();
-        errorMessage.value = "";
-      }
-      async function sendQuestion(question) {
-        const content = question.trim();
-        if (!content || sending.value) {
-          return;
-        }
-        if (!hasApiKey.value) {
-          errorMessage.value = "请先保存百炼 API Key，再开始提问。";
-          return;
-        }
-        errorMessage.value = "";
-        const userMessage = createMessage("user", content);
-        const nextMessages = [...messages.value, userMessage];
-        messages.value = nextMessages;
-        persistMessages();
-        sending.value = true;
-        try {
-          const answer = await chatWithTravelAssistant(nextMessages);
-          messages.value = [...nextMessages, createMessage("assistant", answer)];
-          persistMessages();
-        } catch (error) {
-          messages.value = nextMessages;
-          persistMessages();
-          errorMessage.value = error.message || "AI 响应失败，请稍后再试。";
-          uni.showToast({
-            title: errorMessage.value,
-            icon: "none",
-            duration: 2500
-          });
-        } finally {
-          sending.value = false;
-        }
-      }
-      function sendDraft() {
-        const content = draft.value.trim();
-        if (!content || sending.value) {
-          return;
-        }
-        if (!hasApiKey.value) {
-          errorMessage.value = "请先保存百炼 API Key，再开始提问。";
-          return;
-        }
-        draft.value = "";
-        sendQuestion(content);
-      }
-      function sendPresetQuestion(question) {
-        if (sending.value) {
-          return;
-        }
-        draft.value = "";
-        sendQuestion(question);
-      }
-      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, hasApiKey, canSend, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, sendDraft, sendPresetQuestion, computed: vue.computed, ref: vue.ref, AppTabBar, get AI_MESSAGE_STORAGE() {
-        return AI_MESSAGE_STORAGE;
-      }, get getAiApiKey() {
-        return getAiApiKey;
-      }, get saveAiApiKey() {
-        return saveAiApiKey;
-      }, get chatWithTravelAssistant() {
-        return chatWithTravelAssistant;
-      }, get getTravelAssistantPresetQuestions() {
-        return getTravelAssistantPresetQuestions;
-      }, get testTravelAssistantConnection() {
-        return testTravelAssistantConnection;
-      } };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell assistant-page" }, [
-      vue.createElementVNode("view", { class: "page-scroll" }, [
-        vue.createElementVNode("view", { class: "hero-gradient assistant-banner" }, [
-          vue.createElementVNode("view", { class: "hero-inner section" }, [
-            vue.createElementVNode("view", { class: "private-tools" }, [
-              vue.withDirectives(vue.createElementVNode(
-                "input",
-                {
-                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.apiKeyInput = $event),
-                  password: "",
-                  class: "mini-key-input"
-                },
-                null,
-                512
-                /* NEED_PATCH */
-              ), [
-                [vue.vModelText, $setup.apiKeyInput]
-              ]),
-              vue.createElementVNode("view", {
-                class: "mini-action",
-                onClick: $setup.saveApiKeyToStorage
-              }, "存"),
-              vue.createElementVNode(
-                "view",
-                {
-                  class: vue.normalizeClass(["mini-action dark", { disabled: $setup.testing }]),
-                  onClick: $setup.runConnectionTest
-                },
-                vue.toDisplayString($setup.testing ? "..." : "测"),
-                3
-                /* TEXT, CLASS */
-              )
-            ]),
-            vue.createElementVNode("view", { class: "hero-copy" }, [
-              vue.createElementVNode("text", { class: "hero-kicker" }, "Meet Xinjiang AI"),
-              vue.createElementVNode("text", { class: "banner-title" }, "AI 旅游助手"),
-              vue.createElementVNode("text", { class: "banner-subtitle" }, "面向新疆旅行场景的问答与行程建议")
-            ]),
-            vue.createElementVNode("view", { class: "hero-meta" }, [
-              vue.createElementVNode("view", { class: "meta-item" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "定位"),
-                vue.createElementVNode("text", { class: "meta-value" }, "目的地推荐")
-              ]),
-              vue.createElementVNode("view", { class: "meta-divider" }),
-              vue.createElementVNode("view", { class: "meta-item" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "能力"),
-                vue.createElementVNode("text", { class: "meta-value" }, "行程规划")
-              ]),
-              vue.createElementVNode("view", { class: "meta-divider" }),
-              vue.createElementVNode("view", { class: "meta-item" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "风格"),
-                vue.createElementVNode("text", { class: "meta-value" }, "简洁实用")
-              ])
-            ]),
-            vue.createElementVNode("view", { class: "hero-status" }, [
-              vue.createElementVNode(
-                "text",
-                {
-                  class: vue.normalizeClass(["status-dot", { ready: $setup.hasApiKey }])
-                },
-                null,
-                2
-                /* CLASS */
-              ),
-              vue.createElementVNode(
-                "text",
-                { class: "hero-status-text" },
-                vue.toDisplayString($setup.hasApiKey ? "连接已就绪" : "内部配置未填写"),
-                1
-                /* TEXT */
-              )
-            ])
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "section capability-shell" }, [
-          vue.createElementVNode("view", { class: "capability-grid" }, [
-            vue.createElementVNode("view", { class: "capability-item" }, [
-              vue.createElementVNode("text", { class: "capability-name" }, "行程规划"),
-              vue.createElementVNode("text", { class: "capability-desc" }, "按天数给出新疆旅行安排")
-            ]),
-            vue.createElementVNode("view", { class: "capability-item" }, [
-              vue.createElementVNode("text", { class: "capability-name" }, "目的地选择"),
-              vue.createElementVNode("text", { class: "capability-desc" }, "结合景点资料给路线建议")
-            ]),
-            vue.createElementVNode("view", { class: "capability-item" }, [
-              vue.createElementVNode("text", { class: "capability-name" }, "出行提醒"),
-              vue.createElementVNode("text", { class: "capability-desc" }, "装备、预算与季节建议")
-            ])
-          ])
-        ]),
-        $setup.testResult ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
-          class: "section test-shell"
-        }, [
-          vue.createElementVNode(
-            "view",
-            {
-              class: vue.normalizeClass(["test-card", { failed: !$setup.testResult.ok }])
-            },
-            [
-              vue.createElementVNode(
-                "text",
-                { class: "test-title" },
-                vue.toDisplayString($setup.testResult.ok ? "连接测试成功" : "连接测试失败"),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode(
-                "text",
-                { class: "test-desc" },
-                vue.toDisplayString($setup.testResult.message),
-                1
-                /* TEXT */
-              ),
-              $setup.testResult.meta ? (vue.openBlock(), vue.createElementBlock(
-                "text",
-                {
-                  key: 0,
-                  class: "test-meta muted-text"
-                },
-                vue.toDisplayString($setup.testResult.meta),
-                1
-                /* TEXT */
-              )) : vue.createCommentVNode("v-if", true)
-            ],
-            2
-            /* CLASS */
-          )
-        ])) : vue.createCommentVNode("v-if", true),
-        vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("view", { class: "section-head" }, [
-            vue.createElementVNode("text", { class: "section-title" }, "快捷问题"),
-            vue.createElementVNode("text", {
-              class: "link-text",
-              onClick: $setup.clearConversation
-            }, "清空会话")
-          ]),
-          vue.createElementVNode("view", { class: "shortcut-list" }, [
-            (vue.openBlock(true), vue.createElementBlock(
-              vue.Fragment,
-              null,
-              vue.renderList($setup.presetQuestions, (item) => {
-                return vue.openBlock(), vue.createElementBlock("view", {
-                  key: item,
-                  class: "shortcut-pill",
-                  onClick: ($event) => $setup.sendPresetQuestion(item)
-                }, [
-                  vue.createElementVNode(
-                    "text",
-                    null,
-                    vue.toDisplayString(item),
-                    1
-                    /* TEXT */
-                  )
-                ], 8, ["onClick"]);
-              }),
-              128
-              /* KEYED_FRAGMENT */
-            ))
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("view", { class: "dialogue-head" }, [
-            vue.createElementVNode("text", { class: "section-title" }, "对话记录"),
-            vue.createElementVNode("text", { class: "dialogue-note muted-text" }, "面向新疆旅游场景优先回答")
-          ]),
-          $setup.errorMessage ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
-            class: "error-banner"
-          }, [
-            vue.createElementVNode(
-              "text",
-              null,
-              vue.toDisplayString($setup.errorMessage),
-              1
-              /* TEXT */
-            )
-          ])) : vue.createCommentVNode("v-if", true),
-          vue.createElementVNode("view", { class: "dialogue-surface" }, [
-            !$setup.messages.length ? (vue.openBlock(), vue.createElementBlock("view", {
-              key: 0,
-              class: "empty-card"
-            }, [
-              vue.createElementVNode("text", { class: "empty-title" }, "从一个具体问题开始"),
-              vue.createElementVNode("text", { class: "empty-desc muted-text" }, " 例如新疆第一次去怎么玩、喀纳斯安排几天、乌鲁木齐夜游吃什么。 ")
-            ])) : (vue.openBlock(), vue.createElementBlock("view", {
-              key: 1,
-              class: "message-list"
-            }, [
-              (vue.openBlock(true), vue.createElementBlock(
-                vue.Fragment,
-                null,
-                vue.renderList($setup.messages, (item) => {
-                  return vue.openBlock(), vue.createElementBlock(
-                    "view",
-                    {
-                      key: item.id,
-                      class: vue.normalizeClass(["message-row", { mine: item.role === "user" }])
-                    },
-                    [
-                      vue.createElementVNode(
-                        "view",
-                        {
-                          class: vue.normalizeClass(["message-bubble", { "assistant-bubble": item.role === "assistant" }])
-                        },
-                        [
-                          vue.createElementVNode(
-                            "text",
-                            { class: "message-role" },
-                            vue.toDisplayString(item.role === "user" ? "用户" : "AI助手"),
-                            1
-                            /* TEXT */
-                          ),
-                          vue.createElementVNode(
-                            "text",
-                            { class: "message-content" },
-                            vue.toDisplayString(item.content),
-                            1
-                            /* TEXT */
-                          )
-                        ],
-                        2
-                        /* CLASS */
-                      )
-                    ],
-                    2
-                    /* CLASS */
-                  );
-                }),
-                128
-                /* KEYED_FRAGMENT */
-              ))
-            ])),
-            $setup.sending ? (vue.openBlock(), vue.createElementBlock("view", {
-              key: 2,
-              class: "typing-row"
-            }, [
-              vue.createElementVNode("view", { class: "typing-card" }, [
-                vue.createElementVNode("text", { class: "typing-text" }, "AI 正在整理建议...")
-              ])
-            ])) : vue.createCommentVNode("v-if", true)
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "composer-space" }),
-        vue.createElementVNode("view", { class: "bottom-space" })
-      ]),
-      vue.createElementVNode("view", { class: "composer-wrap" }, [
-        vue.createElementVNode("view", { class: "composer card" }, [
-          vue.withDirectives(vue.createElementVNode(
-            "textarea",
-            {
-              "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.draft = $event),
-              class: "composer-input",
-              "auto-height": "",
-              maxlength: "500",
-              placeholder: "问点具体的，比如：第一次去新疆 5 天怎么安排？"
-            },
-            null,
-            512
-            /* NEED_PATCH */
-          ), [
-            [vue.vModelText, $setup.draft]
-          ]),
-          vue.createElementVNode("view", { class: "composer-foot" }, [
-            vue.createElementVNode("text", { class: "muted-text composer-hint" }, "优先回答新疆旅行相关问题"),
-            vue.createElementVNode(
-              "view",
-              {
-                class: vue.normalizeClass(["send-btn", { disabled: !$setup.canSend }]),
-                onClick: $setup.sendDraft
-              },
-              "发送",
-              2
-              /* CLASS */
-            )
-          ])
-        ])
-      ]),
-      vue.createVNode($setup["AppTabBar"], { current: "/pages/ai-assistant/index" })
-    ]);
-  }
-  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-a1b142b0"], ["__file", "E:/XjtravelApp/pages/ai-assistant/index.vue"]]);
+  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
   const _sfc_main$1 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -3625,19 +3510,19 @@ ${infoText}`;
       ]))
     ]);
   }
-  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-b4993f48"], ["__file", "E:/XjtravelApp/pages/destination-detail/index.vue"]]);
+  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-b4993f48"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destination-detail/index.vue"]]);
   __definePage("pages/home/index", PagesHomeIndex);
   __definePage("pages/destinations/index", PagesDestinationsIndex);
   __definePage("pages/guides/index", PagesGuidesIndex);
+  __definePage("pages/guide-detail/index", PagesGuideDetailIndex);
   __definePage("pages/account/index", PagesAccountIndex);
-  __definePage("pages/ai-assistant/index", PagesAiAssistantIndex);
   __definePage("pages/destination-detail/index", PagesDestinationDetailIndex);
   const _sfc_main = {
     onLaunch() {
       formatAppLog("log", "at App.vue:4", "Meet Xinjiang app launched");
     }
   };
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "E:/XjtravelApp/App.vue"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "F:/AI编程/遇见新疆_uniapp/App.vue"]]);
   function createApp() {
     const app = vue.createVueApp(App);
     return {

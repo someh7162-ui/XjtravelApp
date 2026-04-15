@@ -26,8 +26,7 @@ const props = defineProps({
 const items = [
   { path: '/pages/home/index', label: '首页', short: 'H' },
   { path: '/pages/destinations/index', label: '目的地', short: 'D' },
-  { path: '/pages/guides/index', label: '指南', short: 'G' },
-  { path: '/pages/ai-assistant/index', label: 'AI助手', short: 'AI' },
+  { path: '/pages/guides/index', label: '攻略指南', short: 'G' },
   { path: '/pages/account/index', label: '我的', short: 'A' },
 ]
 
@@ -59,8 +58,7 @@ function go(path) {
 }
 
 .tab-item {
-  flex: 1;
-  min-width: 0;
+  width: 25%;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -82,7 +80,7 @@ function go(path) {
   align-items: center;
   justify-content: center;
   background: rgba(212, 165, 116, 0.16);
-  font-size: 22rpx;
+  font-size: 24rpx;
   font-weight: 700;
 }
 
@@ -93,6 +91,5 @@ function go(path) {
 
 .tab-label {
   font-size: 22rpx;
-  white-space: nowrap;
 }
 </style>
