@@ -1,9 +1,8 @@
 import { getGuideById, getGuideList } from '../common/guide-data'
-
-const GUIDE_API_BASE = ''
+import { API_BASE_URL, hasApiBaseUrl } from '../config/api'
 
 function hasGuideApi() {
-  return Boolean(GUIDE_API_BASE)
+  return hasApiBaseUrl()
 }
 
 function request(url, data = {}) {
@@ -29,8 +28,12 @@ export async function getGuideFeed(params = {}) {
     return getGuideList()
   }
 
-  const data = await request(`${GUIDE_API_BASE}/guides`, params)
-  return Array.isArray(data?.list) ? data.list : []
+  try {
+    const data = await request(`${API_BASE_URL}/guides`, params)
+    return Array.isArray(data?.list) ? data.list : getGuideList()
+  } catch (error) {
+    return getGuideList()
+  }
 }
 
 export async function getGuideDetail(id) {
@@ -38,6 +41,10 @@ export async function getGuideDetail(id) {
     return getGuideById(id)
   }
 
-  const data = await request(`${GUIDE_API_BASE}/guides/${encodeURIComponent(id)}`)
-  return data?.data || null
+  try {
+    const data = await request(`${API_BASE_URL}/guides/${encodeURIComponent(id)}`)
+    return data?.data || getGuideById(id)
+  } catch (error) {
+    return getGuideById(id)
+  }
 }

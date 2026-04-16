@@ -1,3 +1,6 @@
+-- 旧版认证子集表结构。
+-- 新数据库初始化请优先使用 docs/postgresql-app-schema.sql。
+
 CREATE EXTENSION IF NOT EXISTS pgcrypto;
 
 CREATE TABLE IF NOT EXISTS users (

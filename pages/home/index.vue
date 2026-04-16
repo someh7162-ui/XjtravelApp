@@ -8,7 +8,7 @@
           <text class="hero-subtitle">沿着丝路风景，开启一段辽阔而热烈的旅程</text>
           <view class="hero-badge">
             <text class="hero-badge-dot"></text>
-            <text class="hero-badge-text">{{ destinationList.length }} 个精选景区</text>
+            <text class="hero-badge-text">{{ destinations.length }} 个精选景区</text>
           </view>
           <view class="hero-ai-btn" @tap="openAiPlanner">问 AI 规划新疆行程</view>
         </view>
@@ -88,23 +88,29 @@ import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
 import CachedImage from '../../components/CachedImage.vue'
-import { destinationList, scenicCategories, scenicRegions } from '../../common/destination-data'
 import { getCurrentLocation } from '../../services/amap'
+import {
+  getDestinationCategories,
+  getDestinationFeed,
+  getDestinationRegions,
+  getLocalDestinationList,
+} from '../../services/destinations'
 
-const stats = [
-  { value: `${destinationList.length}`, label: '景区总数' },
-  { value: `${scenicCategories.length - 1}`, label: '景区分类' },
-  { value: `${scenicRegions.length - 1}`, label: '覆盖地区' },
-]
-
+const destinations = ref(getLocalDestinationList())
 const currentCoords = ref(null)
+
+const stats = computed(() => [
+  { value: `${destinations.value.length}`, label: '景区总数' },
+  { value: `${getDestinationCategories(destinations.value).length - 1}`, label: '景区分类' },
+  { value: `${getDestinationRegions(destinations.value).length - 1}`, label: '覆盖地区' },
+])
 
 const featuredDestinations = computed(() => {
   if (!currentCoords.value) {
-    return destinationList.slice(0, 3).map((item) => ({ ...item, distanceText: '' }))
+    return destinations.value.slice(0, 3).map((item) => ({ ...item, distanceText: '' }))
   }
 
-  return destinationList
+  return destinations.value
     .map((item) => {
       const distanceKm = getDistanceKm(currentCoords.value, item.coordinates)
       return {
@@ -121,7 +127,7 @@ const featuredSectionTitle = computed(() => (currentCoords.value ? '附近景区
 
 const nicheDestinationIds = [63, 64, 65, 66, 67]
 
-const nicheDestinations = computed(() => destinationList.filter((item) => nicheDestinationIds.includes(item.id)))
+const nicheDestinations = computed(() => destinations.value.filter((item) => nicheDestinationIds.includes(item.id)))
 
 const activities = [
   { short: '丝', title: '丝路人文漫游' },
@@ -129,6 +135,8 @@ const activities = [
 ]
 
 onLoad(async () => {
+  destinations.value = await getDestinationFeed()
+
   try {
     const location = await getCurrentLocation()
     currentCoords.value = {
@@ -150,10 +158,12 @@ function openDetail(id) {
 
 function openAiPlanner() {
   const featuredNames = featuredDestinations.value.map((item) => item.name).join('、')
+  const categories = getDestinationCategories(destinations.value)
+  const regions = getDestinationRegions(destinations.value)
   const context = [
-    `首页推荐景区数：${destinationList.length}`,
-    `景区分类数：${scenicCategories.length - 1}`,
-    `覆盖地区数：${scenicRegions.length - 1}`,
+    `首页推荐景区数：${destinations.value.length}`,
+    `景区分类数：${categories.length - 1}`,
+    `覆盖地区数：${regions.length - 1}`,
     `当前推荐景区：${featuredNames || '天山天池、喀纳斯景区、赛里木湖'}`,
   ].join('\n')
 

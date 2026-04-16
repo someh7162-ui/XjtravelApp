@@ -123,7 +123,7 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$9], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
+  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$9], ["__scopeId", "data-v-8715b27c"], ["__file", "E:/XjtravelApp/components/AppTabBar.vue"]]);
   const _sfc_main$9 = {
     __name: "CachedImage",
     props: {
@@ -240,7 +240,108 @@ if (uni.restoreGlobal) {
       /* CLASS */
     );
   }
-  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
+  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-7d2a8804"], ["__file", "E:/XjtravelApp/components/CachedImage.vue"]]);
+  const AMAP_WEB_KEY = "b16ee0a6a8f641e974a51521ca00b6f0";
+  function hasAmapKey() {
+    return Boolean(AMAP_WEB_KEY) && !AMAP_WEB_KEY.includes("请在这里填入");
+  }
+  function request$4(url, data = {}) {
+    return new Promise((resolve, reject) => {
+      uni.request({
+        url,
+        method: "GET",
+        data,
+        success: (res) => {
+          if (res.statusCode !== 200) {
+            reject(new Error(`HTTP ${res.statusCode}`));
+            return;
+          }
+          resolve(res.data);
+        },
+        fail: reject
+      });
+    });
+  }
+  function getStaticMapUrl({ longitude, latitude, markers = [] }) {
+    if (!hasAmapKey() || longitude === void 0 || latitude === void 0) {
+      return "";
+    }
+    const markerText = markers.map((item) => `${item.size || "mid"},0xC44536,${item.label || ""}:${item.longitude},${item.latitude}`).join("|");
+    return `https://restapi.amap.com/v3/staticmap?key=${encodeURIComponent(AMAP_WEB_KEY)}&size=750*360&scale=2&zoom=11&center=${longitude},${latitude}&markers=${encodeURIComponent(markerText)}`;
+  }
+  async function reverseGeocode(longitude, latitude) {
+    if (!hasAmapKey()) {
+      return null;
+    }
+    const data = await request$4("https://restapi.amap.com/v3/geocode/regeo", {
+      key: AMAP_WEB_KEY,
+      location: `${longitude},${latitude}`,
+      extensions: "base"
+    });
+    if (data.status !== "1" || !data.regeocode) {
+      throw new Error(data.info || "逆地理编码失败");
+    }
+    return data.regeocode;
+  }
+  async function getLiveWeather(adcode) {
+    if (!hasAmapKey() || !adcode) {
+      return null;
+    }
+    const data = await request$4("https://restapi.amap.com/v3/weather/weatherInfo", {
+      key: AMAP_WEB_KEY,
+      city: adcode,
+      extensions: "base"
+    });
+    if (data.status !== "1" || !data.lives || !data.lives.length) {
+      throw new Error(data.info || "天气获取失败");
+    }
+    return data.lives[0];
+  }
+  async function getDrivingRoute(origin, destination) {
+    var _a, _b;
+    if (!hasAmapKey() || !origin || !destination) {
+      return null;
+    }
+    const data = await request$4("https://restapi.amap.com/v3/direction/driving", {
+      key: AMAP_WEB_KEY,
+      origin: `${origin.longitude},${origin.latitude}`,
+      destination: `${destination.longitude},${destination.latitude}`,
+      strategy: 0,
+      extensions: "all"
+    });
+    if (data.status !== "1" || !((_b = (_a = data.route) == null ? void 0 : _a.paths) == null ? void 0 : _b.length)) {
+      throw new Error(data.info || "驾车路线获取失败");
+    }
+    return {
+      ...data.route.paths[0],
+      taxiCost: data.route.taxi_cost || ""
+    };
+  }
+  async function getWalkingRoute(origin, destination) {
+    var _a, _b;
+    if (!hasAmapKey() || !origin || !destination) {
+      return null;
+    }
+    const data = await request$4("https://restapi.amap.com/v3/direction/walking", {
+      key: AMAP_WEB_KEY,
+      origin: `${origin.longitude},${origin.latitude}`,
+      destination: `${destination.longitude},${destination.latitude}`
+    });
+    if (data.status !== "1" || !((_b = (_a = data.route) == null ? void 0 : _a.paths) == null ? void 0 : _b.length)) {
+      throw new Error(data.info || "步行路线获取失败");
+    }
+    return data.route.paths[0];
+  }
+  async function getCurrentLocation() {
+    return new Promise((resolve, reject) => {
+      uni.getLocation({
+        type: "gcj02",
+        isHighAccuracy: true,
+        success: resolve,
+        fail: reject
+      });
+    });
+  }
   function createScenicSpot({
     id,
     name,
@@ -1506,7 +1607,7 @@ if (uni.restoreGlobal) {
       liveKeyword: "阿克苏文庙"
     })
   ];
-  const scenicCategories = ["全部", ...new Set(destinationList.map((item) => item.category))];
+  ["全部", ...new Set(destinationList.map((item) => item.category))];
   const regionOrder = [
     "乌鲁木齐市",
     "克拉玛依市",
@@ -1521,7 +1622,7 @@ if (uni.restoreGlobal) {
     "塔城地区",
     "阿勒泰地区"
   ];
-  const scenicRegions = ["全部", ...regionOrder.filter((item) => destinationList.some((spot) => spot.region === item))];
+  ["全部", ...regionOrder.filter((item) => destinationList.some((spot) => spot.region === item))];
   const destinationCultureMap = {
     1: {
       overview: "天山天池位于博格达峰北麓，是新疆最具代表性的高山湖泊景区之一，湖水、雪峰、云杉林和山地步道共同构成了经典的天山风光。",
@@ -1896,7 +1997,7 @@ if (uni.restoreGlobal) {
   function getDestinationById(id) {
     return destinationList.find((item) => String(item.id) === String(id));
   }
-  function getDestinationCulture(id) {
+  function getDestinationCulture$1(id) {
     const destination = getDestinationById(id);
     if (!destination) {
       return null;
@@ -1911,7 +2012,7 @@ if (uni.restoreGlobal) {
       highlights: destination.suggestion
     };
   }
-  function getDestinationTravelMeta(id) {
+  function getDestinationTravelMeta$1(id) {
     const destination = getDestinationById(id);
     if (!destination) {
       return null;
@@ -1963,7 +2064,7 @@ if (uni.restoreGlobal) {
       audience: "首次来访游客、轻松游用户"
     };
   }
-  function getDestinationVisitMeta(id) {
+  function getDestinationVisitMeta$1(id) {
     const destination = getDestinationById(id);
     if (!destination) {
       return null;
@@ -2010,19 +2111,21 @@ if (uni.restoreGlobal) {
   function getDouyinSearchUrl(keyword) {
     return `https://www.douyin.com/search/${encodeURIComponent(keyword)}?type=live`;
   }
-  const AMAP_WEB_KEY = "b16ee0a6a8f641e974a51521ca00b6f0";
-  function hasAmapKey() {
-    return Boolean(AMAP_WEB_KEY) && !AMAP_WEB_KEY.includes("请在这里填入");
+  const API_BASE_URL = "https://111.20.31.227:34144/api";
+  function hasApiBaseUrl() {
+    return Boolean(API_BASE_URL.trim());
   }
   function request$3(url, data = {}) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
         method: "GET",
+        timeout: 15e3,
         data,
         success: (res) => {
-          if (res.statusCode !== 200) {
-            reject(new Error(`HTTP ${res.statusCode}`));
+          var _a;
+          if (res.statusCode < 200 || res.statusCode >= 300) {
+            reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `HTTP ${res.statusCode}`));
             return;
           }
           resolve(res.data);
@@ -2031,101 +2134,90 @@ if (uni.restoreGlobal) {
       });
     });
   }
-  function getStaticMapUrl({ longitude, latitude, markers = [] }) {
-    if (!hasAmapKey() || longitude === void 0 || latitude === void 0) {
-      return "";
-    }
-    const markerText = markers.map((item) => `${item.size || "mid"},0xC44536,${item.label || ""}:${item.longitude},${item.latitude}`).join("|");
-    return `https://restapi.amap.com/v3/staticmap?key=${encodeURIComponent(AMAP_WEB_KEY)}&size=750*360&scale=2&zoom=11&center=${longitude},${latitude}&markers=${encodeURIComponent(markerText)}`;
+  function hasContentApi() {
+    return hasApiBaseUrl();
   }
-  async function reverseGeocode(longitude, latitude) {
-    if (!hasAmapKey()) {
-      return null;
-    }
-    const data = await request$3("https://restapi.amap.com/v3/geocode/regeo", {
-      key: AMAP_WEB_KEY,
-      location: `${longitude},${latitude}`,
-      extensions: "base"
-    });
-    if (data.status !== "1" || !data.regeocode) {
-      throw new Error(data.info || "逆地理编码失败");
-    }
-    return data.regeocode;
+  function getLocalDestinationList() {
+    return destinationList;
   }
-  async function getLiveWeather(adcode) {
-    if (!hasAmapKey() || !adcode) {
-      return null;
-    }
-    const data = await request$3("https://restapi.amap.com/v3/weather/weatherInfo", {
-      key: AMAP_WEB_KEY,
-      city: adcode,
-      extensions: "base"
-    });
-    if (data.status !== "1" || !data.lives || !data.lives.length) {
-      throw new Error(data.info || "天气获取失败");
-    }
-    return data.lives[0];
+  function getDestinationCategories(list = destinationList) {
+    return ["全部", ...new Set(list.map((item) => item.category).filter(Boolean))];
   }
-  async function getDrivingRoute(origin, destination) {
-    var _a, _b;
-    if (!hasAmapKey() || !origin || !destination) {
-      return null;
-    }
-    const data = await request$3("https://restapi.amap.com/v3/direction/driving", {
-      key: AMAP_WEB_KEY,
-      origin: `${origin.longitude},${origin.latitude}`,
-      destination: `${destination.longitude},${destination.latitude}`,
-      strategy: 0,
-      extensions: "all"
-    });
-    if (data.status !== "1" || !((_b = (_a = data.route) == null ? void 0 : _a.paths) == null ? void 0 : _b.length)) {
-      throw new Error(data.info || "驾车路线获取失败");
-    }
-    return {
-      ...data.route.paths[0],
-      taxiCost: data.route.taxi_cost || ""
-    };
+  function getDestinationRegions(list = destinationList) {
+    const regionOrder2 = [
+      "乌鲁木齐市",
+      "克拉玛依市",
+      "吐鲁番市",
+      "昌吉州",
+      "博州",
+      "巴州",
+      "阿克苏地区",
+      "喀什地区",
+      "和田地区",
+      "伊犁州",
+      "塔城地区",
+      "阿勒泰地区"
+    ];
+    const knownRegions = regionOrder2.filter((item) => list.some((spot) => spot.region === item));
+    const extraRegions = [...new Set(list.map((item) => item.region).filter(Boolean))].filter((item) => !regionOrder2.includes(item));
+    return ["全部", ...knownRegions, ...extraRegions];
   }
-  async function getWalkingRoute(origin, destination) {
-    var _a, _b;
-    if (!hasAmapKey() || !origin || !destination) {
-      return null;
+  async function getDestinationFeed(params = {}) {
+    if (!hasContentApi()) {
+      return destinationList;
     }
-    const data = await request$3("https://restapi.amap.com/v3/direction/walking", {
-      key: AMAP_WEB_KEY,
-      origin: `${origin.longitude},${origin.latitude}`,
-      destination: `${destination.longitude},${destination.latitude}`
-    });
-    if (data.status !== "1" || !((_b = (_a = data.route) == null ? void 0 : _a.paths) == null ? void 0 : _b.length)) {
-      throw new Error(data.info || "步行路线获取失败");
+    try {
+      const data = await request$3(`${API_BASE_URL}/destinations`, params);
+      return Array.isArray(data == null ? void 0 : data.list) ? data.list : destinationList;
+    } catch (error) {
+      return destinationList;
     }
-    return data.route.paths[0];
   }
-  async function getCurrentLocation() {
-    return new Promise((resolve, reject) => {
-      uni.getLocation({
-        type: "gcj02",
-        isHighAccuracy: true,
-        success: resolve,
-        fail: reject
-      });
-    });
+  async function getDestinationDetail(id) {
+    if (!hasContentApi()) {
+      return getDestinationById(id);
+    }
+    try {
+      const data = await request$3(`${API_BASE_URL}/destinations/${encodeURIComponent(id)}`);
+      return (data == null ? void 0 : data.data) || getDestinationById(id);
+    } catch (error) {
+      return getDestinationById(id);
+    }
+  }
+  function getDestinationCulture(destination, id) {
+    if (destination == null ? void 0 : destination.culture) {
+      return destination.culture;
+    }
+    return getDestinationCulture$1(id || (destination == null ? void 0 : destination.id));
+  }
+  function getDestinationTravelMeta(destination, id) {
+    if (destination == null ? void 0 : destination.travelMeta) {
+      return destination.travelMeta;
+    }
+    return getDestinationTravelMeta$1(id || (destination == null ? void 0 : destination.id));
+  }
+  function getDestinationVisitMeta(destination, id) {
+    if (destination == null ? void 0 : destination.visitMeta) {
+      return destination.visitMeta;
+    }
+    return getDestinationVisitMeta$1(id || (destination == null ? void 0 : destination.id));
   }
   const _sfc_main$8 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
-      const stats = [
-        { value: `${destinationList.length}`, label: "景区总数" },
-        { value: `${scenicCategories.length - 1}`, label: "景区分类" },
-        { value: `${scenicRegions.length - 1}`, label: "覆盖地区" }
-      ];
+      const destinations = vue.ref(getLocalDestinationList());
       const currentCoords = vue.ref(null);
+      const stats = vue.computed(() => [
+        { value: `${destinations.value.length}`, label: "景区总数" },
+        { value: `${getDestinationCategories(destinations.value).length - 1}`, label: "景区分类" },
+        { value: `${getDestinationRegions(destinations.value).length - 1}`, label: "覆盖地区" }
+      ]);
       const featuredDestinations = vue.computed(() => {
         if (!currentCoords.value) {
-          return destinationList.slice(0, 3).map((item) => ({ ...item, distanceText: "" }));
+          return destinations.value.slice(0, 3).map((item) => ({ ...item, distanceText: "" }));
         }
-        return destinationList.map((item) => {
+        return destinations.value.map((item) => {
           const distanceKm = getDistanceKm(currentCoords.value, item.coordinates);
           return {
             ...item,
@@ -2136,12 +2228,13 @@ if (uni.restoreGlobal) {
       });
       const featuredSectionTitle = vue.computed(() => currentCoords.value ? "附近景区" : "精选景区");
       const nicheDestinationIds = [63, 64, 65, 66, 67];
-      const nicheDestinations = vue.computed(() => destinationList.filter((item) => nicheDestinationIds.includes(item.id)));
+      const nicheDestinations = vue.computed(() => destinations.value.filter((item) => nicheDestinationIds.includes(item.id)));
       const activities = [
         { short: "丝", title: "丝路人文漫游" },
         { short: "沙", title: "沙漠越野探险" }
       ];
       onLoad(async () => {
+        destinations.value = await getDestinationFeed();
         try {
           const location = await getCurrentLocation();
           currentCoords.value = {
@@ -2160,10 +2253,12 @@ if (uni.restoreGlobal) {
       }
       function openAiPlanner() {
         const featuredNames = featuredDestinations.value.map((item) => item.name).join("、");
+        const categories = getDestinationCategories(destinations.value);
+        const regions = getDestinationRegions(destinations.value);
         const context = [
-          `首页推荐景区数：${destinationList.length}`,
-          `景区分类数：${scenicCategories.length - 1}`,
-          `覆盖地区数：${scenicRegions.length - 1}`,
+          `首页推荐景区数：${destinations.value.length}`,
+          `景区分类数：${categories.length - 1}`,
+          `覆盖地区数：${regions.length - 1}`,
           `当前推荐景区：${featuredNames || "天山天池、喀纳斯景区、赛里木湖"}`
         ].join("\n");
         navigateToAiAssistant({
@@ -2220,16 +2315,18 @@ if (uni.restoreGlobal) {
         }
         return `约 ${distanceKm.toFixed(1)} 公里`;
       }
-      const __returned__ = { stats, currentCoords, featuredDestinations, featuredSectionTitle, nicheDestinationIds, nicheDestinations, activities, goToDestinations, openDetail, openAiPlanner, openAiForDestination, navigateToAiAssistant, getDistanceKm, formatDistance, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { destinations, currentCoords, stats, featuredDestinations, featuredSectionTitle, nicheDestinationIds, nicheDestinations, activities, goToDestinations, openDetail, openAiPlanner, openAiForDestination, navigateToAiAssistant, getDistanceKm, formatDistance, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
-      }, AppTabBar, CachedImage, get destinationList() {
-        return destinationList;
-      }, get scenicCategories() {
-        return scenicCategories;
-      }, get scenicRegions() {
-        return scenicRegions;
-      }, get getCurrentLocation() {
+      }, AppTabBar, CachedImage, get getCurrentLocation() {
         return getCurrentLocation;
+      }, get getDestinationCategories() {
+        return getDestinationCategories;
+      }, get getDestinationFeed() {
+        return getDestinationFeed;
+      }, get getDestinationRegions() {
+        return getDestinationRegions;
+      }, get getLocalDestinationList() {
+        return getLocalDestinationList;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -2248,7 +2345,7 @@ if (uni.restoreGlobal) {
               vue.createElementVNode(
                 "text",
                 { class: "hero-badge-text" },
-                vue.toDisplayString($setup.destinationList.length) + " 个精选景区",
+                vue.toDisplayString($setup.destinations.length) + " 个精选景区",
                 1
                 /* TEXT */
               )
@@ -2261,11 +2358,11 @@ if (uni.restoreGlobal) {
         ]),
         vue.createElementVNode("view", { class: "section stats-panel" }, [
           vue.createElementVNode("view", { class: "stats-grid card" }, [
-            (vue.openBlock(), vue.createElementBlock(
+            (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
               null,
               vue.renderList($setup.stats, (item) => {
-                return vue.createElementVNode("view", {
+                return vue.openBlock(), vue.createElementBlock("view", {
                   key: item.label,
                   class: "stat-item"
                 }, [
@@ -2285,8 +2382,8 @@ if (uni.restoreGlobal) {
                   )
                 ]);
               }),
-              64
-              /* STABLE_FRAGMENT */
+              128
+              /* KEYED_FRAGMENT */
             ))
           ])
         ]),
@@ -2468,7 +2565,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/home/index" })
     ]);
   }
-  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
+  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-4978fed5"], ["__file", "E:/XjtravelApp/pages/home/index.vue"]]);
   const defaultVisibleCount = 5;
   const _sfc_main$7 = {
     __name: "index",
@@ -2479,38 +2576,49 @@ if (uni.restoreGlobal) {
       const currentRegion = vue.ref("全部");
       const categoriesExpanded = vue.ref(false);
       const regionsExpanded = vue.ref(false);
-      const categories = scenicCategories;
-      const regions = scenicRegions;
+      const destinations = vue.ref(getLocalDestinationList());
+      const categories = vue.computed(() => getDestinationCategories(destinations.value));
+      const regions = vue.computed(() => getDestinationRegions(destinations.value));
       const visibleCategories = vue.computed(() => {
-        if (categoriesExpanded.value || categories.length <= defaultVisibleCount) {
-          return categories;
+        const list = categories.value;
+        if (categoriesExpanded.value || list.length <= defaultVisibleCount) {
+          return list;
         }
-        const compact = categories.slice(0, defaultVisibleCount);
+        const compact = list.slice(0, defaultVisibleCount);
         if (compact.includes(currentCategory.value)) {
           return compact;
         }
-        return [categories[0], currentCategory.value, ...categories.slice(1, defaultVisibleCount - 1)];
+        return [list[0], currentCategory.value, ...list.slice(1, defaultVisibleCount - 1)];
       });
       const visibleRegions = vue.computed(() => {
-        if (regionsExpanded.value || regions.length <= defaultVisibleCount) {
-          return regions;
+        const list = regions.value;
+        if (regionsExpanded.value || list.length <= defaultVisibleCount) {
+          return list;
         }
-        const compact = regions.slice(0, defaultVisibleCount);
+        const compact = list.slice(0, defaultVisibleCount);
         if (compact.includes(currentRegion.value)) {
           return compact;
         }
-        return [regions[0], currentRegion.value, ...regions.slice(1, defaultVisibleCount - 1)];
+        return [list[0], currentRegion.value, ...list.slice(1, defaultVisibleCount - 1)];
       });
-      const destinations = destinationList;
       const filteredDestinations = vue.computed(() => {
         const query = searchQuery.value.trim().toLowerCase();
-        return destinations.filter((item) => {
+        return destinations.value.filter((item) => {
           const matchesCategory = currentCategory.value === "全部" || item.category === currentCategory.value;
           const matchesRegion = currentRegion.value === "全部" || item.region === currentRegion.value;
           const searchText = [item.name, item.location, item.region, item.category].join(" ").toLowerCase();
           const matchesSearch = !query || searchText.includes(query);
           return matchesCategory && matchesRegion && matchesSearch;
         });
+      });
+      onShow(async () => {
+        destinations.value = await getDestinationFeed();
+        if (!categories.value.includes(currentCategory.value)) {
+          currentCategory.value = "全部";
+        }
+        if (!regions.value.includes(currentRegion.value)) {
+          currentRegion.value = "全部";
+        }
       });
       function openDetail(id) {
         uni.navigateTo({ url: `/pages/destination-detail/index?id=${id}` });
@@ -2521,12 +2629,16 @@ if (uni.restoreGlobal) {
       function toggleRegions() {
         regionsExpanded.value = !regionsExpanded.value;
       }
-      const __returned__ = { searchQuery, currentCategory, currentRegion, categoriesExpanded, regionsExpanded, defaultVisibleCount, categories, regions, visibleCategories, visibleRegions, destinations, filteredDestinations, openDetail, toggleCategories, toggleRegions, computed: vue.computed, ref: vue.ref, AppTabBar, CachedImage, get destinationList() {
-        return destinationList;
-      }, get scenicCategories() {
-        return scenicCategories;
-      }, get scenicRegions() {
-        return scenicRegions;
+      const __returned__ = { searchQuery, currentCategory, currentRegion, categoriesExpanded, regionsExpanded, defaultVisibleCount, destinations, categories, regions, visibleCategories, visibleRegions, filteredDestinations, openDetail, toggleCategories, toggleRegions, computed: vue.computed, ref: vue.ref, get onShow() {
+        return onShow;
+      }, AppTabBar, CachedImage, get getDestinationCategories() {
+        return getDestinationCategories;
+      }, get getDestinationFeed() {
+        return getDestinationFeed;
+      }, get getDestinationRegions() {
+        return getDestinationRegions;
+      }, get getLocalDestinationList() {
+        return getLocalDestinationList;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -2709,7 +2821,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/destinations/index" })
     ]);
   }
-  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
+  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-9dd01296"], ["__file", "E:/XjtravelApp/pages/destinations/index.vue"]]);
   const guideList = [
     {
       id: "first-time-xinjiang",
@@ -2946,9 +3058,8 @@ if (uni.restoreGlobal) {
   function getGuideById(id) {
     return guideList.find((item) => item.id === id);
   }
-  const GUIDE_API_BASE = "";
   function hasGuideApi() {
-    return Boolean(GUIDE_API_BASE);
+    return hasApiBaseUrl();
   }
   function request$2(url, data = {}) {
     return new Promise((resolve, reject) => {
@@ -2971,15 +3082,23 @@ if (uni.restoreGlobal) {
     if (!hasGuideApi()) {
       return getGuideList();
     }
-    const data = await request$2(`${GUIDE_API_BASE}/guides`, params);
-    return Array.isArray(data == null ? void 0 : data.list) ? data.list : [];
+    try {
+      const data = await request$2(`${API_BASE_URL}/guides`, params);
+      return Array.isArray(data == null ? void 0 : data.list) ? data.list : getGuideList();
+    } catch (error) {
+      return getGuideList();
+    }
   }
   async function getGuideDetail(id) {
     if (!hasGuideApi()) {
       return getGuideById(id);
     }
-    const data = await request$2(`${GUIDE_API_BASE}/guides/${encodeURIComponent(id)}`);
-    return (data == null ? void 0 : data.data) || null;
+    try {
+      const data = await request$2(`${API_BASE_URL}/guides/${encodeURIComponent(id)}`);
+      return (data == null ? void 0 : data.data) || getGuideById(id);
+    } catch (error) {
+      return getGuideById(id);
+    }
   }
   const _sfc_main$6 = {
     __name: "index",
@@ -3003,9 +3122,9 @@ if (uni.restoreGlobal) {
         }
       ];
       const interfaceNotes = [
-        { label: "列表接口", value: "已预留 `getGuideFeed()`，当前先走本地数据，后续可直接切接口" },
-        { label: "详情接口", value: "已预留 `getGuideDetail(id)`，详情页已按接口返回结构设计" },
-        { label: "当前策略", value: "先用原创攻略占位，后面接你自己的内容源或后台都方便" }
+        { label: "列表接口", value: "已接入 `getGuideFeed()`，优先读取后端 PostgreSQL 内容接口" },
+        { label: "详情接口", value: "已接入 `getGuideDetail(id)`，详情页包含正文段落和实用提醒" },
+        { label: "降级策略", value: "接口不可用时自动回退本地原创攻略，页面不会白屏" }
       ];
       const guides = vue.ref([]);
       onShow(async () => {
@@ -3231,15 +3350,18 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/guides/index" })
     ]);
   }
-  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
+  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-4aabec35"], ["__file", "E:/XjtravelApp/pages/guides/index.vue"]]);
   const _sfc_main$5 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
       const guide = vue.ref(null);
+      const loading = vue.ref(true);
       onLoad(async (options) => {
         const id = (options == null ? void 0 : options.id) || "";
+        loading.value = true;
         guide.value = await getGuideDetail(id);
+        loading.value = false;
       });
       function goBack() {
         if (getCurrentPages().length > 1) {
@@ -3248,7 +3370,7 @@ if (uni.restoreGlobal) {
         }
         uni.reLaunch({ url: "/pages/guides/index" });
       }
-      const __returned__ = { guide, goBack, ref: vue.ref, get onLoad() {
+      const __returned__ = { guide, loading, goBack, ref: vue.ref, get onLoad() {
         return onLoad;
       }, CachedImage, get getGuideDetail() {
         return getGuideDetail;
@@ -3402,12 +3524,12 @@ if (uni.restoreGlobal) {
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
           vue.createElementVNode("view", { class: "info-panel" }, [
-            vue.createElementVNode("text", { class: "section-title" }, "接口预留"),
-            vue.createElementVNode("text", { class: "info-copy muted-text" }, "当前详情页通过 `getGuideDetail(id)` 获取数据，后续接你自己的内容接口时，保留 `id/title/image/excerpt/highlights/sections/tips` 这些字段即可直接复用。")
+            vue.createElementVNode("text", { class: "section-title" }, "数据接口"),
+            vue.createElementVNode("text", { class: "info-copy muted-text" }, "当前详情页已通过 `getGuideDetail(id)` 接入内容接口；接口失败时会自动回退本地攻略数据。")
           ])
         ]),
         vue.createElementVNode("view", { class: "bottom-space" })
-      ])) : (vue.openBlock(), vue.createElementBlock("view", {
+      ])) : !$setup.loading ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 1,
         class: "empty-shell section"
       }, [
@@ -3416,10 +3538,10 @@ if (uni.restoreGlobal) {
           class: "primary-btn narrow-btn",
           onClick: $setup.goBack
         }, "返回上一页")
-      ]))
+      ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-202be074"], ["__file", "E:/XjtravelApp/pages/guide-detail/index.vue"]]);
   const AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
   const AI_MODEL = "qwen3.6-plus";
   const AI_API_KEY = "";
@@ -4459,12 +4581,12 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/ai-assistant/index" })
     ]);
   }
-  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-a1b142b0"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/ai-assistant/index.vue"]]);
-  const AUTH_API_BASE_URL = "";
+  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-a1b142b0"], ["__file", "E:/XjtravelApp/pages/ai-assistant/index.vue"]]);
+  const AUTH_API_BASE_URL = API_BASE_URL;
   const AUTH_TOKEN_STORAGE = "meet-xinjiang-auth-token";
   const AUTH_USER_STORAGE = "meet-xinjiang-auth-user";
   function hasAuthApiBaseUrl() {
-    return Boolean(AUTH_API_BASE_URL);
+    return Boolean(AUTH_API_BASE_URL.trim());
   }
   function getStoredAuthToken() {
     const token = uni.getStorageSync(AUTH_TOKEN_STORAGE);
@@ -4799,7 +4921,7 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/account/index" })
     ]);
   }
-  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
+  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-3c1b446f"], ["__file", "E:/XjtravelApp/pages/account/index.vue"]]);
   function request(path, data) {
     return new Promise((resolve, reject) => {
       if (!hasAuthApiBaseUrl()) {
@@ -5100,7 +5222,7 @@ ${infoText}`;
       ])
     ]);
   }
-  const PagesAuthIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3f748249"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/auth/index.vue"]]);
+  const PagesAuthIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3f748249"], ["__file", "E:/XjtravelApp/pages/auth/index.vue"]]);
   const _sfc_main$1 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -5111,18 +5233,19 @@ ${infoText}`;
         { label: "打车", value: "taxi" }
       ];
       const currentId = vue.ref("");
-      const destination = vue.computed(() => getDestinationById(currentId.value));
-      const destinationCulture = vue.computed(() => getDestinationCulture(currentId.value) || {
+      const loading = vue.ref(true);
+      const destination = vue.ref(null);
+      const destinationCulture = vue.computed(() => getDestinationCulture(destination.value, currentId.value) || {
         overview: "",
         history: "",
         highlights: ""
       });
-      const destinationTravelMeta = vue.computed(() => getDestinationTravelMeta(currentId.value) || {
+      const destinationTravelMeta = vue.computed(() => getDestinationTravelMeta(destination.value, currentId.value) || {
         season: "",
         stay: "",
         audience: ""
       });
-      const destinationVisitMeta = vue.computed(() => getDestinationVisitMeta(currentId.value) || {
+      const destinationVisitMeta = vue.computed(() => getDestinationVisitMeta(destination.value, currentId.value) || {
         ticket: "",
         openHours: ""
       });
@@ -5201,6 +5324,9 @@ ${infoText}`;
       });
       onLoad(async (options) => {
         currentId.value = (options == null ? void 0 : options.id) || "";
+        loading.value = true;
+        destination.value = await getDestinationDetail(currentId.value);
+        loading.value = false;
         await refreshLocationAndWeather();
       });
       async function refreshLocationAndWeather() {
@@ -5388,7 +5514,7 @@ ${infoText}`;
           `所在地区：${item.location}`,
           `景区分类：${item.category}`,
           `景区介绍：${item.description}`,
-          `游玩提示：${item.tips.join("；")}`,
+          `游玩提示：${(item.tips || []).join("；")}`,
           `路线建议：${item.suggestion}`
         ].join("\n");
         return [
@@ -5400,19 +5526,9 @@ ${infoText}`;
           ["autoAsk", autoAsk ? "1" : "0"]
         ].map(([key, value]) => `${key}=${encodeURIComponent(value)}`).join("&");
       }
-      const __returned__ = { routeModeOptions, currentId, destination, destinationCulture, destinationTravelMeta, destinationVisitMeta, locationReady, locationStatusText, routeMode, routeData, liveWeatherData, weatherError, liveWeather, hasRealWeather, weatherSourceText, scenicLocationText, routeDurationText, routeDistanceText, taxiCostText, mapImageUrl, refreshLocationAndWeather, changeRouteMode, loadRoute, formatDuration, formatDistance, goBack, openDouyinSearch, copyKeyword, openScenicLocation, openAiAssistantForScenic, openAiAssistantForRoute, openAiAssistant, buildAiAssistantParams, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { routeModeOptions, currentId, loading, destination, destinationCulture, destinationTravelMeta, destinationVisitMeta, locationReady, locationStatusText, routeMode, routeData, liveWeatherData, weatherError, liveWeather, hasRealWeather, weatherSourceText, scenicLocationText, routeDurationText, routeDistanceText, taxiCostText, mapImageUrl, refreshLocationAndWeather, changeRouteMode, loadRoute, formatDuration, formatDistance, goBack, openDouyinSearch, copyKeyword, openScenicLocation, openAiAssistantForScenic, openAiAssistantForRoute, openAiAssistant, buildAiAssistantParams, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
-      }, CachedImage, get getDestinationById() {
-        return getDestinationById;
-      }, get getDestinationCulture() {
-        return getDestinationCulture;
-      }, get getDestinationTravelMeta() {
-        return getDestinationTravelMeta;
-      }, get getDestinationVisitMeta() {
-        return getDestinationVisitMeta;
-      }, get getDouyinSearchUrl() {
-        return getDouyinSearchUrl;
-      }, get getCurrentLocation() {
+      }, CachedImage, get getCurrentLocation() {
         return getCurrentLocation;
       }, get getDrivingRoute() {
         return getDrivingRoute;
@@ -5426,6 +5542,16 @@ ${infoText}`;
         return reverseGeocode;
       }, get hasAmapKey() {
         return hasAmapKey;
+      }, get getDestinationCulture() {
+        return getDestinationCulture;
+      }, get getDestinationDetail() {
+        return getDestinationDetail;
+      }, get getDestinationTravelMeta() {
+        return getDestinationTravelMeta;
+      }, get getDestinationVisitMeta() {
+        return getDestinationVisitMeta;
+      }, get getDouyinSearchUrl() {
+        return getDouyinSearchUrl;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -5845,7 +5971,7 @@ ${infoText}`;
           ])
         ]),
         vue.createElementVNode("view", { class: "bottom-space" })
-      ])) : (vue.openBlock(), vue.createElementBlock("view", {
+      ])) : !$setup.loading ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 1,
         class: "empty-shell section"
       }, [
@@ -5854,10 +5980,10 @@ ${infoText}`;
           class: "primary-btn narrow-btn",
           onClick: $setup.goBack
         }, "返回上一页")
-      ]))
+      ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-b4993f48"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destination-detail/index.vue"]]);
+  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-b4993f48"], ["__file", "E:/XjtravelApp/pages/destination-detail/index.vue"]]);
   __definePage("pages/home/index", PagesHomeIndex);
   __definePage("pages/destinations/index", PagesDestinationsIndex);
   __definePage("pages/guides/index", PagesGuidesIndex);
@@ -5877,7 +6003,7 @@ ${infoText}`;
       clearAiMessages();
     }
   };
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "F:/AI编程/遇见新疆_uniapp/App.vue"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "E:/XjtravelApp/App.vue"]]);
   function createApp() {
     const app = vue.createVueApp(App);
     return {

@@ -1,0 +1,137 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="d91772ac-69c4-4d28-bd79-952e3fd413c2" name="更改" comment="完善ai助手输出">
+      <change beforePath="$PROJECT_DIR$/config/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/config/auth.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/postgresql-auth-schema.md" beforeDir="false" afterPath="$PROJECT_DIR$/docs/postgresql-auth-schema.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/postgresql-auth-schema.sql" beforeDir="false" afterPath="$PROJECT_DIR$/docs/postgresql-auth-schema.sql" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/destination-detail/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/pages/destination-detail/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/destinations/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/pages/destinations/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/guide-detail/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/pages/guide-detail/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/guides/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/pages/guides/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/pages/home/index.vue" beforeDir="false" afterPath="$PROJECT_DIR$/pages/home/index.vue" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/services/guides.js" beforeDir="false" afterPath="$PROJECT_DIR$/services/guides.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/app-config-service.js" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/app-config-service.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/app-service.js" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/app-service.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/account/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/account/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/ai-assistant/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/ai-assistant/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/auth/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/auth/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/destination-detail/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/destination-detail/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/home/index.css" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/app-plus/pages/home/index.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/unpackage/dist/dev/cache/.app-plus/tsc/app-android/.tsbuildInfo" beforeDir="false" afterPath="$PROJECT_DIR$/unpackage/dist/dev/cache/.app-plus/tsc/app-android/.tsbuildInfo" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {}
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/someh7162-ui/XjtravelApp.git&quot;,
+    &quot;accountId&quot;: &quot;a1f964c1-8f4d-4cbe-9077-163fbed72773&quot;
+  }
+}</component>
+  <component name="KubernetesApiPersistence">{}</component>
+  <component name="KubernetesApiProvider">{
+  &quot;isMigrated&quot;: true
+}</component>
+  <component name="McpProjectServerCommands">
+    <commands />
+    <urls />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;customColor&quot;: &quot;&quot;,
+  &quot;associatedIndex&quot;: 1
+}</component>
+  <component name="ProjectId" id="3CQN6jeGKH4KBtZxJdIaKabiiKs" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;ignore.virus.scanning.warn.message&quot;: &quot;true&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.lookFeel&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  },
+  &quot;keyToStringList&quot;: {
+    &quot;DatabaseDriversLRU&quot;: [
+      &quot;postgresql&quot;
+    ]
+  }
+}</component>
+  <component name="RunManager">
+    <configuration default="true" type="JetRunConfigurationType">
+      <module name="XjtravelApp" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration default="true" type="KotlinStandaloneScriptRunConfigurationType">
+      <module name="XjtravelApp" />
+      <option name="filePath" />
+      <method v="2" />
+    </configuration>
+  </component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-2fc7cc6b9a17-intellij.indexing.shared.core-IU-253.31033.145" />
+        <option value="bundled-js-predefined-d6986cc7102b-9b0f141eb926-JavaScript-IU-253.31033.145" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="d91772ac-69c4-4d28-bd79-952e3fd413c2" name="更改" comment="" />
+      <created>1776313661944</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1776313661944</updated>
+      <workItem from="1776313664679" duration="118000" />
+      <workItem from="1776327358806" duration="1172000" />
+      <workItem from="1776331217996" duration="733000" />
+    </task>
+    <task id="LOCAL-00001" summary="完善ai助手输出">
+      <option name="closed" value="true" />
+      <created>1776313699147</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1776313699147</updated>
+    </task>
+    <option name="localTasksCounter" value="2" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
+    <option name="CHECK_NEW_TODO" value="false" />
+    <MESSAGE value="完善ai助手输出" />
+    <option name="LAST_COMMIT_MESSAGE" value="完善ai助手输出" />
+  </component>
+</project>

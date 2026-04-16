@@ -44,15 +44,15 @@
 
       <view class="section section-block">
         <view class="info-panel">
-          <text class="section-title">接口预留</text>
-          <text class="info-copy muted-text">当前详情页通过 `getGuideDetail(id)` 获取数据，后续接你自己的内容接口时，保留 `id/title/image/excerpt/highlights/sections/tips` 这些字段即可直接复用。</text>
+          <text class="section-title">数据接口</text>
+          <text class="info-copy muted-text">当前详情页已通过 `getGuideDetail(id)` 接入内容接口；接口失败时会自动回退本地攻略数据。</text>
         </view>
       </view>
 
       <view class="bottom-space"></view>
     </view>
 
-    <view v-else class="empty-shell section">
+    <view v-else-if="!loading" class="empty-shell section">
       <text class="section-title">攻略不存在</text>
       <view class="primary-btn narrow-btn" @tap="goBack">返回上一页</view>
     </view>
@@ -66,10 +66,13 @@ import CachedImage from '../../components/CachedImage.vue'
 import { getGuideDetail } from '../../services/guides'
 
 const guide = ref(null)
+const loading = ref(true)
 
 onLoad(async (options) => {
   const id = options?.id || ''
+  loading.value = true
   guide.value = await getGuideDetail(id)
+  loading.value = false
 })
 
 function goBack() {

@@ -190,7 +190,7 @@
       <view class="bottom-space"></view>
     </view>
 
-      <view v-else class="empty-shell section">
+      <view v-else-if="!loading" class="empty-shell section">
         <text class="section-title">景区不存在</text>
         <view class="primary-btn narrow-btn" @tap="goBack">返回上一页</view>
       </view>
@@ -201,9 +201,15 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import CachedImage from '../../components/CachedImage.vue'
-import { getDestinationById, getDestinationCulture, getDestinationTravelMeta, getDestinationVisitMeta, getDouyinSearchUrl } from '../../common/destination-data'
 import { getCurrentLocation, getDrivingRoute, getLiveWeather, getStaticMapUrl, getWalkingRoute, reverseGeocode } from '../../services/amap'
 import { hasAmapKey } from '../../config/amap'
+import {
+  getDestinationCulture,
+  getDestinationDetail,
+  getDestinationTravelMeta,
+  getDestinationVisitMeta,
+  getDouyinSearchUrl,
+} from '../../services/destinations'
 
 const routeModeOptions = [
   { label: '驾车', value: 'driving' },
@@ -212,18 +218,19 @@ const routeModeOptions = [
 ]
 
 const currentId = ref('')
-const destination = computed(() => getDestinationById(currentId.value))
-const destinationCulture = computed(() => getDestinationCulture(currentId.value) || {
+const loading = ref(true)
+const destination = ref(null)
+const destinationCulture = computed(() => getDestinationCulture(destination.value, currentId.value) || {
   overview: '',
   history: '',
   highlights: '',
 })
-const destinationTravelMeta = computed(() => getDestinationTravelMeta(currentId.value) || {
+const destinationTravelMeta = computed(() => getDestinationTravelMeta(destination.value, currentId.value) || {
   season: '',
   stay: '',
   audience: '',
 })
-const destinationVisitMeta = computed(() => getDestinationVisitMeta(currentId.value) || {
+const destinationVisitMeta = computed(() => getDestinationVisitMeta(destination.value, currentId.value) || {
   ticket: '',
   openHours: '',
 })
@@ -310,6 +317,9 @@ const mapImageUrl = computed(() => {
 
 onLoad(async (options) => {
   currentId.value = options?.id || ''
+  loading.value = true
+  destination.value = await getDestinationDetail(currentId.value)
+  loading.value = false
   await refreshLocationAndWeather()
 })
 
@@ -537,7 +547,7 @@ function buildAiAssistantParams(item, prompt, autoAsk) {
     `所在地区：${item.location}`,
     `景区分类：${item.category}`,
     `景区介绍：${item.description}`,
-    `游玩提示：${item.tips.join('；')}`,
+    `游玩提示：${(item.tips || []).join('；')}`,
     `路线建议：${item.suggestion}`,
   ].join('\n')
 

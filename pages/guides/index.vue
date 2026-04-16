@@ -109,9 +109,9 @@ const quickTips = [
 ]
 
 const interfaceNotes = [
-  { label: '列表接口', value: '已预留 `getGuideFeed()`，当前先走本地数据，后续可直接切接口' },
-  { label: '详情接口', value: '已预留 `getGuideDetail(id)`，详情页已按接口返回结构设计' },
-  { label: '当前策略', value: '先用原创攻略占位，后面接你自己的内容源或后台都方便' },
+  { label: '列表接口', value: '已接入 `getGuideFeed()`，优先读取后端 PostgreSQL 内容接口' },
+  { label: '详情接口', value: '已接入 `getGuideDetail(id)`，详情页包含正文段落和实用提醒' },
+  { label: '降级策略', value: '接口不可用时自动回退本地原创攻略，页面不会白屏' },
 ]
 
 const guides = ref([])
