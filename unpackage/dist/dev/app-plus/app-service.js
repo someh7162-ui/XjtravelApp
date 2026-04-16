@@ -60,7 +60,7 @@ if (uni.restoreGlobal) {
     }
     return target;
   };
-  const _sfc_main$9 = {
+  const _sfc_main$a = {
     __name: "AppTabBar",
     props: {
       current: {
@@ -89,7 +89,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$9(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "tabbar-wrap" }, [
       vue.createElementVNode("view", { class: "tabbar card" }, [
         (vue.openBlock(), vue.createElementBlock(
@@ -123,8 +123,8 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
-  const _sfc_main$8 = {
+  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$9], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
+  const _sfc_main$9 = {
     __name: "CachedImage",
     props: {
       src: {
@@ -212,7 +212,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$7(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock(
       "view",
       {
@@ -240,7 +240,7 @@ if (uni.restoreGlobal) {
       /* CLASS */
     );
   }
-  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
+  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
   function createScenicSpot({
     id,
     name,
@@ -2014,7 +2014,7 @@ if (uni.restoreGlobal) {
   function hasAmapKey() {
     return Boolean(AMAP_WEB_KEY) && !AMAP_WEB_KEY.includes("请在这里填入");
   }
-  function request$2(url, data = {}) {
+  function request$3(url, data = {}) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
@@ -2042,7 +2042,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey()) {
       return null;
     }
-    const data = await request$2("https://restapi.amap.com/v3/geocode/regeo", {
+    const data = await request$3("https://restapi.amap.com/v3/geocode/regeo", {
       key: AMAP_WEB_KEY,
       location: `${longitude},${latitude}`,
       extensions: "base"
@@ -2056,7 +2056,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey() || !adcode) {
       return null;
     }
-    const data = await request$2("https://restapi.amap.com/v3/weather/weatherInfo", {
+    const data = await request$3("https://restapi.amap.com/v3/weather/weatherInfo", {
       key: AMAP_WEB_KEY,
       city: adcode,
       extensions: "base"
@@ -2071,7 +2071,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey() || !origin || !destination) {
       return null;
     }
-    const data = await request$2("https://restapi.amap.com/v3/direction/driving", {
+    const data = await request$3("https://restapi.amap.com/v3/direction/driving", {
       key: AMAP_WEB_KEY,
       origin: `${origin.longitude},${origin.latitude}`,
       destination: `${destination.longitude},${destination.latitude}`,
@@ -2091,7 +2091,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey() || !origin || !destination) {
       return null;
     }
-    const data = await request$2("https://restapi.amap.com/v3/direction/walking", {
+    const data = await request$3("https://restapi.amap.com/v3/direction/walking", {
       key: AMAP_WEB_KEY,
       origin: `${origin.longitude},${origin.latitude}`,
       destination: `${destination.longitude},${destination.latitude}`
@@ -2111,7 +2111,7 @@ if (uni.restoreGlobal) {
       });
     });
   }
-  const _sfc_main$7 = {
+  const _sfc_main$8 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2235,7 +2235,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$7(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero hero-gradient" }, [
@@ -2468,9 +2468,9 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/home/index" })
     ]);
   }
-  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
+  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
   const defaultVisibleCount = 5;
-  const _sfc_main$6 = {
+  const _sfc_main$7 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2532,7 +2532,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient top-banner section" }, [
@@ -2709,7 +2709,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/destinations/index" })
     ]);
   }
-  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
+  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
   const guideList = [
     {
       id: "first-time-xinjiang",
@@ -2950,7 +2950,7 @@ if (uni.restoreGlobal) {
   function hasGuideApi() {
     return Boolean(GUIDE_API_BASE);
   }
-  function request$1(url, data = {}) {
+  function request$2(url, data = {}) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
@@ -2971,17 +2971,17 @@ if (uni.restoreGlobal) {
     if (!hasGuideApi()) {
       return getGuideList();
     }
-    const data = await request$1(`${GUIDE_API_BASE}/guides`, params);
+    const data = await request$2(`${GUIDE_API_BASE}/guides`, params);
     return Array.isArray(data == null ? void 0 : data.list) ? data.list : [];
   }
   async function getGuideDetail(id) {
     if (!hasGuideApi()) {
       return getGuideById(id);
     }
-    const data = await request$1(`${GUIDE_API_BASE}/guides/${encodeURIComponent(id)}`);
+    const data = await request$2(`${GUIDE_API_BASE}/guides/${encodeURIComponent(id)}`);
     return (data == null ? void 0 : data.data) || null;
   }
-  const _sfc_main$5 = {
+  const _sfc_main$6 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -3025,7 +3025,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient top-banner section" }, [
@@ -3231,8 +3231,8 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/guides/index" })
     ]);
   }
-  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
-  const _sfc_main$4 = {
+  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
+  const _sfc_main$5 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -3257,7 +3257,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       $setup.guide ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -3419,7 +3419,7 @@ if (uni.restoreGlobal) {
       ]))
     ]);
   }
-  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
   const AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
   const AI_MODEL = "qwen3.6-plus";
   const AI_API_KEY = "";
@@ -3469,7 +3469,7 @@ if (uni.restoreGlobal) {
   ];
   const MAX_DESTINATION_CONTEXT_ITEMS = 24;
   const MAX_GUIDE_CONTEXT_ITEMS = 8;
-  function request(url, data) {
+  function request$1(url, data) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
@@ -3581,7 +3581,7 @@ ${infoText}`;
       max_tokens: 32
     };
     try {
-      const data = await request(`${AI_BASE_URL}/chat/completions`, payload);
+      const data = await request$1(`${AI_BASE_URL}/chat/completions`, payload);
       const text = getAssistantText((_c = (_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.message) == null ? void 0 : _c.content);
       if (!text) {
         throw new Error("模型没有返回有效内容。");
@@ -3614,7 +3614,7 @@ ${infoText}`;
       max_tokens: 1800
     };
     try {
-      const data = await request(`${AI_BASE_URL}/chat/completions`, payload);
+      const data = await request$1(`${AI_BASE_URL}/chat/completions`, payload);
       let text = getAssistantText((_c = (_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.message) == null ? void 0 : _c.content);
       if (!text) {
         throw new Error("模型没有返回有效内容。");
@@ -3629,7 +3629,7 @@ ${infoText}`;
       throw new Error(formatErrorMessage(error));
     }
   }
-  const _sfc_main$3 = {
+  const _sfc_main$4 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -3846,12 +3846,23 @@ ${infoText}`;
         }
       }
       function clearConversation() {
-        messages.value = [];
-        clearAiMessages();
-        errorMessage.value = "";
-        uni.showToast({
-          title: "会话已清空",
-          icon: "none"
+        uni.showModal({
+          title: "清空会话",
+          content: "确认清空当前 AI 对话记录吗？清空后无法恢复。",
+          confirmText: "确认清空",
+          cancelText: "取消",
+          success: ({ confirm }) => {
+            if (!confirm) {
+              return;
+            }
+            messages.value = [];
+            clearAiMessages();
+            errorMessage.value = "";
+            uni.showToast({
+              title: "会话已清空",
+              icon: "none"
+            });
+          }
         });
       }
       async function sendQuestion(question, extraContext = "") {
@@ -3869,10 +3880,12 @@ ${infoText}`;
         messages.value = nextMessages;
         persistMessages();
         sending.value = true;
+        await scrollToConversationBottom();
         try {
           const answer = await chatWithTravelAssistant(nextMessages, extraContext);
           messages.value = [...nextMessages, createMessage("assistant", answer)];
           persistMessages();
+          await scrollToConversationBottom();
         } catch (error) {
           messages.value = nextMessages;
           persistMessages();
@@ -3885,6 +3898,15 @@ ${infoText}`;
         } finally {
           sending.value = false;
         }
+      }
+      async function scrollToConversationBottom() {
+        await vue.nextTick();
+        setTimeout(() => {
+          uni.pageScrollTo({
+            selector: "#ai-response-anchor",
+            duration: 280
+          });
+        }, 80);
       }
       function sendDraft() {
         const content = draft.value.trim();
@@ -3918,7 +3940,7 @@ ${infoText}`;
         draft.value = "";
         sendQuestion(incomingPrompt.value, incomingContext.value);
       }
-      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, incomingContextTitle, incomingContextDesc, incomingContextSource, incomingPrompt, incomingContext, hasApiKey, canSend, getMessageBlocks, parseAssistantMarkdown, formatInlineMarkdown, decodeParam, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, sendDraft, sendPresetQuestion, fillIncomingPrompt, sendIncomingPrompt, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, incomingContextTitle, incomingContextDesc, incomingContextSource, incomingPrompt, incomingContext, hasApiKey, canSend, getMessageBlocks, parseAssistantMarkdown, formatInlineMarkdown, decodeParam, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, scrollToConversationBottom, sendDraft, sendPresetQuestion, fillIncomingPrompt, sendIncomingPrompt, computed: vue.computed, nextTick: vue.nextTick, ref: vue.ref, get onLoad() {
         return onLoad;
       }, AppTabBar, get AI_MESSAGE_STORAGE() {
         return AI_MESSAGE_STORAGE;
@@ -3939,7 +3961,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell assistant-page" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient assistant-banner" }, [
@@ -4386,7 +4408,11 @@ ${infoText}`;
               vue.createElementVNode("view", { class: "typing-card" }, [
                 vue.createElementVNode("text", { class: "typing-text" }, "AI 正在整理建议...")
               ])
-            ])) : vue.createCommentVNode("v-if", true)
+            ])) : vue.createCommentVNode("v-if", true),
+            vue.createElementVNode("view", {
+              id: "ai-response-anchor",
+              class: "response-anchor"
+            })
           ])
         ]),
         vue.createElementVNode("view", { class: "composer-space" }),
@@ -4433,52 +4459,178 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/ai-assistant/index" })
     ]);
   }
-  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-a1b142b0"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/ai-assistant/index.vue"]]);
-  const _sfc_main$2 = {
+  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-a1b142b0"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/ai-assistant/index.vue"]]);
+  const AUTH_API_BASE_URL = "";
+  const AUTH_TOKEN_STORAGE = "meet-xinjiang-auth-token";
+  const AUTH_USER_STORAGE = "meet-xinjiang-auth-user";
+  function hasAuthApiBaseUrl() {
+    return Boolean(AUTH_API_BASE_URL);
+  }
+  function getStoredAuthToken() {
+    const token = uni.getStorageSync(AUTH_TOKEN_STORAGE);
+    return typeof token === "string" ? token : "";
+  }
+  function getStoredAuthUser() {
+    try {
+      const raw = uni.getStorageSync(AUTH_USER_STORAGE);
+      return raw ? JSON.parse(raw) : null;
+    } catch (error) {
+      return null;
+    }
+  }
+  function saveAuthSession({ token, user }) {
+    uni.setStorageSync(AUTH_TOKEN_STORAGE, token || "");
+    uni.setStorageSync(AUTH_USER_STORAGE, JSON.stringify(user || null));
+  }
+  function clearAuthSession() {
+    uni.removeStorageSync(AUTH_TOKEN_STORAGE);
+    uni.removeStorageSync(AUTH_USER_STORAGE);
+  }
+  const _sfc_main$3 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
-      const profileStats = [
+      const currentUser = vue.ref(null);
+      const authToken = vue.ref("");
+      const loggedInStats = [
         { value: "12", label: "已去过" },
         { value: "8", label: "已收藏" },
         { value: "24", label: "点评数" }
+      ];
+      const guestStats = [
+        { value: "0", label: "云端收藏" },
+        { value: "0", label: "同步行程" },
+        { value: "0", label: "账号消息" }
       ];
       const savedDestinations = [
         { id: 1, name: "天池", date: "2 天前收藏" },
         { id: 2, name: "喀什古城", date: "1 周前收藏" },
         { id: 3, name: "喀纳斯", date: "2 周前收藏" }
       ];
-      const menuItems = [
+      const loggedInMenuItems = [
         { short: "藏", label: "我的收藏", count: 3 },
         { short: "行", label: "旅行足迹", count: 5 },
         { short: "消", label: "消息通知", count: 3 },
         { short: "语", label: "语言设置", value: "简体中文" },
         { short: "设", label: "通用设置" }
       ];
-      const __returned__ = { profileStats, savedDestinations, menuItems, AppTabBar };
+      const guestMenuItems = [
+        { short: "登", label: "登录账号", value: "同步旅行信息" },
+        { short: "注", label: "注册账号", value: "预留 PostgreSQL 接口" },
+        { short: "语", label: "语言设置", value: "简体中文" },
+        { short: "设", label: "通用设置" }
+      ];
+      const isLoggedIn = vue.computed(() => Boolean(authToken.value || currentUser.value));
+      const profileStats = vue.computed(() => isLoggedIn.value ? loggedInStats : guestStats);
+      const visibleMenuItems = vue.computed(() => isLoggedIn.value ? loggedInMenuItems : guestMenuItems);
+      const profileName = vue.computed(() => {
+        var _a;
+        return ((_a = currentUser.value) == null ? void 0 : _a.nickname) || "新疆漫游者";
+      });
+      const profileEmail = vue.computed(() => {
+        var _a;
+        return ((_a = currentUser.value) == null ? void 0 : _a.email) || "登录后同步收藏与行程";
+      });
+      const profileInitial = vue.computed(() => {
+        const source = profileName.value || "疆游";
+        return source.slice(0, 2);
+      });
+      onShow(() => {
+        loadAuthState();
+      });
+      function loadAuthState() {
+        authToken.value = getStoredAuthToken();
+        currentUser.value = getStoredAuthUser();
+      }
+      function goAuth(mode = "login") {
+        uni.navigateTo({
+          url: `/pages/auth/index?mode=${mode}`
+        });
+      }
+      function handlePrimaryAction() {
+        if (!isLoggedIn.value) {
+          goAuth("login");
+          return;
+        }
+        uni.showModal({
+          title: "退出登录",
+          content: "确认退出当前账号吗？本地登录态会被清除。",
+          success: ({ confirm }) => {
+            if (!confirm) {
+              return;
+            }
+            clearAuthSession();
+            loadAuthState();
+            uni.showToast({
+              title: "已退出登录",
+              icon: "none"
+            });
+          }
+        });
+      }
+      const __returned__ = { currentUser, authToken, loggedInStats, guestStats, savedDestinations, loggedInMenuItems, guestMenuItems, isLoggedIn, profileStats, visibleMenuItems, profileName, profileEmail, profileInitial, loadAuthState, goAuth, handlePrimaryAction, computed: vue.computed, ref: vue.ref, get onShow() {
+        return onShow;
+      }, AppTabBar, get clearAuthSession() {
+        return clearAuthSession;
+      }, get getStoredAuthToken() {
+        return getStoredAuthToken;
+      }, get getStoredAuthUser() {
+        return getStoredAuthUser;
+      } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   };
-  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient profile-banner section" }, [
           vue.createElementVNode("view", { class: "profile-row" }, [
-            vue.createElementVNode("view", { class: "avatar" }, "疆游"),
+            vue.createElementVNode(
+              "view",
+              { class: "avatar" },
+              vue.toDisplayString($setup.profileInitial),
+              1
+              /* TEXT */
+            ),
             vue.createElementVNode("view", { class: "profile-meta" }, [
-              vue.createElementVNode("text", { class: "profile-name" }, "新疆漫游者"),
-              vue.createElementVNode("text", { class: "profile-email" }, "explorer@meetxinjiang.com")
+              vue.createElementVNode(
+                "text",
+                { class: "profile-name" },
+                vue.toDisplayString($setup.profileName),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode(
+                "text",
+                { class: "profile-email" },
+                vue.toDisplayString($setup.profileEmail),
+                1
+                /* TEXT */
+              )
             ])
-          ])
+          ]),
+          !$setup.isLoggedIn ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "guest-actions"
+          }, [
+            vue.createElementVNode("view", {
+              class: "hero-action primary",
+              onClick: _cache[0] || (_cache[0] = ($event) => $setup.goAuth("login"))
+            }, "去登录"),
+            vue.createElementVNode("view", {
+              class: "hero-action secondary",
+              onClick: _cache[1] || (_cache[1] = ($event) => $setup.goAuth("register"))
+            }, "去注册")
+          ])) : vue.createCommentVNode("v-if", true)
         ]),
         vue.createElementVNode("view", { class: "section stats-shell" }, [
           vue.createElementVNode("view", { class: "card stats-grid" }, [
-            (vue.openBlock(), vue.createElementBlock(
+            (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
               null,
               vue.renderList($setup.profileStats, (item) => {
-                return vue.createElementVNode("view", {
+                return vue.openBlock(), vue.createElementBlock("view", {
                   key: item.label,
                   class: "stat-item"
                 }, [
@@ -4498,12 +4650,15 @@ ${infoText}`;
                   )
                 ]);
               }),
-              64
-              /* STABLE_FRAGMENT */
+              128
+              /* KEYED_FRAGMENT */
             ))
           ])
         ]),
-        vue.createElementVNode("view", { class: "section section-block" }, [
+        $setup.isLoggedIn ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "section section-block"
+        }, [
           vue.createElementVNode("text", { class: "section-title" }, "最近收藏"),
           vue.createElementVNode("view", { class: "saved-list" }, [
             (vue.openBlock(), vue.createElementBlock(
@@ -4540,15 +4695,34 @@ ${infoText}`;
               /* STABLE_FRAGMENT */
             ))
           ])
-        ]),
+        ])) : (vue.openBlock(), vue.createElementBlock("view", {
+          key: 1,
+          class: "section section-block"
+        }, [
+          vue.createElementVNode("text", { class: "section-title" }, "登录后可用"),
+          vue.createElementVNode("view", { class: "card guest-card" }, [
+            vue.createElementVNode("text", { class: "guest-title" }, "同步你的新疆旅行档案"),
+            vue.createElementVNode("text", { class: "guest-desc muted-text" }, "登录后可接入收藏、行程、通知和后续 PostgreSQL 云端数据。"),
+            vue.createElementVNode("view", { class: "guest-inline-actions" }, [
+              vue.createElementVNode("view", {
+                class: "inline-btn",
+                onClick: _cache[2] || (_cache[2] = ($event) => $setup.goAuth("login"))
+              }, "登录账号"),
+              vue.createElementVNode("view", {
+                class: "inline-btn ghost",
+                onClick: _cache[3] || (_cache[3] = ($event) => $setup.goAuth("register"))
+              }, "注册新账号")
+            ])
+          ])
+        ])),
         vue.createElementVNode("view", { class: "section section-block" }, [
           vue.createElementVNode("text", { class: "section-title" }, "账户设置"),
           vue.createElementVNode("view", { class: "card menu-card" }, [
-            (vue.openBlock(), vue.createElementBlock(
+            (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
               null,
-              vue.renderList($setup.menuItems, (item, index) => {
-                return vue.createElementVNode("view", {
+              vue.renderList($setup.visibleMenuItems, (item, index) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
                   key: item.label,
                   class: "menu-wrap"
                 }, [
@@ -4593,19 +4767,28 @@ ${infoText}`;
                       vue.createElementVNode("text", { class: "saved-arrow" }, ">")
                     ])
                   ]),
-                  index < $setup.menuItems.length - 1 ? (vue.openBlock(), vue.createElementBlock("view", {
+                  index < $setup.visibleMenuItems.length - 1 ? (vue.openBlock(), vue.createElementBlock("view", {
                     key: 0,
                     class: "menu-divider"
                   })) : vue.createCommentVNode("v-if", true)
                 ]);
               }),
-              64
-              /* STABLE_FRAGMENT */
+              128
+              /* KEYED_FRAGMENT */
             ))
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("view", { class: "logout-button" }, "退出登录")
+          vue.createElementVNode(
+            "view",
+            {
+              class: vue.normalizeClass(["logout-button", { disabled: !$setup.isLoggedIn }]),
+              onClick: $setup.handlePrimaryAction
+            },
+            vue.toDisplayString($setup.isLoggedIn ? "退出登录" : "前往登录 / 注册"),
+            3
+            /* TEXT, CLASS */
+          )
         ]),
         vue.createElementVNode("view", { class: "section app-info" }, [
           vue.createElementVNode("text", { class: "muted-text" }, "遇见新疆 v1.0.0"),
@@ -4616,7 +4799,308 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/account/index" })
     ]);
   }
-  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
+  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
+  function request(path, data) {
+    return new Promise((resolve, reject) => {
+      if (!hasAuthApiBaseUrl()) {
+        reject(new Error("认证服务地址未配置，请先在 config/auth.js 中填写 AUTH_API_BASE_URL。"));
+        return;
+      }
+      uni.request({
+        url: `${AUTH_API_BASE_URL}${path}`,
+        method: "POST",
+        timeout: 15e3,
+        header: {
+          "Content-Type": "application/json"
+        },
+        data,
+        success: (res) => {
+          var _a;
+          if (res.statusCode < 200 || res.statusCode >= 300) {
+            reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
+            return;
+          }
+          resolve(res.data || {});
+        },
+        fail: () => {
+          reject(new Error("无法连接认证服务，请检查服务器地址或网络。"));
+        }
+      });
+    });
+  }
+  async function loginWithPassword(payload) {
+    return request("/auth/login", payload);
+  }
+  async function registerWithPassword(payload) {
+    return request("/auth/register", payload);
+  }
+  const _sfc_main$2 = {
+    __name: "index",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const mode = vue.ref("login");
+      const submitting = vue.ref(false);
+      const errorMessage = vue.ref("");
+      const form = vue.reactive({
+        nickname: "",
+        email: "",
+        password: "",
+        confirmPassword: ""
+      });
+      onLoad((options = {}) => {
+        if (options.mode === "register") {
+          mode.value = "register";
+        }
+      });
+      async function submitAuth() {
+        if (submitting.value) {
+          return;
+        }
+        const validationMessage = validateForm();
+        if (validationMessage) {
+          errorMessage.value = validationMessage;
+          return;
+        }
+        submitting.value = true;
+        errorMessage.value = "";
+        try {
+          const payload = {
+            email: form.email,
+            password: form.password
+          };
+          if (mode.value === "register") {
+            payload.nickname = form.nickname;
+          }
+          const response = mode.value === "login" ? await loginWithPassword(payload) : await registerWithPassword(payload);
+          const token = (response == null ? void 0 : response.token) || "";
+          const user = (response == null ? void 0 : response.user) || {
+            nickname: form.nickname || "新疆新用户",
+            email: form.email
+          };
+          saveAuthSession({ token, user });
+          uni.showToast({
+            title: mode.value === "login" ? "登录成功" : "注册成功",
+            icon: "none"
+          });
+          setTimeout(() => {
+            const pages = getCurrentPages();
+            if (pages.length > 1) {
+              uni.navigateBack({ delta: 1 });
+              return;
+            }
+            uni.redirectTo({
+              url: "/pages/account/index"
+            });
+          }, 500);
+        } catch (error) {
+          errorMessage.value = error.message || "提交失败，请稍后再试。";
+        } finally {
+          submitting.value = false;
+        }
+      }
+      function validateForm() {
+        if (mode.value === "register" && !form.nickname) {
+          return "请输入昵称。";
+        }
+        if (!form.email) {
+          return "请输入邮箱。";
+        }
+        if (!/^\S+@\S+\.\S+$/.test(form.email)) {
+          return "请输入正确的邮箱格式。";
+        }
+        if (!form.password || form.password.length < 6) {
+          return "密码至少 6 位。";
+        }
+        if (mode.value === "register" && form.password !== form.confirmPassword) {
+          return "两次输入的密码不一致。";
+        }
+        return "";
+      }
+      const __returned__ = { mode, submitting, errorMessage, form, submitAuth, validateForm, reactive: vue.reactive, ref: vue.ref, get onLoad() {
+        return onLoad;
+      }, get loginWithPassword() {
+        return loginWithPassword;
+      }, get registerWithPassword() {
+        return registerWithPassword;
+      }, get saveAuthSession() {
+        return saveAuthSession;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$1(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell auth-page" }, [
+      vue.createElementVNode("view", { class: "page-scroll" }, [
+        vue.createElementVNode("view", { class: "hero-gradient auth-banner section" }, [
+          vue.createElementVNode("text", { class: "auth-kicker" }, "Account Center"),
+          vue.createElementVNode("text", { class: "auth-title" }, "登录 / 注册"),
+          vue.createElementVNode("text", { class: "auth-subtitle" }, "先把账号体系接好，后续只需要填服务器地址和 PostgreSQL 配置就能连起来。")
+        ]),
+        vue.createElementVNode("view", { class: "section auth-panel-shell" }, [
+          vue.createElementVNode("view", { class: "card auth-card" }, [
+            vue.createElementVNode("view", { class: "mode-switch" }, [
+              vue.createElementVNode(
+                "view",
+                {
+                  class: vue.normalizeClass(["mode-pill", { active: $setup.mode === "login" }]),
+                  onClick: _cache[0] || (_cache[0] = ($event) => $setup.mode = "login")
+                },
+                "登录",
+                2
+                /* CLASS */
+              ),
+              vue.createElementVNode(
+                "view",
+                {
+                  class: vue.normalizeClass(["mode-pill", { active: $setup.mode === "register" }]),
+                  onClick: _cache[1] || (_cache[1] = ($event) => $setup.mode = "register")
+                },
+                "注册",
+                2
+                /* CLASS */
+              )
+            ]),
+            vue.createElementVNode("view", { class: "field-list" }, [
+              $setup.mode === "register" ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "field-wrap"
+              }, [
+                vue.createElementVNode("text", { class: "field-label" }, "昵称"),
+                vue.withDirectives(vue.createElementVNode(
+                  "input",
+                  {
+                    "onUpdate:modelValue": _cache[2] || (_cache[2] = ($event) => $setup.form.nickname = $event),
+                    class: "field-input",
+                    placeholder: "输入昵称"
+                  },
+                  null,
+                  512
+                  /* NEED_PATCH */
+                ), [
+                  [
+                    vue.vModelText,
+                    $setup.form.nickname,
+                    void 0,
+                    { trim: true }
+                  ]
+                ])
+              ])) : vue.createCommentVNode("v-if", true),
+              vue.createElementVNode("view", { class: "field-wrap" }, [
+                vue.createElementVNode("text", { class: "field-label" }, "邮箱"),
+                vue.withDirectives(vue.createElementVNode(
+                  "input",
+                  {
+                    "onUpdate:modelValue": _cache[3] || (_cache[3] = ($event) => $setup.form.email = $event),
+                    class: "field-input",
+                    type: "text",
+                    placeholder: "输入邮箱"
+                  },
+                  null,
+                  512
+                  /* NEED_PATCH */
+                ), [
+                  [
+                    vue.vModelText,
+                    $setup.form.email,
+                    void 0,
+                    { trim: true }
+                  ]
+                ])
+              ]),
+              vue.createElementVNode("view", { class: "field-wrap" }, [
+                vue.createElementVNode("text", { class: "field-label" }, "密码"),
+                vue.withDirectives(vue.createElementVNode(
+                  "input",
+                  {
+                    "onUpdate:modelValue": _cache[4] || (_cache[4] = ($event) => $setup.form.password = $event),
+                    password: "",
+                    class: "field-input",
+                    placeholder: "输入密码"
+                  },
+                  null,
+                  512
+                  /* NEED_PATCH */
+                ), [
+                  [
+                    vue.vModelText,
+                    $setup.form.password,
+                    void 0,
+                    { trim: true }
+                  ]
+                ])
+              ]),
+              $setup.mode === "register" ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 1,
+                class: "field-wrap"
+              }, [
+                vue.createElementVNode("text", { class: "field-label" }, "确认密码"),
+                vue.withDirectives(vue.createElementVNode(
+                  "input",
+                  {
+                    "onUpdate:modelValue": _cache[5] || (_cache[5] = ($event) => $setup.form.confirmPassword = $event),
+                    password: "",
+                    class: "field-input",
+                    placeholder: "再次输入密码"
+                  },
+                  null,
+                  512
+                  /* NEED_PATCH */
+                ), [
+                  [
+                    vue.vModelText,
+                    $setup.form.confirmPassword,
+                    void 0,
+                    { trim: true }
+                  ]
+                ])
+              ])) : vue.createCommentVNode("v-if", true)
+            ]),
+            $setup.errorMessage ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "error-banner"
+            }, [
+              vue.createElementVNode(
+                "text",
+                null,
+                vue.toDisplayString($setup.errorMessage),
+                1
+                /* TEXT */
+              )
+            ])) : vue.createCommentVNode("v-if", true),
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["submit-btn", { disabled: $setup.submitting }]),
+                onClick: $setup.submitAuth
+              },
+              vue.toDisplayString($setup.submitting ? "提交中..." : $setup.mode === "login" ? "立即登录" : "创建账号"),
+              3
+              /* TEXT, CLASS */
+            ),
+            vue.createElementVNode("text", { class: "auth-note muted-text" }, "接口已预留，后续把认证服务地址填到 `config/auth.js` 即可联调。")
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "section section-block" }, [
+          vue.createElementVNode("text", { class: "section-title" }, "当前预留接口"),
+          vue.createElementVNode("view", { class: "card reserve-card" }, [
+            vue.createElementVNode("view", { class: "reserve-row" }, [
+              vue.createElementVNode("text", { class: "reserve-tag" }, "POST"),
+              vue.createElementVNode("text", { class: "reserve-path" }, "/auth/register")
+            ]),
+            vue.createElementVNode("text", { class: "reserve-desc muted-text" }, "注册账号，建议返回 `token`、`user`。"),
+            vue.createElementVNode("view", { class: "reserve-row second" }, [
+              vue.createElementVNode("text", { class: "reserve-tag" }, "POST"),
+              vue.createElementVNode("text", { class: "reserve-path" }, "/auth/login")
+            ]),
+            vue.createElementVNode("text", { class: "reserve-desc muted-text" }, "邮箱 + 密码登录，建议返回 `token`、`user`。")
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "bottom-space" })
+      ])
+    ]);
+  }
+  const PagesAuthIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3f748249"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/auth/index.vue"]]);
   const _sfc_main$1 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -5380,6 +5864,7 @@ ${infoText}`;
   __definePage("pages/guide-detail/index", PagesGuideDetailIndex);
   __definePage("pages/ai-assistant/index", PagesAiAssistantIndex);
   __definePage("pages/account/index", PagesAccountIndex);
+  __definePage("pages/auth/index", PagesAuthIndex);
   __definePage("pages/destination-detail/index", PagesDestinationDetailIndex);
   const _sfc_main = {
     onLaunch() {
