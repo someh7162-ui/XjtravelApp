@@ -223,7 +223,7 @@
 import { computed, ref } from 'vue'
 import { onLoad } from '@dcloudio/uni-app'
 import AppTabBar from '../../components/AppTabBar.vue'
-import { AI_MESSAGE_STORAGE, getAiApiKey, saveAiApiKey } from '../../config/ai'
+import { AI_MESSAGE_STORAGE, clearAiMessages, getAiApiKey, saveAiApiKey } from '../../config/ai'
 import {
   chatWithTravelAssistant,
   getTravelAssistantPresetQuestions,
@@ -485,8 +485,12 @@ async function runConnectionTest() {
 
 function clearConversation() {
   messages.value = []
-  persistMessages()
+  clearAiMessages()
   errorMessage.value = ''
+  uni.showToast({
+    title: '会话已清空',
+    icon: 'none',
+  })
 }
 
 async function sendQuestion(question, extraContext = '') {

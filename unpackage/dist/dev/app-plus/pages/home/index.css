@@ -189,6 +189,50 @@
   flex-direction: column;
   gap: 0.75rem;
 }
+.niche-note[data-v-4978fed5] {
+  font-size: 0.6875rem;
+}
+.niche-list[data-v-4978fed5] {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5625rem;
+}
+.niche-card[data-v-4978fed5] {
+  padding: 0.8125rem;
+}
+.niche-head[data-v-4978fed5] {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+.niche-title[data-v-4978fed5] {
+  flex: 1;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #2d1810;
+}
+.niche-badge[data-v-4978fed5] {
+  flex-shrink: 0;
+  padding: 0.25rem 0.5rem;
+  border-radius: 31.21875rem;
+  background: rgba(196, 69, 54, 0.1);
+  color: #c44536;
+  font-size: 0.65625rem;
+}
+.niche-desc[data-v-4978fed5] {
+  display: block;
+  margin-top: 0.3125rem;
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+.niche-reason[data-v-4978fed5] {
+  display: block;
+  margin-top: 0.4375rem;
+  font-size: 0.71875rem;
+  line-height: 1.7;
+  color: #c44536;
+}
 .destination-card[data-v-4978fed5] {
   overflow: hidden;
   position: relative;
