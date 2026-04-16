@@ -123,7 +123,7 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
+  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-8715b27c"], ["__file", "E:/XjtravelApp/components/AppTabBar.vue"]]);
   const _sfc_main$8 = {
     __name: "CachedImage",
     props: {
@@ -240,7 +240,7 @@ if (uni.restoreGlobal) {
       /* CLASS */
     );
   }
-  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
+  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-7d2a8804"], ["__file", "E:/XjtravelApp/components/CachedImage.vue"]]);
   function createScenicSpot({
     id,
     name,
@@ -1835,7 +1835,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/home/index" })
     ]);
   }
-  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
+  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-4978fed5"], ["__file", "E:/XjtravelApp/pages/home/index.vue"]]);
   const defaultVisibleCount = 5;
   const _sfc_main$6 = {
     __name: "index",
@@ -2076,7 +2076,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/destinations/index" })
     ]);
   }
-  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
+  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-9dd01296"], ["__file", "E:/XjtravelApp/pages/destinations/index.vue"]]);
   const guideList = [
     {
       id: "first-time-xinjiang",
@@ -2598,7 +2598,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/guides/index" })
     ]);
   }
-  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
+  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-4aabec35"], ["__file", "E:/XjtravelApp/pages/guides/index.vue"]]);
   const _sfc_main$4 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -2786,7 +2786,7 @@ if (uni.restoreGlobal) {
       ]))
     ]);
   }
-  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-202be074"], ["__file", "E:/XjtravelApp/pages/guide-detail/index.vue"]]);
   const AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
   const AI_MODEL = "qwen3.6-plus";
   const AI_API_KEY = "";
@@ -2831,12 +2831,14 @@ if (uni.restoreGlobal) {
     { label: "语言", value: "普通话、维吾尔语、哈萨克语等" },
     { label: "气候", value: "大陆性气候明显，夏季较热、昼夜温差较大" }
   ];
+  const MAX_DESTINATION_CONTEXT_ITEMS = 24;
+  const MAX_GUIDE_CONTEXT_ITEMS = 8;
   function request(url, data) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
         method: "POST",
-        timeout: 3e4,
+        timeout: 6e4,
         header: {
           Authorization: `Bearer ${getAiApiKey()}`,
           "Content-Type": "application/json"
@@ -2858,14 +2860,16 @@ if (uni.restoreGlobal) {
     });
   }
   function buildDestinationSummary() {
-    return destinationList.map((item) => {
-      const tips = item.tips.join("；");
-      const weather = `${item.weather.condition}，${item.weather.temperature}，${item.weather.wind}`;
-      return `${item.name}（${item.location}，${item.category}，评分${item.rating}）：${item.description}。建议：${item.suggestion}。提示：${tips}。示例天气：${weather}。`;
+    const featuredItems = destinationList.slice(0, MAX_DESTINATION_CONTEXT_ITEMS).map((item) => {
+      const tips = item.tips.slice(0, 2).join("；");
+      return `${item.name}（${item.location}，${item.category}）：${item.description}。建议：${item.suggestion}。提示：${tips}。`;
     }).join("\n");
+    const remainingNames = destinationList.slice(MAX_DESTINATION_CONTEXT_ITEMS).map((item) => item.name).join("、");
+    return remainingNames ? `${featuredItems}
+其他可参考景区：${remainingNames}` : featuredItems;
   }
   function buildGuideSummary() {
-    const guideText = getGuideList().map((item) => `${item.title}（${item.category}）：${item.excerpt}`).join("\n");
+    const guideText = getGuideList().slice(0, MAX_GUIDE_CONTEXT_ITEMS).map((item) => `${item.title}（${item.category}）：${item.excerpt}`).join("\n");
     const tipText = quickTips.map((item) => `${item.title}：${item.description}`).join("\n");
     const infoText = essentialInfo.map((item) => `${item.label}：${item.value}`).join("\n");
     return `${guideText}
@@ -2908,6 +2912,10 @@ ${infoText}`;
       return "请求过于频繁或额度受限，请稍后再试。";
     }
     return message;
+  }
+  function isAssistantTruncated(data) {
+    var _a, _b;
+    return ((_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.finish_reason) === "length";
   }
   function getTravelAssistantPresetQuestions() {
     return [
@@ -2967,13 +2975,18 @@ ${infoText}`;
       ],
       enable_thinking: false,
       temperature: 0.6,
-      max_tokens: 800
+      max_tokens: 1800
     };
     try {
       const data = await request(`${AI_BASE_URL}/chat/completions`, payload);
-      const text = getAssistantText((_c = (_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.message) == null ? void 0 : _c.content);
+      let text = getAssistantText((_c = (_b = (_a = data == null ? void 0 : data.choices) == null ? void 0 : _a[0]) == null ? void 0 : _b.message) == null ? void 0 : _c.content);
       if (!text) {
         throw new Error("模型没有返回有效内容。");
+      }
+      if (isAssistantTruncated(data)) {
+        text = `${text}
+
+> 内容较长，可继续追问“继续”获取后续建议。`;
       }
       return text;
     } catch (error) {
@@ -3000,6 +3013,118 @@ ${infoText}`;
       const incomingContext = vue.ref("");
       const hasApiKey = vue.computed(() => Boolean(savedApiKey.value));
       const canSend = vue.computed(() => Boolean(draft.value.trim()) && !sending.value && hasApiKey.value);
+      function getMessageBlocks(item) {
+        if (!(item == null ? void 0 : item.content)) {
+          return [];
+        }
+        return parseAssistantMarkdown(item.content);
+      }
+      function parseAssistantMarkdown(content) {
+        const lines = String(content).replace(/\r\n/g, "\n").split("\n");
+        const blocks = [];
+        let paragraphLines = [];
+        let currentList = null;
+        function flushParagraph() {
+          if (!paragraphLines.length) {
+            return;
+          }
+          blocks.push({
+            type: "paragraph",
+            segments: formatInlineMarkdown(paragraphLines.join("\n"))
+          });
+          paragraphLines = [];
+        }
+        function flushList() {
+          if (!currentList) {
+            return;
+          }
+          blocks.push(currentList);
+          currentList = null;
+        }
+        lines.forEach((line) => {
+          const trimmed = line.trim();
+          if (!trimmed) {
+            flushParagraph();
+            flushList();
+            return;
+          }
+          const headingMatch = trimmed.match(/^(#{1,6})\s+(.+)$/);
+          if (headingMatch) {
+            flushParagraph();
+            flushList();
+            blocks.push({
+              type: "heading",
+              level: Math.min(headingMatch[1].length, 3),
+              segments: formatInlineMarkdown(headingMatch[2])
+            });
+            return;
+          }
+          const noteMatch = trimmed.match(/^>\s+(.+)$/);
+          if (noteMatch) {
+            flushParagraph();
+            flushList();
+            blocks.push({
+              type: "note",
+              segments: formatInlineMarkdown(noteMatch[1])
+            });
+            return;
+          }
+          const unorderedMatch = trimmed.match(/^[-*+]\s+(.+)$/);
+          const orderedMatch = trimmed.match(/^\d+[.)]\s+(.+)$/);
+          if (unorderedMatch || orderedMatch) {
+            const ordered = Boolean(orderedMatch);
+            const text = (orderedMatch == null ? void 0 : orderedMatch[1]) || (unorderedMatch == null ? void 0 : unorderedMatch[1]) || "";
+            flushParagraph();
+            if (!currentList || currentList.ordered !== ordered) {
+              flushList();
+              currentList = {
+                type: "list",
+                ordered,
+                items: []
+              };
+            }
+            currentList.items.push({
+              segments: formatInlineMarkdown(text)
+            });
+            return;
+          }
+          flushList();
+          paragraphLines.push(trimmed);
+        });
+        flushParagraph();
+        flushList();
+        if (!blocks.length) {
+          return [{ type: "paragraph", segments: formatInlineMarkdown(content) }];
+        }
+        return blocks;
+      }
+      function formatInlineMarkdown(text) {
+        const segments = [];
+        const source = String(text).replace(/`([^`]+)`/g, "$1");
+        const pattern = /(\*\*([^*]+)\*\*|\*([^*]+)\*)/g;
+        let lastIndex = 0;
+        let match;
+        while (match = pattern.exec(source)) {
+          if (match.index > lastIndex) {
+            segments.push({
+              text: source.slice(lastIndex, match.index),
+              strong: false
+            });
+          }
+          segments.push({
+            text: match[2] || match[3] || "",
+            strong: true
+          });
+          lastIndex = match.index + match[0].length;
+        }
+        if (lastIndex < source.length) {
+          segments.push({
+            text: source.slice(lastIndex),
+            strong: false
+          });
+        }
+        return segments.length ? segments : [{ text: source, strong: false }];
+      }
       onLoad(async (options) => {
         incomingContextTitle.value = decodeParam(options == null ? void 0 : options.title);
         incomingContextDesc.value = decodeParam(options == null ? void 0 : options.desc);
@@ -3153,7 +3278,7 @@ ${infoText}`;
         draft.value = "";
         sendQuestion(incomingPrompt.value, incomingContext.value);
       }
-      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, incomingContextTitle, incomingContextDesc, incomingContextSource, incomingPrompt, incomingContext, hasApiKey, canSend, decodeParam, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, sendDraft, sendPresetQuestion, fillIncomingPrompt, sendIncomingPrompt, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, incomingContextTitle, incomingContextDesc, incomingContextSource, incomingPrompt, incomingContext, hasApiKey, canSend, getMessageBlocks, parseAssistantMarkdown, formatInlineMarkdown, decodeParam, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, sendDraft, sendPresetQuestion, fillIncomingPrompt, sendIncomingPrompt, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
       }, AppTabBar, get AI_MESSAGE_STORAGE() {
         return AI_MESSAGE_STORAGE;
@@ -3380,8 +3505,28 @@ ${infoText}`;
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
           vue.createElementVNode("view", { class: "dialogue-head" }, [
-            vue.createElementVNode("text", { class: "section-title" }, "对话记录"),
-            vue.createElementVNode("text", { class: "dialogue-note muted-text" }, "面向新疆旅游场景优先回答")
+            vue.createElementVNode("view", null, [
+              vue.createElementVNode("text", { class: "section-title" }, "智能顾问工作台"),
+              vue.createElementVNode("text", { class: "dialogue-note muted-text" }, "结构化输出新疆旅行建议")
+            ]),
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["dialogue-state", { active: $setup.sending }])
+              },
+              [
+                vue.createElementVNode("text", { class: "dialogue-state-dot" }),
+                vue.createElementVNode(
+                  "text",
+                  null,
+                  vue.toDisplayString($setup.sending ? "生成中" : `${$setup.messages.length} 条记录`),
+                  1
+                  /* TEXT */
+                )
+              ],
+              2
+              /* CLASS */
+            )
           ]),
           $setup.errorMessage ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 0,
@@ -3414,7 +3559,7 @@ ${infoText}`;
                     "view",
                     {
                       key: item.id,
-                      class: vue.normalizeClass(["message-row", { mine: item.role === "user" }])
+                      class: vue.normalizeClass(["message-row", { mine: item.role === "user", assistant: item.role === "assistant" }])
                     },
                     [
                       vue.createElementVNode(
@@ -3430,13 +3575,155 @@ ${infoText}`;
                             1
                             /* TEXT */
                           ),
-                          vue.createElementVNode(
+                          item.role === "user" ? (vue.openBlock(), vue.createElementBlock(
                             "text",
-                            { class: "message-content" },
+                            {
+                              key: 0,
+                              class: "message-content user-content"
+                            },
                             vue.toDisplayString(item.content),
                             1
                             /* TEXT */
-                          )
+                          )) : (vue.openBlock(), vue.createElementBlock("view", {
+                            key: 1,
+                            class: "assistant-markdown"
+                          }, [
+                            (vue.openBlock(true), vue.createElementBlock(
+                              vue.Fragment,
+                              null,
+                              vue.renderList($setup.getMessageBlocks(item), (block, blockIndex) => {
+                                return vue.openBlock(), vue.createElementBlock(
+                                  vue.Fragment,
+                                  {
+                                    key: `${item.id}-${blockIndex}`
+                                  },
+                                  [
+                                    block.type === "heading" ? (vue.openBlock(), vue.createElementBlock(
+                                      "text",
+                                      {
+                                        key: 0,
+                                        class: vue.normalizeClass(["markdown-heading", `level-${block.level}`])
+                                      },
+                                      [
+                                        (vue.openBlock(true), vue.createElementBlock(
+                                          vue.Fragment,
+                                          null,
+                                          vue.renderList(block.segments, (segment, segmentIndex) => {
+                                            return vue.openBlock(), vue.createElementBlock(
+                                              "text",
+                                              {
+                                                key: segmentIndex,
+                                                class: vue.normalizeClass({ strong: segment.strong })
+                                              },
+                                              vue.toDisplayString(segment.text),
+                                              3
+                                              /* TEXT, CLASS */
+                                            );
+                                          }),
+                                          128
+                                          /* KEYED_FRAGMENT */
+                                        ))
+                                      ],
+                                      2
+                                      /* CLASS */
+                                    )) : block.type === "list" ? (vue.openBlock(), vue.createElementBlock("view", {
+                                      key: 1,
+                                      class: "markdown-list"
+                                    }, [
+                                      (vue.openBlock(true), vue.createElementBlock(
+                                        vue.Fragment,
+                                        null,
+                                        vue.renderList(block.items, (listItem, listIndex) => {
+                                          return vue.openBlock(), vue.createElementBlock("view", {
+                                            key: listIndex,
+                                            class: "markdown-list-row"
+                                          }, [
+                                            vue.createElementVNode(
+                                              "text",
+                                              { class: "markdown-marker" },
+                                              vue.toDisplayString(block.ordered ? `${listIndex + 1}.` : "•"),
+                                              1
+                                              /* TEXT */
+                                            ),
+                                            vue.createElementVNode("view", { class: "markdown-list-content" }, [
+                                              (vue.openBlock(true), vue.createElementBlock(
+                                                vue.Fragment,
+                                                null,
+                                                vue.renderList(listItem.segments, (segment, segmentIndex) => {
+                                                  return vue.openBlock(), vue.createElementBlock(
+                                                    "text",
+                                                    {
+                                                      key: segmentIndex,
+                                                      class: vue.normalizeClass({ strong: segment.strong })
+                                                    },
+                                                    vue.toDisplayString(segment.text),
+                                                    3
+                                                    /* TEXT, CLASS */
+                                                  );
+                                                }),
+                                                128
+                                                /* KEYED_FRAGMENT */
+                                              ))
+                                            ])
+                                          ]);
+                                        }),
+                                        128
+                                        /* KEYED_FRAGMENT */
+                                      ))
+                                    ])) : block.type === "note" ? (vue.openBlock(), vue.createElementBlock("view", {
+                                      key: 2,
+                                      class: "markdown-note"
+                                    }, [
+                                      (vue.openBlock(true), vue.createElementBlock(
+                                        vue.Fragment,
+                                        null,
+                                        vue.renderList(block.segments, (segment, segmentIndex) => {
+                                          return vue.openBlock(), vue.createElementBlock(
+                                            "text",
+                                            {
+                                              key: segmentIndex,
+                                              class: vue.normalizeClass({ strong: segment.strong })
+                                            },
+                                            vue.toDisplayString(segment.text),
+                                            3
+                                            /* TEXT, CLASS */
+                                          );
+                                        }),
+                                        128
+                                        /* KEYED_FRAGMENT */
+                                      ))
+                                    ])) : (vue.openBlock(), vue.createElementBlock("text", {
+                                      key: 3,
+                                      class: "markdown-paragraph"
+                                    }, [
+                                      (vue.openBlock(true), vue.createElementBlock(
+                                        vue.Fragment,
+                                        null,
+                                        vue.renderList(block.segments, (segment, segmentIndex) => {
+                                          return vue.openBlock(), vue.createElementBlock(
+                                            "text",
+                                            {
+                                              key: segmentIndex,
+                                              class: vue.normalizeClass({ strong: segment.strong })
+                                            },
+                                            vue.toDisplayString(segment.text),
+                                            3
+                                            /* TEXT, CLASS */
+                                          );
+                                        }),
+                                        128
+                                        /* KEYED_FRAGMENT */
+                                      ))
+                                    ]))
+                                  ],
+                                  64
+                                  /* STABLE_FRAGMENT */
+                                );
+                              }),
+                              128
+                              /* KEYED_FRAGMENT */
+                            ))
+                          ]))
                         ],
                         2
                         /* CLASS */
@@ -3471,8 +3758,8 @@ ${infoText}`;
               "onUpdate:modelValue": _cache[1] || (_cache[1] = ($event) => $setup.draft = $event),
               class: "composer-input",
               "auto-height": "",
-              maxlength: "500",
-              placeholder: "问点具体的，比如：第一次去新疆 5 天怎么安排？"
+              maxlength: "800",
+              placeholder: "输入你的旅行问题，例如：新疆 7 天怎么安排？"
             },
             null,
             512
@@ -3481,7 +3768,13 @@ ${infoText}`;
             [vue.vModelText, $setup.draft]
           ]),
           vue.createElementVNode("view", { class: "composer-foot" }, [
-            vue.createElementVNode("text", { class: "muted-text composer-hint" }, "优先回答新疆旅行相关问题"),
+            vue.createElementVNode(
+              "text",
+              { class: "muted-text composer-hint" },
+              vue.toDisplayString($setup.hasApiKey ? "已连接 AI 旅游助手" : "请先填写内部 Key"),
+              1
+              /* TEXT */
+            ),
             vue.createElementVNode(
               "view",
               {
@@ -3498,7 +3791,7 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/ai-assistant/index" })
     ]);
   }
-  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-a1b142b0"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/ai-assistant/index.vue"]]);
+  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-a1b142b0"], ["__file", "E:/XjtravelApp/pages/ai-assistant/index.vue"]]);
   const _sfc_main$2 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -3681,7 +3974,7 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/account/index" })
     ]);
   }
-  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
+  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-3c1b446f"], ["__file", "E:/XjtravelApp/pages/account/index.vue"]]);
   const _sfc_main$1 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -4329,7 +4622,7 @@ ${infoText}`;
       ]))
     ]);
   }
-  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-b4993f48"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destination-detail/index.vue"]]);
+  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$1, [["render", _sfc_render], ["__scopeId", "data-v-b4993f48"], ["__file", "E:/XjtravelApp/pages/destination-detail/index.vue"]]);
   __definePage("pages/home/index", PagesHomeIndex);
   __definePage("pages/destinations/index", PagesDestinationsIndex);
   __definePage("pages/guides/index", PagesGuidesIndex);
@@ -4342,7 +4635,7 @@ ${infoText}`;
       formatAppLog("log", "at App.vue:4", "Meet Xinjiang app launched");
     }
   };
-  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "F:/AI编程/遇见新疆_uniapp/App.vue"]]);
+  const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "E:/XjtravelApp/App.vue"]]);
   function createApp() {
     const app = vue.createVueApp(App);
     return {
