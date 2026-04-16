@@ -13,7 +13,8 @@
   border-radius: 1rem;
 }
 .tab-item[data-v-8715b27c] {
-  width: 25%;
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -42,6 +43,7 @@
 }
 .tab-label[data-v-8715b27c] {
   font-size: 0.6875rem;
+  white-space: nowrap;
 }
 .cached-image[data-v-7d2a8804] {
   width: 100%;
@@ -123,6 +125,20 @@
 }
 .hero-badge-text[data-v-4978fed5] {
   font-size: 0.75rem;
+}
+.hero-ai-btn[data-v-4978fed5] {
+  margin-top: 0.8125rem;
+  min-width: 10rem;
+  height: 2.625rem;
+  padding: 0 1.0625rem;
+  border-radius: 31.21875rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: #c44536;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }
 .stats-panel[data-v-4978fed5] {
   margin-top: -1.6875rem;
@@ -229,6 +245,19 @@
   margin-top: 0.25rem;
   font-size: 0.75rem;
   line-height: 1.6;
+}
+.card-ai-link[data-v-4978fed5] {
+  margin-top: 0.5625rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 2.125rem;
+  padding: 0 0.75rem;
+  border-radius: 31.21875rem;
+  background: rgba(196, 69, 54, 0.1);
+  color: #c44536;
+  font-size: 0.71875rem;
+  font-weight: 600;
 }
 .activity-grid[data-v-4978fed5] {
   margin-top: 0.75rem;

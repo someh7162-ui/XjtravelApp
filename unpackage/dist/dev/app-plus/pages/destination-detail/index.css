@@ -276,6 +276,22 @@
   background: rgba(232, 168, 124, 0.16);
   border: 0.0625rem solid rgba(232, 168, 124, 0.34);
 }
+.ai-card[data-v-b4993f48] {
+  margin-top: 0.6875rem;
+  padding: 0.875rem;
+}
+.ai-desc[data-v-b4993f48] {
+  display: block;
+  margin-top: 0.3125rem;
+  font-size: 0.75rem;
+  line-height: 1.7;
+}
+.ai-actions[data-v-b4993f48] {
+  margin-top: 0.6875rem;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.5rem;
+}
 .live-card[data-v-b4993f48] {
   margin-top: 0.75rem;
   overflow: hidden;
