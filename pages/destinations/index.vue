@@ -97,6 +97,7 @@ const currentRegion = ref('全部')
 const categoriesExpanded = ref(false)
 const regionsExpanded = ref(false)
 const defaultVisibleCount = 5
+
 const destinations = ref(getLocalDestinationList())
 
 const categories = computed(() => getDestinationCategories(destinations.value))

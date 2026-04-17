@@ -35,6 +35,15 @@ CREATE TABLE IF NOT EXISTS user_sessions (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+CREATE TABLE IF NOT EXISTS user_follows (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  follower_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  following_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT user_follows_unique_pair UNIQUE (follower_id, following_id),
+  CONSTRAINT user_follows_not_self CHECK (follower_id <> following_id)
+);
+
 CREATE TABLE IF NOT EXISTS destinations (
   id INTEGER PRIMARY KEY,
   name VARCHAR(120) NOT NULL,
@@ -75,16 +84,32 @@ CREATE TABLE IF NOT EXISTS guides (
   slug VARCHAR(120) NOT NULL,
   title VARCHAR(200) NOT NULL,
   category VARCHAR(80) NOT NULL,
+  sub_category VARCHAR(40) NOT NULL DEFAULT '推荐',
+  content_type VARCHAR(20) NOT NULL DEFAULT '图文',
   read_time VARCHAR(60),
   author VARCHAR(80) NOT NULL,
+  author_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  author_avatar_url TEXT,
   publish_date DATE,
   views VARCHAR(30) NOT NULL DEFAULT '0',
   likes VARCHAR(30) NOT NULL DEFAULT '0',
+  likes_count INTEGER NOT NULL DEFAULT 0,
+  save_count INTEGER NOT NULL DEFAULT 0,
+  comment_count INTEGER NOT NULL DEFAULT 0,
   location VARCHAR(120),
+  location_tag VARCHAR(160),
   image_url TEXT,
+  images TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  video_url TEXT,
+  video_poster_url TEXT,
   excerpt TEXT NOT NULL,
+  summary_text TEXT,
   highlights TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
   tips TEXT[] NOT NULL DEFAULT ARRAY[]::TEXT[],
+  primary_tab VARCHAR(20) NOT NULL DEFAULT '发现',
+  city_tab VARCHAR(20) NOT NULL DEFAULT '同城',
+  cover_aspect_ratio NUMERIC(6, 3),
+  badge_count INTEGER NOT NULL DEFAULT 0,
   sort_order INTEGER NOT NULL DEFAULT 0,
   status VARCHAR(20) NOT NULL DEFAULT 'published',
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -102,6 +127,23 @@ CREATE TABLE IF NOT EXISTS guide_sections (
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   CONSTRAINT guide_sections_unique_sort UNIQUE (guide_id, sort_order)
+);
+
+CREATE TABLE IF NOT EXISTS guide_comments (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  guide_id UUID NOT NULL REFERENCES guides(id) ON DELETE CASCADE,
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  author_name VARCHAR(80) NOT NULL DEFAULT '',
+  content TEXT NOT NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS guide_likes (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  guide_id UUID NOT NULL REFERENCES guides(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  CONSTRAINT guide_likes_unique_pair UNIQUE (guide_id, user_id)
 );
 
 CREATE TABLE IF NOT EXISTS user_favorites (
@@ -159,6 +201,8 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_user_id ON user_sessions(user_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_user_sessions_token_hash ON user_sessions(token_hash);
 CREATE INDEX IF NOT EXISTS idx_user_sessions_expires_at ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_follows_follower_id ON user_follows(follower_id);
+CREATE INDEX IF NOT EXISTS idx_user_follows_following_id ON user_follows(following_id);
 
 CREATE INDEX IF NOT EXISTS idx_destinations_region ON destinations(region);
 CREATE INDEX IF NOT EXISTS idx_destinations_category ON destinations(category);
@@ -166,10 +210,16 @@ CREATE INDEX IF NOT EXISTS idx_destinations_status_sort ON destinations(status, 
 CREATE INDEX IF NOT EXISTS idx_destinations_lower_name ON destinations(LOWER(name));
 
 CREATE INDEX IF NOT EXISTS idx_guides_category ON guides(category);
+CREATE INDEX IF NOT EXISTS idx_guides_sub_category ON guides(sub_category);
+CREATE INDEX IF NOT EXISTS idx_guides_author_id ON guides(author_id);
 CREATE INDEX IF NOT EXISTS idx_guides_status_publish_date ON guides(status, publish_date DESC);
 CREATE INDEX IF NOT EXISTS idx_guides_status_sort ON guides(status, sort_order);
 
 CREATE INDEX IF NOT EXISTS idx_guide_sections_guide_id ON guide_sections(guide_id);
+CREATE INDEX IF NOT EXISTS idx_guide_comments_guide_id ON guide_comments(guide_id);
+CREATE INDEX IF NOT EXISTS idx_guide_comments_user_id ON guide_comments(user_id);
+CREATE INDEX IF NOT EXISTS idx_guide_likes_guide_id ON guide_likes(guide_id);
+CREATE INDEX IF NOT EXISTS idx_guide_likes_user_id ON guide_likes(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_favorites_user_id ON user_favorites(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_favorites_target ON user_favorites(target_type, target_id);
 CREATE INDEX IF NOT EXISTS idx_user_destination_visits_user_id ON user_destination_visits(user_id);

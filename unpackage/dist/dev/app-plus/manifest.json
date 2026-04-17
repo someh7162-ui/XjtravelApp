@@ -40,6 +40,11 @@
     },
     "usingComponents": true,
     "nvueStyleCompiler": "uni-app",
+    "networkTimeout": {
+      "request": 15000,
+      "uploadFile": 30000
+    },
+    "ssl": "none",
     "distribute": {
       "google": {
         "permissions": [
@@ -64,6 +69,7 @@
       "style": "dark",
       "background": "#FAF8F5"
     },
+    "arguments": "{\"name\":\"\",\"path\":\"\",\"query\":\"\"}",
     "allowsInlineMediaPlayback": true,
     "uni-app": {
       "control": "uni-v3",
