@@ -130,6 +130,94 @@ if (uni.restoreGlobal) {
     ]);
   }
   const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["render", _sfc_render$h], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
+  function parseResponseData(text) {
+    const raw = String(text || "");
+    if (!raw) {
+      return {};
+    }
+    try {
+      return JSON.parse(raw);
+    } catch (error) {
+      return raw;
+    }
+  }
+  function buildRequestBody(data, headers = {}) {
+    if (data === void 0 || data === null) {
+      return null;
+    }
+    const contentType = String(headers["Content-Type"] || headers["content-type"] || "").toLowerCase();
+    if (contentType.includes("application/json") && typeof data !== "string") {
+      return JSON.stringify(data);
+    }
+    return data;
+  }
+  function canUsePlusRequest(url) {
+    return /^https:/i.test(String(url || "")) && typeof plus !== "undefined" && plus.net && typeof plus.net.XMLHttpRequest === "function";
+  }
+  function plusRequest({ url, method = "GET", data, headers = {}, timeout = 2e4 }) {
+    return new Promise((resolve, reject) => {
+      const xhr = new plus.net.XMLHttpRequest();
+      xhr.timeout = timeout;
+      xhr.open(method, url);
+      Object.entries(headers).forEach(([key, value]) => {
+        if (value !== void 0 && value !== null) {
+          xhr.setRequestHeader(key, value);
+        }
+      });
+      xhr.onreadystatechange = () => {
+        if (xhr.readyState !== 4) {
+          return;
+        }
+        resolve({
+          statusCode: Number(xhr.status || 0),
+          data: parseResponseData(xhr.responseText)
+        });
+      };
+      xhr.onerror = () => {
+        reject(new Error("网络请求失败"));
+      };
+      xhr.ontimeout = () => {
+        reject(new Error("请求超时"));
+      };
+      xhr.send(buildRequestBody(data, headers));
+    });
+  }
+  function uniRequest(options) {
+    return new Promise((resolve, reject) => {
+      uni.request({
+        ...options,
+        success: (res) => resolve(res),
+        fail: (error) => reject(error)
+      });
+    });
+  }
+  function requestJson(options) {
+    if (canUsePlusRequest(options == null ? void 0 : options.url)) {
+      return plusRequest(options);
+    }
+    return uniRequest(options);
+  }
+  function downloadRemoteFile(url) {
+    return new Promise((resolve, reject) => {
+      if (/^https:/i.test(String(url || "")) && typeof plus !== "undefined" && plus.downloader && typeof plus.downloader.createDownload === "function") {
+        const filename = `_doc/cache/image-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+        const task = plus.downloader.createDownload(url, { filename }, (download, status) => {
+          if (status === 200 && download.filename) {
+            resolve({ statusCode: status, tempFilePath: download.filename });
+            return;
+          }
+          reject(new Error(`下载失败(${status || 0})`));
+        });
+        task.start();
+        return;
+      }
+      uni.downloadFile({
+        url,
+        success: (res) => resolve(res),
+        fail: (error) => reject(error)
+      });
+    });
+  }
   const _sfc_main$h = {
     __name: "CachedImage",
     props: {
@@ -188,9 +276,14 @@ if (uni.restoreGlobal) {
           return;
         }
         try {
-          const downloadRes = await uni.downloadFile({ url });
+          const downloadRes = await downloadRemoteFile(url);
           if (downloadRes.statusCode !== 200 || !downloadRes.tempFilePath) {
             loading.value = false;
+            return;
+          }
+          if (typeof plus !== "undefined" && downloadRes.tempFilePath.startsWith("_doc/")) {
+            uni.setStorageSync(key, downloadRes.tempFilePath);
+            currentSrc.value = downloadRes.tempFilePath;
             return;
           }
           const saveRes = await uni.saveFile({ tempFilePath: downloadRes.tempFilePath });
@@ -218,7 +311,9 @@ if (uni.restoreGlobal) {
         },
         { immediate: true }
       );
-      const __returned__ = { props, loading, currentSrc, storageKey, resolveImage, handleLoad, handleError, ref: vue.ref, watch: vue.watch };
+      const __returned__ = { props, loading, currentSrc, storageKey, resolveImage, handleLoad, handleError, ref: vue.ref, watch: vue.watch, get downloadRemoteFile() {
+        return downloadRemoteFile;
+      } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -2286,6 +2381,7 @@ if (uni.restoreGlobal) {
     return data.route.paths[0];
   }
   async function getCurrentLocation() {
+    await ensureLocationPermission();
     const attempts = [
       { label: "uni-gcj02", run: () => requestUniLocation("gcj02") },
       { label: "uni-wgs84", run: () => requestUniLocation("wgs84") },
@@ -2297,18 +2393,112 @@ if (uni.restoreGlobal) {
       try {
         const location = await attempt.run();
         if (location) {
-          formatAppLog("log", "at services/amap.js:186", `[hiking-location] success via ${attempt.label}`, location);
+          formatAppLog("log", "at services/amap.js:188", `[hiking-location] success via ${attempt.label}`, location);
           return location;
         }
       } catch (error) {
         lastError = error;
-        const message = (error == null ? void 0 : error.message) || String(error);
+        const message = normalizeLocationError(error);
         errors.push(`${attempt.label}: ${message}`);
-        formatAppLog("warn", "at services/amap.js:193", `[hiking-location] failed via ${attempt.label}`, error);
+        formatAppLog("warn", "at services/amap.js:195", `[hiking-location] failed via ${attempt.label}`, error);
       }
     }
     const detail = errors.length ? `；${errors.join(" | ")}` : "";
-    throw new Error(((lastError == null ? void 0 : lastError.message) || "定位失败，请检查系统定位服务是否开启") + detail);
+    throw new Error(`${normalizeLocationError(lastError) || "定位失败，请检查系统定位服务是否开启"}${detail}`);
+  }
+  function normalizeLocationError(error) {
+    if (!error) {
+      return "定位失败，请检查系统定位服务是否开启";
+    }
+    if (typeof error === "string") {
+      return error;
+    }
+    const parts = [
+      error.errMsg,
+      error.message,
+      error.reason,
+      error.code ? `code=${error.code}` : ""
+    ].filter(Boolean);
+    const text = parts.join(" | ");
+    const raw = JSON.stringify(error);
+    if (/auth deny|permission|authorize|获取定位权限失败|code=1501|code=PERMISSION_DENIED/i.test(text + raw)) {
+      return "定位权限未开启，请在系统设置中允许“云起天山”访问位置信息";
+    }
+    if (/service disabled|LOCATION_SWITCH_OFF|gps|定位服务|系统定位服务未开启/i.test(text + raw)) {
+      return "系统定位服务未开启，请先打开手机定位开关";
+    }
+    return text || raw || "定位失败，请检查系统定位服务是否开启";
+  }
+  function ensureLocationPermission() {
+    return new Promise((resolve, reject) => {
+      if (typeof plus === "undefined" || !plus.os || plus.os.name !== "Android") {
+        resolve();
+        return;
+      }
+      const android = plus.android;
+      if (!android || typeof android.requestPermissions !== "function") {
+        resolve();
+        return;
+      }
+      const permissions = [
+        "android.permission.ACCESS_FINE_LOCATION",
+        "android.permission.ACCESS_COARSE_LOCATION"
+      ];
+      if (permissions.some((permission) => hasAndroidPermission(permission))) {
+        resolve();
+        return;
+      }
+      android.requestPermissions(
+        permissions,
+        (result) => {
+          const granted = Array.isArray(result == null ? void 0 : result.granted) ? result.granted : [];
+          const deniedAlways = Array.isArray(result == null ? void 0 : result.deniedAlways) ? result.deniedAlways : [];
+          const deniedPresent = Array.isArray(result == null ? void 0 : result.deniedPresent) ? result.deniedPresent : [];
+          if (granted.includes("android.permission.ACCESS_FINE_LOCATION") || granted.includes("android.permission.ACCESS_COARSE_LOCATION") || permissions.some((permission) => hasAndroidPermission(permission))) {
+            resolve();
+            return;
+          }
+          if (deniedAlways.length || deniedPresent.length) {
+            reject(new Error("定位权限未开启，请在系统设置中允许“云起天山”访问位置信息"));
+            return;
+          }
+          resolve();
+        },
+        (error) => {
+          reject(new Error(normalizeLocationError(error)));
+        }
+      );
+    });
+  }
+  function hasAndroidPermission(permission) {
+    if (typeof plus === "undefined" || !plus.android || !permission) {
+      return false;
+    }
+    try {
+      const main = plus.android.runtimeMainActivity();
+      const PackageManager = plus.android.importClass("android.content.pm.PackageManager");
+      return main.checkSelfPermission(permission) === PackageManager.PERMISSION_GRANTED;
+    } catch (error) {
+      return false;
+    }
+  }
+  function openAppPermissionSettings() {
+    if (typeof plus === "undefined" || !plus.os || plus.os.name !== "Android" || !plus.android) {
+      return false;
+    }
+    try {
+      const main = plus.android.runtimeMainActivity();
+      const Intent = plus.android.importClass("android.content.Intent");
+      const Settings = plus.android.importClass("android.provider.Settings");
+      const Uri = plus.android.importClass("android.net.Uri");
+      const intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+      intent.setData(Uri.parse(`package:${main.getPackageName()}`));
+      main.startActivity(intent);
+      return true;
+    } catch (error) {
+      formatAppLog("warn", "at services/amap.js:315", "[hiking-location] open settings failed", error);
+      return false;
+    }
   }
   function requestUniLocation(type = "gcj02") {
     return new Promise((resolve, reject) => {
@@ -2740,9 +2930,28 @@ if (uni.restoreGlobal) {
     ]);
   }
   const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$g, [["render", _sfc_render$f], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
-  const API_BASE_URL = "https://111.20.31.227:34144/api";
+  const API_ORIGIN = "https://yd.frp-arm.com:44637";
+  const API_BASE_URL = `${API_ORIGIN}/api`;
+  const LEGACY_API_ORIGINS = [
+    "https://111.20.31.227:34144",
+    "https://frp-arm.com:44637"
+  ];
+  function normalizeApiAssetUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    if (/^https?:\/\//i.test(raw)) {
+      const matched = LEGACY_API_ORIGINS.find((origin) => raw.startsWith(origin));
+      return matched ? `${API_ORIGIN}${raw.slice(matched.length)}` : raw;
+    }
+    if (raw.startsWith("/")) {
+      return `${API_ORIGIN}${raw}`;
+    }
+    return `${API_ORIGIN}/${raw}`;
+  }
   function hasApiBaseUrl() {
-    return Boolean(API_BASE_URL.trim());
+    return Boolean(API_BASE_URL && API_BASE_URL.trim());
   }
   function request$3(url, data = {}) {
     return new Promise((resolve, reject) => {
@@ -3062,7 +3271,7 @@ if (uni.restoreGlobal) {
   const AUTH_TOKEN_STORAGE = "meet-xinjiang-auth-token";
   const AUTH_USER_STORAGE = "meet-xinjiang-auth-user";
   function hasAuthApiBaseUrl() {
-    return Boolean(AUTH_API_BASE_URL.trim());
+    return Boolean(AUTH_API_BASE_URL && AUTH_API_BASE_URL.trim());
   }
   function getStoredAuthToken() {
     const token = uni.getStorageSync(AUTH_TOKEN_STORAGE);
@@ -3593,30 +3802,43 @@ if (uni.restoreGlobal) {
   }
   function request$2(method, path, data, token = getStoredAuthToken()) {
     return new Promise((resolve, reject) => {
-      uni.request({
+      const headers = {
+        "Content-Type": "application/json",
+        ...token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      requestJson({
         url: buildUrl(path, method === "GET" ? data : void 0),
         method,
         timeout: 2e4,
-        header: {
-          "Content-Type": "application/json",
-          ...token ? { Authorization: `Bearer ${token}` } : {}
-        },
-        data: method === "GET" ? void 0 : data,
-        success: (res) => {
-          var _a;
-          if (res.statusCode < 200 || res.statusCode >= 300) {
-            const error = new Error(((_a = res.data) == null ? void 0 : _a.message) || `HTTP ${res.statusCode}`);
-            error.statusCode = res.statusCode;
-            reject(error);
-            return;
-          }
-          resolve(res.data || {});
-        },
-        fail: () => {
-          reject(new Error("无法连接攻略服务，请检查服务器地址或网络。"));
+        headers,
+        header: headers,
+        data: method === "GET" ? void 0 : data
+      }).then((res) => {
+        var _a;
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          const error = new Error(((_a = res.data) == null ? void 0 : _a.message) || `HTTP ${res.statusCode}`);
+          error.statusCode = res.statusCode;
+          reject(error);
+          return;
         }
+        resolve(res.data || {});
+      }).catch((error) => {
+        reject(new Error((error == null ? void 0 : error.message) || "无法连接攻略服务，请检查服务器地址或网络。"));
       });
     });
+  }
+  function normalizeGuideEntity(item) {
+    if (!item || typeof item !== "object") {
+      return item;
+    }
+    return {
+      ...item,
+      image: normalizeApiAssetUrl(item.image),
+      images: Array.isArray(item.images) ? item.images.map(normalizeApiAssetUrl).filter(Boolean) : [],
+      authorAvatar: normalizeApiAssetUrl(item.authorAvatar),
+      video: normalizeApiAssetUrl(item.video),
+      videoPoster: normalizeApiAssetUrl(item.videoPoster)
+    };
   }
   function uploadGuideMedia(filePath, mediaType = "image", token = getStoredAuthToken()) {
     return new Promise((resolve, reject) => {
@@ -3656,7 +3878,7 @@ if (uni.restoreGlobal) {
   async function createGuide(payload, token = getStoredAuthToken()) {
     if (hasGuideApi()) {
       const data = await request$2("POST", "/guides", payload, token);
-      return (data == null ? void 0 : data.data) || null;
+      return normalizeGuideEntity((data == null ? void 0 : data.data) || null);
     }
     const savedImages = await persistGuideImages(payload.images);
     const savedVideo = payload.video ? await persistLocalFile(payload.video) : "";
@@ -3678,24 +3900,32 @@ if (uni.restoreGlobal) {
       return [...publishedGuides, ...getGuideList()];
     }
     const data = await request$2("GET", "/guides", params);
-    return Array.isArray(data == null ? void 0 : data.list) ? data.list : [];
+    return Array.isArray(data == null ? void 0 : data.list) ? data.list.map(normalizeGuideEntity) : [];
   }
   async function getGuideDetail(id) {
     if (!hasGuideApi()) {
       return getPublishedGuideById(id) || getGuideById(id);
     }
     const data = await request$2("GET", `/guides/${encodeURIComponent(id)}`);
-    return (data == null ? void 0 : data.data) || null;
+    return normalizeGuideEntity((data == null ? void 0 : data.data) || null);
   }
   async function getGuideComments(slug) {
     if (!hasGuideApi())
       return [];
     const data = await request$2("GET", `/guides/${encodeURIComponent(slug)}/comments`);
-    return (data == null ? void 0 : data.list) || [];
+    return Array.isArray(data == null ? void 0 : data.list) ? data.list.map((item) => ({
+      ...item,
+      avatarUrl: normalizeApiAssetUrl(item.avatarUrl),
+      authorAvatar: normalizeApiAssetUrl(item.authorAvatar)
+    })) : [];
   }
   async function postGuideComment(slug, content, token) {
     const data = await request$2("POST", `/guides/${encodeURIComponent(slug)}/comments`, { content }, token);
-    return (data == null ? void 0 : data.comment) || null;
+    return (data == null ? void 0 : data.comment) ? {
+      ...data.comment,
+      avatarUrl: normalizeApiAssetUrl(data.comment.avatarUrl),
+      authorAvatar: normalizeApiAssetUrl(data.comment.authorAvatar)
+    } : null;
   }
   async function deleteGuideComment(slug, commentId, token) {
     const data = await request$2("DELETE", `/guides/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`, void 0, token);
@@ -4193,10 +4423,10 @@ if (uni.restoreGlobal) {
                         /* TEXT */
                       ),
                       vue.createElementVNode("view", { class: "author-row" }, [
-                        vue.createElementVNode("image", {
-                          class: "author-avatar",
+                        vue.createVNode($setup["CachedImage"], {
                           src: item.authorAvatar,
-                          mode: "aspectFill"
+                          "container-class": "author-avatar-shell",
+                          "image-class": "author-avatar"
                         }, null, 8, ["src"]),
                         vue.createElementVNode(
                           "text",
@@ -4336,10 +4566,10 @@ if (uni.restoreGlobal) {
                         /* TEXT */
                       ),
                       vue.createElementVNode("view", { class: "author-row" }, [
-                        vue.createElementVNode("image", {
-                          class: "author-avatar",
+                        vue.createVNode($setup["CachedImage"], {
                           src: item.authorAvatar,
-                          mode: "aspectFill"
+                          "container-class": "author-avatar-shell",
+                          "image-class": "author-avatar"
                         }, null, 8, ["src"]),
                         vue.createElementVNode(
                           "text",
@@ -4467,25 +4697,26 @@ if (uni.restoreGlobal) {
         reject(new Error("认证服务地址未配置，请先在 config/auth.js 中填写 AUTH_API_BASE_URL。"));
         return;
       }
-      uni.request({
+      requestJson({
         url: `${AUTH_API_BASE_URL}${path}`,
         method: "POST",
         timeout: 15e3,
+        headers: {
+          "Content-Type": "application/json"
+        },
         header: {
           "Content-Type": "application/json"
         },
-        data,
-        success: (res) => {
-          var _a;
-          if (res.statusCode < 200 || res.statusCode >= 300) {
-            reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
-            return;
-          }
-          resolve(res.data || {});
-        },
-        fail: () => {
-          reject(new Error("无法连接认证服务，请检查服务器地址或网络。"));
+        data
+      }).then((res) => {
+        var _a;
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
+          return;
         }
+        resolve(res.data || {});
+      }).catch((error) => {
+        reject(new Error((error == null ? void 0 : error.message) || "无法连接认证服务，请检查服务器地址或网络。"));
       });
     });
   }
@@ -4501,25 +4732,25 @@ if (uni.restoreGlobal) {
         reject(new Error("认证服务地址未配置"));
         return;
       }
-      uni.request({
+      const headers = {
+        "Content-Type": "application/json",
+        ...token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      requestJson({
         url: `${AUTH_API_BASE_URL}${path}`,
         method,
         timeout: 15e3,
-        header: {
-          "Content-Type": "application/json",
-          ...token ? { Authorization: `Bearer ${token}` } : {}
-        },
-        data: method === "GET" ? void 0 : data,
-        success: (res) => {
-          var _a;
-          if (res.statusCode < 200 || res.statusCode >= 300) {
-            reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
-            return;
-          }
-          resolve(res.data || {});
-        },
-        fail: () => reject(new Error("无法连接服务器"))
-      });
+        headers,
+        header: headers,
+        data: method === "GET" ? void 0 : data
+      }).then((res) => {
+        var _a;
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
+          return;
+        }
+        resolve(res.data || {});
+      }).catch((error) => reject(new Error((error == null ? void 0 : error.message) || "无法连接服务器")));
     });
   }
   function uploadAvatar(token, filePath) {
@@ -7278,7 +7509,7 @@ ${infoText}`;
             try {
               uni.showLoading({ title: "上传中..." });
               const res = await uploadAvatar(authToken.value, tempFilePaths[0]);
-              const fullUrl = res.avatar_url.startsWith("http") ? res.avatar_url : `https://111.20.31.227:34144${res.avatar_url}`;
+              const fullUrl = normalizeApiAssetUrl(res.avatar_url);
               const updated = { ...currentUser.value, avatar_url: fullUrl };
               saveAuthSession({ token: authToken.value, user: updated });
               currentUser.value = updated;
@@ -7347,6 +7578,8 @@ ${infoText}`;
         return updateUserProfile;
       }, get uploadAvatar() {
         return uploadAvatar;
+      }, get normalizeApiAssetUrl() {
+        return normalizeApiAssetUrl;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -10339,6 +10572,7 @@ ${infoText}`;
       const debugLogs = vue.ref([]);
       let pollTimer = null;
       let stopStandardEvents = null;
+      let hasPromptedLocationSettings = false;
       const mapCenter = vue.computed(() => {
         if (!currentLocation.value) {
           return null;
@@ -10483,6 +10717,7 @@ ${infoText}`;
         } catch (error) {
           locationError.value = (error == null ? void 0 : error.message) || "定位失败";
           appendDebugLog(`定位失败: ${locationError.value}`);
+          maybePromptLocationSettings(locationError.value);
         }
       }
       function persistTrackPoint(location) {
@@ -10585,6 +10820,27 @@ ${infoText}`;
         const stamp = (/* @__PURE__ */ new Date()).toTimeString().slice(0, 8);
         debugLogs.value = [`${stamp} ${message}`, ...debugLogs.value].slice(0, 4);
       }
+      function maybePromptLocationSettings(message) {
+        if (hasPromptedLocationSettings || !/定位权限未开启/.test(String(message || ""))) {
+          return;
+        }
+        hasPromptedLocationSettings = true;
+        uni.showModal({
+          title: "需要定位权限",
+          content: "徒步页面需要定位权限才能记录轨迹。是否现在前往系统设置开启？",
+          confirmText: "去开启",
+          cancelText: "稍后",
+          success: ({ confirm }) => {
+            if (confirm && !openAppPermissionSettings()) {
+              uni.showToast({
+                title: "请在系统设置中手动开启定位权限",
+                icon: "none",
+                duration: 2500
+              });
+            }
+          }
+        });
+      }
       function formatLocationDebug(location) {
         if (!location) {
           return "empty";
@@ -10605,7 +10861,11 @@ ${infoText}`;
         return stopStandardEvents;
       }, set stopStandardEvents(v) {
         stopStandardEvents = v;
-      }, mapCenter, hasMapLocation, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapPolyline, mapMarkers, mapModeLabel, headerModeText, debugText, offlineHint, hydrateSession, bindNetworkState, bindNativeEvents, refreshLocation, persistTrackPoint, startTrackingPoll, stopTrackingPoll, handleStart, recenterMap, cycleMapMode, refreshTrackSummary, refreshOfflineMapStatus, handleSOS, toggleGuard, cleanup, appendDebugLog, formatLocationDebug, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, get onLoad() {
+      }, get hasPromptedLocationSettings() {
+        return hasPromptedLocationSettings;
+      }, set hasPromptedLocationSettings(v) {
+        hasPromptedLocationSettings = v;
+      }, mapCenter, hasMapLocation, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapPolyline, mapMarkers, mapModeLabel, headerModeText, debugText, offlineHint, hydrateSession, bindNetworkState, bindNativeEvents, refreshLocation, persistTrackPoint, startTrackingPoll, stopTrackingPoll, handleStart, recenterMap, cycleMapMode, refreshTrackSummary, refreshOfflineMapStatus, handleSOS, toggleGuard, cleanup, appendDebugLog, maybePromptLocationSettings, formatLocationDebug, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, get onLoad() {
         return onLoad;
       }, get onUnload() {
         return onUnload;
@@ -10625,6 +10885,8 @@ ${infoText}`;
         return normalizeLocation;
       }, get sumTrackDistanceKm() {
         return sumTrackDistanceKm;
+      }, get openAppPermissionSettings() {
+        return openAppPermissionSettings;
       }, get createHikingNativeBridge() {
         return createHikingNativeBridge;
       }, get DEFAULT_MAP_PROVIDER() {

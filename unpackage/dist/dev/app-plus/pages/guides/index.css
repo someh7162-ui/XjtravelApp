@@ -408,6 +408,12 @@
   flex-shrink: 0;
   background: rgba(212, 165, 116, 0.2);
 }
+.author-avatar-shell[data-v-4aabec35] {
+  width: 1.1875rem;
+  height: 1.1875rem;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
 .author-name[data-v-4aabec35],
 .author-meta[data-v-4aabec35],
 .author-dot[data-v-4aabec35] {
