@@ -2498,7 +2498,7 @@ if (uni.restoreGlobal) {
         vue.createElementVNode("view", { class: "hero hero-gradient" }, [
           vue.createElementVNode("view", { class: "hero-overlay" }),
           vue.createElementVNode("view", { class: "hero-content" }, [
-            vue.createElementVNode("text", { class: "hero-title" }, "遇见新疆"),
+            vue.createElementVNode("text", { class: "hero-title" }, "云起天山"),
             vue.createElementVNode("text", { class: "hero-subtitle" }, "沿着丝路风景，开启一段辽阔而热烈的旅程"),
             vue.createElementVNode("view", { class: "hero-badge" }, [
               vue.createElementVNode("text", { class: "hero-badge-dot" }),
@@ -3090,7 +3090,7 @@ if (uni.restoreGlobal) {
       title: "第一次来新疆，7 天怎么安排更顺路",
       category: "行程规划",
       readTime: "6 分钟阅读",
-      author: "遇见新疆编辑部",
+      author: "云起天山编辑部",
       publishDate: "2026-04-15",
       views: "2.3k",
       likes: "318",
@@ -3128,7 +3128,7 @@ if (uni.restoreGlobal) {
       title: "新疆自驾前，这份准备清单先收好",
       category: "自驾建议",
       readTime: "5 分钟阅读",
-      author: "遇见新疆编辑部",
+      author: "云起天山编辑部",
       publishDate: "2026-04-15",
       views: "1.8k",
       likes: "246",
@@ -3166,7 +3166,7 @@ if (uni.restoreGlobal) {
       title: "新疆吃什么不容易踩雷",
       category: "吃喝推荐",
       readTime: "7 分钟阅读",
-      author: "遇见新疆编辑部",
+      author: "云起天山编辑部",
       publishDate: "2026-04-15",
       views: "3.1k",
       likes: "402",
@@ -3204,7 +3204,7 @@ if (uni.restoreGlobal) {
       title: "去沙漠玩之前，一定先看这 6 条提醒",
       category: "安全提醒",
       readTime: "5 分钟阅读",
-      author: "遇见新疆编辑部",
+      author: "云起天山编辑部",
       publishDate: "2026-04-15",
       views: "1.5k",
       likes: "228",
@@ -3242,7 +3242,7 @@ if (uni.restoreGlobal) {
       title: "天山徒步装备，不想漏东西就照着带",
       category: "户外探险",
       readTime: "6 分钟阅读",
-      author: "遇见新疆编辑部",
+      author: "云起天山编辑部",
       publishDate: "2026-04-15",
       views: "1.2k",
       likes: "173",
@@ -3280,7 +3280,7 @@ if (uni.restoreGlobal) {
       title: "新疆住宿怎么选，住景区还是住县城",
       category: "住宿建议",
       readTime: "5 分钟阅读",
-      author: "遇见新疆编辑部",
+      author: "云起天山编辑部",
       publishDate: "2026-04-15",
       views: "1.6k",
       likes: "201",
@@ -6131,7 +6131,7 @@ if (uni.restoreGlobal) {
   function clearAiMessages() {
     uni.removeStorageSync(AI_MESSAGE_STORAGE);
   }
-  const SYSTEM_PROMPT = `你是“遇见新疆”App 内的 AI 旅游助手。你的主要职责是回答新疆旅行相关问题，并优先基于应用内已有景点、攻略和基础信息给出建议。
+  const SYSTEM_PROMPT = `你是“云起天山”App 内的 AI 旅游助手。你的主要职责是回答新疆旅行相关问题，并优先基于应用内已有景点、攻略和基础信息给出建议。
 
 回答要求：
 1. 优先围绕新疆旅游、目的地推荐、出行季节、玩法、预算、装备、安全与美食给建议。
@@ -7595,8 +7595,8 @@ ${infoText}`;
           ])
         ])),
         vue.createElementVNode("view", { class: "section app-info" }, [
-          vue.createElementVNode("text", { class: "muted-text" }, "遇见新疆 v1.0.0"),
-          vue.createElementVNode("text", { class: "muted-text" }, "© 2026 遇见新疆，保留所有权利")
+          vue.createElementVNode("text", { class: "muted-text" }, "云起天山 v1.0.0"),
+          vue.createElementVNode("text", { class: "muted-text" }, "© 2026 云起天山，保留所有权利")
         ]),
         vue.createElementVNode("view", { class: "bottom-space" })
       ]),
