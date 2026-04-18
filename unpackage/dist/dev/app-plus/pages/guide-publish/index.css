@@ -377,6 +377,48 @@
 .track-empty[data-v-f222cc13] {
   padding: 0.125rem 0;
 }
+.track-option-list[data-v-f222cc13] {
+  margin-top: 0.5625rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4375rem;
+}
+.track-option[data-v-f222cc13] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5625rem;
+  padding: 0.625rem 0.6875rem;
+  border-radius: 0.6875rem;
+  background: #fff7f3;
+  border: 0.0625rem solid rgba(223, 92, 70, 0.08);
+}
+.track-option.active[data-v-f222cc13] {
+  border-color: rgba(223, 92, 70, 0.35);
+  background: #fff1ec;
+}
+.track-option-title[data-v-f222cc13],
+.track-option-meta[data-v-f222cc13],
+.track-option-check[data-v-f222cc13] {
+  display: block;
+}
+.track-option-title[data-v-f222cc13] {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2d1810;
+}
+.track-option-meta[data-v-f222cc13] {
+  margin-top: 0.1875rem;
+  font-size: 0.65625rem;
+  line-height: 1.6;
+  color: #8b6f47;
+}
+.track-option-check[data-v-f222cc13] {
+  flex-shrink: 0;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  color: #df5c46;
+}
 .location-picker-mask[data-v-f222cc13] {
   position: fixed;
   inset: 0;

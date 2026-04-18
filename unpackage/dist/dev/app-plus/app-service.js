@@ -78,11 +78,10 @@ if (uni.restoreGlobal) {
       __expose();
       const props = __props;
       const items = [
-        { path: "/pages/home/index", label: "首页", short: "H" },
-        { path: "/pages/destinations/index", label: "目的地", short: "D" },
-        { path: "/pages/guides/index", label: "攻略指南", short: "G" },
-        { path: "/pages/ai-assistant/index", label: "AI助手", short: "AI" },
-        { path: "/pages/account/index", label: "我的", short: "A" }
+        { path: "/pages/home/index", label: "首页" },
+        { path: "/pages/destinations/index", label: "目的地" },
+        { path: "/pages/guides/index", label: "攻略指南" },
+        { path: "/pages/account/index", label: "我的" }
       ];
       function go(path) {
         if (props.current === path) {
@@ -107,13 +106,6 @@ if (uni.restoreGlobal) {
               class: vue.normalizeClass(["tab-item", { active: $props.current === item.path }]),
               onClick: ($event) => $setup.go(item.path)
             }, [
-              vue.createElementVNode(
-                "view",
-                { class: "tab-icon" },
-                vue.toDisplayString(item.short),
-                1
-                /* TEXT */
-              ),
               vue.createElementVNode(
                 "text",
                 { class: "tab-label" },
@@ -3515,10 +3507,11 @@ if (uni.restoreGlobal) {
     if (!user || typeof user !== "object") {
       return user;
     }
+    const avatarUrl = normalizeApiAssetUrl(user.avatar_url || user.avatar);
     return {
       ...user,
-      avatar_url: normalizeApiAssetUrl(user.avatar_url),
-      avatar: normalizeApiAssetUrl(user.avatar)
+      avatar_url: avatarUrl,
+      avatar: avatarUrl
     };
   }
   function getStoredAuthToken() {
@@ -3569,7 +3562,7 @@ if (uni.restoreGlobal) {
       return "--";
     }
     const suffix = type === "lat" ? numeric >= 0 ? "N" : "S" : numeric >= 0 ? "E" : "W";
-    return `${Math.abs(numeric).toFixed(5)}deg${suffix}`;
+    return `${Math.abs(numeric).toFixed(5)}°${suffix}`;
   }
   function getDistanceKm(from, to) {
     const start = normalizeLocation(from);
@@ -4035,58 +4028,44 @@ if (uni.restoreGlobal) {
       const primaryTabs = ["关注", "发现", "同城"];
       const allSubTabs = ["推荐", "自驾", "美食", "安全", "徒步", "住宿"];
       const visibleSubTabs = allSubTabs.slice(0, 5);
+      const sortOptions = [
+        { value: "recommended", label: "推荐排序", description: "保持当前推荐流顺序" },
+        { value: "latest", label: "最新发布", description: "优先查看最近更新的攻略" },
+        { value: "hot", label: "热度优先", description: "按点赞、收藏和评论综合排序" }
+      ];
       const activePrimaryTab = vue.ref("发现");
       const activeSubTab = vue.ref("推荐");
       const guides = vue.ref([]);
       const showCategoryPanel = vue.ref(false);
+      const showSearchBar = vue.ref(false);
+      const showSortPanel = vue.ref(false);
       const loading = vue.ref(false);
       const errorMessage = vue.ref("");
       const detectedCity = vue.ref("");
       const cityLoading = vue.ref(false);
+      const searchQuery = vue.ref("");
+      const sortMode = vue.ref("recommended");
       const systemInfo = typeof uni.getSystemInfoSync === "function" ? uni.getSystemInfoSync() : {};
       const statusBarHeight = systemInfo.statusBarHeight || 20;
       const statusBarStyle = vue.computed(() => ({ height: `${statusBarHeight}px` }));
       const currentUser = vue.computed(() => getStoredAuthUser() || null);
       const isLoggedIn = vue.computed(() => Boolean(getStoredAuthToken() && currentUser.value));
       const filteredGuides = vue.computed(() => {
-        return guides.value.filter((item) => {
+        const keyword = normalizeSearchText(searchQuery.value);
+        const matched = guides.value.filter((item) => {
           const primaryMatched = activePrimaryTab.value === "同城" ? isSameCityGuide(item) : true;
           if (!primaryMatched) {
             return false;
           }
           if (activeSubTab.value === "推荐") {
-            return true;
+            return matchesGuideSearch(item, keyword);
           }
-          return item.subCategory === activeSubTab.value;
+          return item.subCategory === activeSubTab.value && matchesGuideSearch(item, keyword);
         });
+        return sortGuides(matched, sortMode.value);
       });
       const feedBadgeCount = vue.computed(() => {
         return guides.value.reduce((total, item) => total + (item.badgeCount || 0), 0);
-      });
-      const feedSummary = vue.computed(() => {
-        const total = filteredGuides.value.length;
-        if (activePrimaryTab.value === "关注" && !isLoggedIn.value) {
-          return "登录后即可查看已关注作者的最新攻略，并让推荐流优先展示他们的更新。";
-        }
-        if (loading.value) {
-          return "正在同步后台攻略流和推荐排序。";
-        }
-        if (activePrimaryTab.value === "同城" && cityLoading.value) {
-          return "正在定位你所在的城市，同城内容会按当前位置筛选。";
-        }
-        if (errorMessage.value) {
-          return "连接攻略服务失败，重新加载后会继续请求真实内容流。";
-        }
-        if (!total) {
-          return activePrimaryTab.value === "关注" ? "你关注的作者暂时还没有发布符合当前分类的攻略。" : "当前分类还没有可展示的真实攻略内容。";
-        }
-        if (activePrimaryTab.value === "关注") {
-          return `当前展示 ${total} 条关注作者攻略，按发布时间和作者关系优先展示。`;
-        }
-        if (activePrimaryTab.value === "同城") {
-          return detectedCity.value ? `当前展示 ${total} 条 ${detectedCity.value} 同城攻略。` : `当前展示 ${total} 条同城攻略，定位成功后会自动收敛到你所在城市。`;
-        }
-        return `当前展示 ${total} 条真实攻略，推荐排序会优先考虑你已关注作者的新内容。`;
       });
       const emptyTitle = vue.computed(() => {
         if (activePrimaryTab.value === "关注" && !isLoggedIn.value) {
@@ -4096,7 +4075,13 @@ if (uni.restoreGlobal) {
           return "关注流还没有内容";
         }
         if (activePrimaryTab.value === "同城") {
+          if (searchQuery.value) {
+            return `没有找到与“${searchQuery.value}”相关的同城攻略`;
+          }
           return detectedCity.value ? `${detectedCity.value} 暂时还没有内容` : "定位后查看同城流";
+        }
+        if (searchQuery.value) {
+          return `没有找到与“${searchQuery.value}”相关的攻略`;
         }
         return "这个分类暂时还没有内容";
       });
@@ -4108,7 +4093,13 @@ if (uni.restoreGlobal) {
           return "去发现页逛逛并关注喜欢的作者，新的内容发布后会自动出现在这里。";
         }
         if (activePrimaryTab.value === "同城") {
+          if (searchQuery.value) {
+            return "试试换个作者名、标题关键词，或者切换分类后再搜。";
+          }
           return detectedCity.value ? `暂时还没有来自 ${detectedCity.value} 的攻略，稍后再刷新看看。` : "允许定位后，这里会自动显示你当前城市的攻略，比如人在乌鲁木齐就看乌鲁木齐。";
+        }
+        if (searchQuery.value) {
+          return "可以搜索作者昵称、攻略标题、摘要里的关键词，或者切换排序方式看看。";
         }
         return "可以切换分类看看，或者稍后重新刷新真实攻略流。";
       });
@@ -4144,7 +4135,28 @@ if (uni.restoreGlobal) {
         activeSubTab.value = tab;
       }
       function toggleCategoryPanel() {
+        showSortPanel.value = false;
         showCategoryPanel.value = !showCategoryPanel.value;
+      }
+      function toggleSearchBar() {
+        showCategoryPanel.value = false;
+        showSortPanel.value = false;
+        showSearchBar.value = !showSearchBar.value;
+        if (!showSearchBar.value) {
+          clearSearch();
+        }
+      }
+      function clearSearch() {
+        searchQuery.value = "";
+      }
+      function toggleSortPanel() {
+        showCategoryPanel.value = false;
+        showSearchBar.value = false;
+        showSortPanel.value = !showSortPanel.value;
+      }
+      function selectSort(value) {
+        sortMode.value = value;
+        showSortPanel.value = false;
       }
       function selectCategory(tab) {
         activeSubTab.value = tab;
@@ -4169,6 +4181,51 @@ if (uni.restoreGlobal) {
       function noteSummary(item) {
         return (item == null ? void 0 : item.summaryText) || (item == null ? void 0 : item.excerpt) || (Array.isArray(item == null ? void 0 : item.highlights) ? item.highlights.map((tag) => `#${tag}`).join(" ") : "") || "发布了一条新的新疆旅行笔记。";
       }
+      function displayAuthorAvatar(item) {
+        var _a, _b, _c;
+        if ((item == null ? void 0 : item.authorId) && ((_a = currentUser.value) == null ? void 0 : _a.id) && item.authorId === currentUser.value.id) {
+          return ((_b = currentUser.value) == null ? void 0 : _b.avatar_url) || ((_c = currentUser.value) == null ? void 0 : _c.avatar) || item.authorAvatar || "";
+        }
+        return (item == null ? void 0 : item.authorAvatar) || "";
+      }
+      function matchesGuideSearch(item, keyword) {
+        if (!keyword) {
+          return true;
+        }
+        const haystack = [
+          item == null ? void 0 : item.nickname,
+          item == null ? void 0 : item.author,
+          item == null ? void 0 : item.title,
+          item == null ? void 0 : item.excerpt,
+          item == null ? void 0 : item.summaryText,
+          item == null ? void 0 : item.location,
+          item == null ? void 0 : item.locationTag,
+          item == null ? void 0 : item.category,
+          ...Array.isArray(item == null ? void 0 : item.highlights) ? item.highlights : []
+        ].filter(Boolean).map(normalizeSearchText);
+        return haystack.some((text) => text.includes(keyword));
+      }
+      function normalizeSearchText(value) {
+        return String(value || "").trim().toLowerCase();
+      }
+      function sortGuides(list, mode) {
+        const items = Array.isArray(list) ? [...list] : [];
+        if (mode === "latest") {
+          return items.sort((left, right) => getGuideTime(right) - getGuideTime(left));
+        }
+        if (mode === "hot") {
+          return items.sort((left, right) => getGuideHotScore(right) - getGuideHotScore(left));
+        }
+        return items;
+      }
+      function getGuideTime(item) {
+        const raw = (item == null ? void 0 : item.publishDate) || (item == null ? void 0 : item.createdAt) || "";
+        const stamp = Date.parse(raw);
+        return Number.isFinite(stamp) ? stamp : 0;
+      }
+      function getGuideHotScore(item) {
+        return Number((item == null ? void 0 : item.likesCount) || 0) * 3 + Number((item == null ? void 0 : item.saveCount) || 0) * 2 + Number((item == null ? void 0 : item.commentCount) || 0) * 4;
+      }
       function formatCount(value) {
         const count = Number(value) || 0;
         if (count >= 1e3) {
@@ -4180,6 +4237,9 @@ if (uni.restoreGlobal) {
         uni.navigateTo({
           url: `/pages/guide-detail/index?id=${encodeURIComponent(id)}`
         });
+      }
+      function openAiAssistant() {
+        uni.navigateTo({ url: "/pages/ai-assistant/index" });
       }
       function publishGuide() {
         if (!currentUser.value) {
@@ -4251,7 +4311,7 @@ if (uni.restoreGlobal) {
         const candidates = [item == null ? void 0 : item.locationTag, item == null ? void 0 : item.location, item == null ? void 0 : item.title, item == null ? void 0 : item.summaryText].filter(Boolean).map(normalizeCityName);
         return candidates.some((text) => text.includes(detectedCity.value) || detectedCity.value.includes(text));
       }
-      const __returned__ = { primaryTabs, allSubTabs, visibleSubTabs, activePrimaryTab, activeSubTab, guides, showCategoryPanel, loading, errorMessage, detectedCity, cityLoading, systemInfo, statusBarHeight, statusBarStyle, currentUser, isLoggedIn, filteredGuides, feedBadgeCount, feedSummary, emptyTitle, emptyDescription, waterfallColumns, leftColumn, rightColumn, setPrimaryTab, setSubTab, toggleCategoryPanel, selectCategory, coverStyle, estimateFeedCardHeight, hasVisualCover, noteSummary, formatCount, openGuide, publishGuide, loadGuides, ensureDetectedCity, normalizeCityName, isSameCityGuide, computed: vue.computed, ref: vue.ref, watch: vue.watch, get onShow() {
+      const __returned__ = { primaryTabs, allSubTabs, visibleSubTabs, sortOptions, activePrimaryTab, activeSubTab, guides, showCategoryPanel, showSearchBar, showSortPanel, loading, errorMessage, detectedCity, cityLoading, searchQuery, sortMode, systemInfo, statusBarHeight, statusBarStyle, currentUser, isLoggedIn, filteredGuides, feedBadgeCount, emptyTitle, emptyDescription, waterfallColumns, leftColumn, rightColumn, setPrimaryTab, setSubTab, toggleCategoryPanel, toggleSearchBar, clearSearch, toggleSortPanel, selectSort, selectCategory, coverStyle, estimateFeedCardHeight, hasVisualCover, noteSummary, displayAuthorAvatar, matchesGuideSearch, normalizeSearchText, sortGuides, getGuideTime, getGuideHotScore, formatCount, openGuide, openAiAssistant, publishGuide, loadGuides, ensureDetectedCity, normalizeCityName, isSameCityGuide, computed: vue.computed, ref: vue.ref, watch: vue.watch, get onShow() {
         return onShow;
       }, AppTabBar, CachedImage, get getStoredAuthToken() {
         return getStoredAuthToken;
@@ -4283,7 +4343,10 @@ if (uni.restoreGlobal) {
             /* STYLE */
           ),
           vue.createElementVNode("view", { class: "hero-topbar section" }, [
-            vue.createElementVNode("view", { class: "hero-action left-action" }, "≡"),
+            vue.createElementVNode("view", {
+              class: "hero-action left-action chat-entry",
+              onClick: $setup.openAiAssistant
+            }, "💬"),
             vue.createElementVNode("view", { class: "primary-tabs" }, [
               (vue.openBlock(), vue.createElementBlock(
                 vue.Fragment,
@@ -4322,14 +4385,59 @@ if (uni.restoreGlobal) {
               ))
             ]),
             vue.createElementVNode("view", { class: "hero-actions" }, [
-              vue.createElementVNode("view", { class: "hero-action" }, "⌕"),
-              vue.createElementVNode("view", { class: "hero-action" }, "◎")
+              vue.createElementVNode(
+                "view",
+                {
+                  class: vue.normalizeClass(["hero-action", { active: $setup.showSearchBar }]),
+                  onClick: $setup.toggleSearchBar
+                },
+                "⌕",
+                2
+                /* CLASS */
+              ),
+              vue.createElementVNode(
+                "view",
+                {
+                  class: vue.normalizeClass(["hero-action text-action", { active: $setup.showSortPanel }]),
+                  onClick: $setup.toggleSortPanel
+                },
+                "筛",
+                2
+                /* CLASS */
+              )
             ])
           ]),
-          vue.createElementVNode("view", { class: "section hero-copy" }, [
-            vue.createElementVNode("text", { class: "hero-title" }, "新疆发现页"),
-            vue.createElementVNode("text", { class: "hero-subtitle" }, "真实攻略流已接入后台，发现页会优先推荐你关注作者发布的新内容。")
-          ])
+          $setup.showSearchBar ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "section search-shell"
+          }, [
+            vue.createElementVNode("view", { class: "search-bar" }, [
+              vue.createElementVNode("text", { class: "search-icon" }, "⌕"),
+              vue.withDirectives(vue.createElementVNode(
+                "input",
+                {
+                  "onUpdate:modelValue": _cache[0] || (_cache[0] = ($event) => $setup.searchQuery = $event),
+                  class: "search-input",
+                  type: "text",
+                  "confirm-type": "search",
+                  maxlength: "40",
+                  placeholder: "搜索作者、标题或相关内容",
+                  "placeholder-class": "search-placeholder"
+                },
+                null,
+                512
+                /* NEED_PATCH */
+              ), [
+                [vue.vModelText, $setup.searchQuery]
+              ]),
+              $setup.searchQuery ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "search-clear",
+                onClick: $setup.clearSearch
+              }, "×")) : vue.createCommentVNode("v-if", true)
+            ]),
+            vue.createElementVNode("text", { class: "search-hint" }, "支持搜索作者昵称、攻略标题、摘要和标签")
+          ])) : vue.createCommentVNode("v-if", true)
         ]),
         vue.createElementVNode("view", { class: "subnav-shell section" }, [
           vue.createElementVNode("scroll-view", {
@@ -4357,31 +4465,6 @@ if (uni.restoreGlobal) {
             onClick: $setup.toggleCategoryPanel
           }, [
             vue.createElementVNode("text", { class: "more-icon" }, "▾")
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "section trend-strip" }, [
-          vue.createElementVNode("view", { class: "trend-card" }, [
-            vue.createElementVNode("view", { class: "trend-main" }, [
-              vue.createElementVNode("text", { class: "trend-label" }, "热议"),
-              vue.createElementVNode(
-                "text",
-                { class: "trend-value" },
-                vue.toDisplayString($setup.activeSubTab),
-                1
-                /* TEXT */
-              )
-            ]),
-            vue.createElementVNode(
-              "text",
-              { class: "trend-copy" },
-              vue.toDisplayString($setup.feedSummary),
-              1
-              /* TEXT */
-            )
-          ]),
-          vue.createElementVNode("view", { class: "trend-card accent-card" }, [
-            vue.createElementVNode("text", { class: "trend-small" }, "同城速递"),
-            vue.createElementVNode("text", { class: "trend-copy" }, "乌鲁木齐、伊宁、喀什等同城内容会保留独立筛选，推荐结果基于真实数据刷新。")
           ])
         ]),
         vue.createElementVNode("view", { class: "section waterfall-shell" }, [
@@ -4505,7 +4588,7 @@ if (uni.restoreGlobal) {
                       ),
                       vue.createElementVNode("view", { class: "author-row" }, [
                         vue.createVNode($setup["CachedImage"], {
-                          src: item.authorAvatar,
+                          src: $setup.displayAuthorAvatar(item),
                           "container-class": "author-avatar-shell",
                           "image-class": "author-avatar"
                         }, null, 8, ["src"]),
@@ -4648,7 +4731,7 @@ if (uni.restoreGlobal) {
                       ),
                       vue.createElementVNode("view", { class: "author-row" }, [
                         vue.createVNode($setup["CachedImage"], {
-                          src: item.authorAvatar,
+                          src: $setup.displayAuthorAvatar(item),
                           "container-class": "author-avatar-shell",
                           "image-class": "author-avatar"
                         }, null, 8, ["src"]),
@@ -4726,7 +4809,7 @@ if (uni.restoreGlobal) {
       }, [
         vue.createElementVNode("view", {
           class: "category-panel",
-          onClick: _cache[0] || (_cache[0] = vue.withModifiers(() => {
+          onClick: _cache[1] || (_cache[1] = vue.withModifiers(() => {
           }, ["stop"]))
         }, [
           vue.createElementVNode("view", { class: "panel-head" }, [
@@ -4750,6 +4833,55 @@ if (uni.restoreGlobal) {
                     "text",
                     { class: "category-label" },
                     vue.toDisplayString(tab),
+                    1
+                    /* TEXT */
+                  )
+                ], 10, ["onClick"]);
+              }),
+              64
+              /* STABLE_FRAGMENT */
+            ))
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
+      $setup.showSortPanel ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "category-mask",
+        onClick: $setup.toggleSortPanel
+      }, [
+        vue.createElementVNode("view", {
+          class: "sort-panel",
+          onClick: _cache[2] || (_cache[2] = vue.withModifiers(() => {
+          }, ["stop"]))
+        }, [
+          vue.createElementVNode("view", { class: "panel-head" }, [
+            vue.createElementVNode("text", { class: "panel-title" }, "排序方式"),
+            vue.createElementVNode("view", {
+              class: "panel-close",
+              onClick: $setup.toggleSortPanel
+            }, "×")
+          ]),
+          vue.createElementVNode("view", { class: "sort-list" }, [
+            (vue.openBlock(), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.sortOptions, (option) => {
+                return vue.createElementVNode("view", {
+                  key: option.value,
+                  class: vue.normalizeClass(["sort-item", { active: $setup.sortMode === option.value }]),
+                  onClick: ($event) => $setup.selectSort(option.value)
+                }, [
+                  vue.createElementVNode(
+                    "text",
+                    { class: "sort-label" },
+                    vue.toDisplayString(option.label),
+                    1
+                    /* TEXT */
+                  ),
+                  vue.createElementVNode(
+                    "text",
+                    { class: "sort-desc" },
+                    vue.toDisplayString(option.description),
                     1
                     /* TEXT */
                   )
@@ -5083,10 +5215,11 @@ if (uni.restoreGlobal) {
     if (!user || typeof user !== "object") {
       return user;
     }
+    const avatarUrl = normalizeApiAssetUrl(user.avatar_url || user.avatar);
     return {
       ...user,
-      avatar_url: normalizeApiAssetUrl(user.avatar_url),
-      avatar: normalizeApiAssetUrl(user.avatar)
+      avatar_url: avatarUrl,
+      avatar: avatarUrl
     };
   }
   function normalizeResponseData(data) {
@@ -5098,7 +5231,8 @@ if (uni.restoreGlobal) {
       user: normalizeUser(data.user),
       data: data.data && typeof data.data === "object" ? {
         ...data.data,
-        avatar_url: normalizeApiAssetUrl(data.data.avatar_url)
+        avatar_url: normalizeApiAssetUrl(data.data.avatar_url || data.data.avatar),
+        avatar: normalizeApiAssetUrl(data.data.avatar || data.data.avatar_url)
       } : data.data
     };
   }
@@ -5190,6 +5324,9 @@ if (uni.restoreGlobal) {
   function updateUserProfile(token, payload) {
     return authRequest("/users/me", "PATCH", token, payload);
   }
+  function getMyProfile(token) {
+    return authRequest("/users/me", "GET", token, void 0);
+  }
   function getMyGuides(token) {
     return authRequest("/users/me/guides", "GET", token, void 0);
   }
@@ -5247,13 +5384,25 @@ if (uni.restoreGlobal) {
         const authorId = (_a = guide.value) == null ? void 0 : _a.authorId;
         return Boolean(authorId && ((_b = currentUser.value) == null ? void 0 : _b.id) && authorId === currentUser.value.id);
       });
+      const currentUserAvatar = vue.computed(() => {
+        var _a, _b;
+        return ((_a = currentUser.value) == null ? void 0 : _a.avatar_url) || ((_b = currentUser.value) == null ? void 0 : _b.avatar) || "";
+      });
+      const guideAuthorAvatar = vue.computed(() => {
+        var _a;
+        if (isOwnAuthor.value && currentUserAvatar.value) {
+          return currentUserAvatar.value;
+        }
+        return ((_a = guide.value) == null ? void 0 : _a.authorAvatar) || "";
+      });
       const showFollowButton = vue.computed(() => {
         var _a;
         return Boolean((_a = guide.value) == null ? void 0 : _a.authorId);
       });
-      const commentInputAvatar = vue.computed(() => {
+      const commentInputAvatar = vue.computed(() => currentUserAvatar.value);
+      const commentInputInitial = vue.computed(() => {
         var _a, _b;
-        return ((_a = currentUser.value) == null ? void 0 : _a.avatar_url) || ((_b = guide.value) == null ? void 0 : _b.authorAvatar) || "";
+        return getAvatarInitial(((_a = currentUser.value) == null ? void 0 : _a.nickname) || ((_b = currentUser.value) == null ? void 0 : _b.email) || "");
       });
       const commentSubmitDisabled = vue.computed(() => commentSubmitting.value || !commentInput.value.trim());
       const commentSummary = vue.computed(() => {
@@ -5266,14 +5415,21 @@ if (uni.restoreGlobal) {
         return `已展示最新 ${comments.value.length} 条评论`;
       });
       function commentAvatar(comment) {
-        var _a, _b, _c, _d;
+        var _a;
         if (comment == null ? void 0 : comment.avatarUrl) {
           return comment.avatarUrl;
         }
         if ((comment == null ? void 0 : comment.authorId) && ((_a = currentUser.value) == null ? void 0 : _a.id) && comment.authorId === currentUser.value.id) {
-          return ((_b = currentUser.value) == null ? void 0 : _b.avatar_url) || ((_c = guide.value) == null ? void 0 : _c.authorAvatar) || "";
+          return currentUserAvatar.value;
         }
-        return ((_d = guide.value) == null ? void 0 : _d.authorAvatar) || "";
+        return "";
+      }
+      function getAvatarInitial(value) {
+        const text = String(value || "").trim();
+        if (!text) {
+          return "游";
+        }
+        return text.slice(0, 1).toUpperCase();
       }
       const followButtonText = vue.computed(() => {
         var _a, _b, _c;
@@ -5338,6 +5494,7 @@ if (uni.restoreGlobal) {
         const id = (options == null ? void 0 : options.id) || "";
         detailLoading.value = true;
         try {
+          await refreshCurrentUser();
           guide.value = await getGuideDetail(id);
           likeCount.value = Number((_a = guide.value) == null ? void 0 : _a.likesCount) || 0;
           saveCount.value = Number((_b = guide.value) == null ? void 0 : _b.saveCount) || 0;
@@ -5352,6 +5509,19 @@ if (uni.restoreGlobal) {
         }
         activeImageIndex.value = 0;
       });
+      async function refreshCurrentUser() {
+        const token = getStoredAuthToken();
+        if (!token) {
+          return;
+        }
+        try {
+          const res = await getMyProfile(token);
+          if (res == null ? void 0 : res.user) {
+            saveAuthSession({ token, user: res.user });
+          }
+        } catch {
+        }
+      }
       async function toggleLike() {
         var _a;
         const token = getStoredAuthToken();
@@ -5646,7 +5816,7 @@ if (uni.restoreGlobal) {
         }
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       }
-      const __returned__ = { guide, activeImageIndex, followLoading, detailLoading, isLiked, isSaved, likeCount, saveCount, likeSubmitting, saveSubmitting, comments, commentInput, commentSubmitting, commentInputFocused, commentsLoading, commentError, commentDeletingId, systemInfo, statusBarHeight, statusBarStyle, guideImages, hasVideo, currentUser, isOwnAuthor, showFollowButton, commentInputAvatar, commentSubmitDisabled, commentSummary, commentAvatar, followButtonText, detailTags, guideTrack, guideTrackCenter, guideTrackPolyline, guideTrackMarkers, guideTrackDistanceText, guideTrackDurationText, guideTrackAscentText, guideTrackCoordinateText, searchHint, toggleLike, toggleSave, focusComment, handleCommentBlur, loadComments, reloadComments, submitComment, promptLoginForComment, removeComment, goBack, handleSwiperChange, previewImage, handleFollowTap, formatCount, formatPublishMeta, formatCommentTime, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { guide, activeImageIndex, followLoading, detailLoading, isLiked, isSaved, likeCount, saveCount, likeSubmitting, saveSubmitting, comments, commentInput, commentSubmitting, commentInputFocused, commentsLoading, commentError, commentDeletingId, systemInfo, statusBarHeight, statusBarStyle, guideImages, hasVideo, currentUser, isOwnAuthor, currentUserAvatar, guideAuthorAvatar, showFollowButton, commentInputAvatar, commentInputInitial, commentSubmitDisabled, commentSummary, commentAvatar, getAvatarInitial, followButtonText, detailTags, guideTrack, guideTrackCenter, guideTrackPolyline, guideTrackMarkers, guideTrackDistanceText, guideTrackDurationText, guideTrackAscentText, guideTrackCoordinateText, searchHint, refreshCurrentUser, toggleLike, toggleSave, focusComment, handleCommentBlur, loadComments, reloadComments, submitComment, promptLoginForComment, removeComment, goBack, handleSwiperChange, previewImage, handleFollowTap, formatCount, formatPublishMeta, formatCommentTime, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
       }, CachedImage, get clearAuthSession() {
         return clearAuthSession;
@@ -5654,6 +5824,8 @@ if (uni.restoreGlobal) {
         return getStoredAuthToken;
       }, get getStoredAuthUser() {
         return getStoredAuthUser;
+      }, get saveAuthSession() {
+        return saveAuthSession;
       }, get formatTrackDuration() {
         return formatTrackDuration;
       }, get buildCurrentMarker() {
@@ -5664,6 +5836,8 @@ if (uni.restoreGlobal) {
         return formatCoordinate;
       }, HikingTileMapCompat, get followUser() {
         return followUser;
+      }, get getMyProfile() {
+        return getMyProfile;
       }, get unfollowUser() {
         return unfollowUser;
       }, get deleteGuideComment() {
@@ -5710,7 +5884,7 @@ if (uni.restoreGlobal) {
           }, "‹"),
           vue.createElementVNode("view", { class: "author-strip" }, [
             vue.createVNode($setup["CachedImage"], {
-              src: $setup.guide.authorAvatar,
+              src: $setup.guideAuthorAvatar,
               "container-class": "author-avatar-shell",
               "image-class": "author-avatar",
               style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
@@ -5986,12 +6160,24 @@ if (uni.restoreGlobal) {
           class: "input-preview section",
           onClick: $setup.focusComment
         }, [
-          vue.createVNode($setup["CachedImage"], {
+          $setup.commentInputAvatar ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+            key: 0,
             src: $setup.commentInputAvatar,
             "container-class": "comment-avatar-shell",
             "image-class": "comment-avatar",
             style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
-          }, null, 8, ["src"]),
+          }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "comment-avatar-shell comment-avatar-placeholder"
+          }, [
+            vue.createElementVNode(
+              "text",
+              { class: "comment-avatar-placeholder-text" },
+              vue.toDisplayString($setup.commentInputInitial),
+              1
+              /* TEXT */
+            )
+          ])),
           vue.createElementVNode("view", { class: "fake-input" }, "留下你的想法吧")
         ]),
         $setup.commentsLoading ? (vue.openBlock(), vue.createElementBlock("view", {
@@ -6026,12 +6212,24 @@ if (uni.restoreGlobal) {
                 key: c.id,
                 class: "comment-item"
               }, [
-                vue.createVNode($setup["CachedImage"], {
+                $setup.commentAvatar(c) ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+                  key: 0,
                   src: $setup.commentAvatar(c),
                   "container-class": "comment-avatar-shell",
                   "image-class": "comment-avatar",
                   style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
-                }, null, 8, ["src"]),
+                }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock("view", {
+                  key: 1,
+                  class: "comment-avatar-shell comment-avatar-placeholder"
+                }, [
+                  vue.createElementVNode(
+                    "text",
+                    { class: "comment-avatar-placeholder-text" },
+                    vue.toDisplayString($setup.getAvatarInitial(c.nickname)),
+                    1
+                    /* TEXT */
+                  )
+                ])),
                 vue.createElementVNode("view", { class: "comment-body-wrap" }, [
                   vue.createElementVNode("view", { class: "comment-row-top" }, [
                     vue.createElementVNode("view", { class: "comment-user-meta" }, [
@@ -7642,6 +7840,57 @@ This will fail in production.`);
       return refs;
     }
   }
+  const PI = Math.PI;
+  const AXIS = 6378245;
+  const OFFSET = 0.006693421622965943;
+  function gcj02ToWgs84(longitude, latitude) {
+    const lng = Number(longitude);
+    const lat = Number(latitude);
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+      return null;
+    }
+    if (isOutOfChina(lng, lat)) {
+      return { longitude: lng, latitude: lat };
+    }
+    const delta = calcDelta(lng, lat);
+    return {
+      longitude: lng * 2 - delta.longitude,
+      latitude: lat * 2 - delta.latitude
+    };
+  }
+  function isOutOfChina(longitude, latitude) {
+    return longitude < 72.004 || longitude > 137.8347 || latitude < 0.8293 || latitude > 55.8271;
+  }
+  function calcDelta(longitude, latitude) {
+    let dLat = transformLat(longitude - 105, latitude - 35);
+    let dLng = transformLng(longitude - 105, latitude - 35);
+    const radLat = latitude / 180 * PI;
+    let magic = Math.sin(radLat);
+    magic = 1 - OFFSET * magic * magic;
+    const sqrtMagic = Math.sqrt(magic);
+    dLat = dLat * 180 / (AXIS * (1 - OFFSET) / (magic * sqrtMagic) * PI);
+    dLng = dLng * 180 / (AXIS / sqrtMagic * Math.cos(radLat) * PI);
+    return {
+      longitude: longitude + dLng,
+      latitude: latitude + dLat
+    };
+  }
+  function transformLat(longitude, latitude) {
+    let value = -100 + 2 * longitude + 3 * latitude + 0.2 * latitude * latitude;
+    value += 0.1 * longitude * latitude + 0.2 * Math.sqrt(Math.abs(longitude));
+    value += (20 * Math.sin(6 * longitude * PI) + 20 * Math.sin(2 * longitude * PI)) * 2 / 3;
+    value += (20 * Math.sin(latitude * PI) + 40 * Math.sin(latitude / 3 * PI)) * 2 / 3;
+    value += (160 * Math.sin(latitude / 12 * PI) + 320 * Math.sin(latitude * PI / 30)) * 2 / 3;
+    return value;
+  }
+  function transformLng(longitude, latitude) {
+    let value = 300 + longitude + 2 * latitude + 0.1 * longitude * longitude;
+    value += 0.1 * longitude * latitude + 0.1 * Math.sqrt(Math.abs(longitude));
+    value += (20 * Math.sin(6 * longitude * PI) + 20 * Math.sin(2 * longitude * PI)) * 2 / 3;
+    value += (20 * Math.sin(longitude * PI) + 40 * Math.sin(longitude / 3 * PI)) * 2 / 3;
+    value += (150 * Math.sin(longitude / 12 * PI) + 300 * Math.sin(longitude / 30 * PI)) * 2 / 3;
+    return value;
+  }
   const HIKING_SESSION_KEY = "meet-xinjiang-hiking-session";
   function readSession() {
     const raw = uni.getStorageSync(HIKING_SESSION_KEY);
@@ -7666,12 +7915,18 @@ This will fail in production.`);
     return session;
   }
   const MAX_TRACK_POINTS = 1200;
+  const MAX_SAVED_TRACKS = 6;
+  const MAX_ACCEPTABLE_ACCURACY = 80;
+  const MIN_MOVEMENT_METERS = 5;
+  const MAX_HIKING_SPEED_MPS = 3.6;
+  const MAX_WALKING_JUMP_METERS = 60;
   let listenerBound = false;
   let locationUpdating = false;
   const useHikingStore = defineStore("hiking", () => {
     const isTracking = vue.ref(false);
     const currentLocation = vue.ref(null);
     const trackPoints = vue.ref([]);
+    const savedTracks = vue.ref([]);
     const locationError = vue.ref("");
     const hydrated = vue.ref(false);
     const mapCenter = vue.computed(() => {
@@ -7694,6 +7949,7 @@ This will fail in production.`);
       if (session) {
         currentLocation.value = normalizeLocation(session.lastLocation);
         trackPoints.value = Array.isArray(session.points) ? session.points.map(normalizeLocation).filter(Boolean) : [];
+        savedTracks.value = Array.isArray(session.savedTracks) ? session.savedTracks.map(normalizeSavedTrack).filter(Boolean) : [];
         isTracking.value = Boolean(session.isTracking);
       }
       hydrated.value = true;
@@ -7775,9 +8031,11 @@ This will fail in production.`);
     }
     async function refreshLocation(options = {}) {
       hydrate();
-      const location2 = normalizeLocation(await getCurrentLocation({
+      const location2 = normalizeTrackLocation(await getCurrentLocation({
         highAccuracy: true,
         allowGpsOffline: true,
+        coordsType: "wgs84",
+        providers: ["gps", "system", "wgs84", "network"],
         gpsTimeout: 18e3,
         networkTimeout: 6e3,
         ...options
@@ -7795,11 +8053,18 @@ This will fail in production.`);
       return location2;
     }
     function appendTrackPoint(location2) {
-      const normalized = normalizeLocation(location2);
+      const normalized = normalizeTrackLocation(location2);
       if (!normalized) {
         return;
       }
       const lastPoint = trackPoints.value[trackPoints.value.length - 1];
+      if (shouldSkipTrackPoint(normalized, lastPoint)) {
+        if (!currentLocation.value || shouldReplaceCurrentLocation(currentLocation.value, normalized)) {
+          currentLocation.value = normalized;
+          persistSession();
+        }
+        return;
+      }
       if (lastPoint && Math.abs(lastPoint.latitude - normalized.latitude) < 1e-6 && Math.abs(lastPoint.longitude - normalized.longitude) < 1e-6 && Math.abs((lastPoint.timestamp || 0) - (normalized.timestamp || 0)) < 1500) {
         currentLocation.value = normalized;
         persistSession();
@@ -7809,11 +8074,112 @@ This will fail in production.`);
       currentLocation.value = normalized;
       persistSession();
     }
+    async function finishTracking() {
+      hydrate();
+      const savedTrack = createSavedTrack(trackPoints.value);
+      await stopTracking();
+      if (!savedTrack) {
+        throw new Error("当前轨迹太短，至少记录两个有效点后再结束");
+      }
+      savedTracks.value = [savedTrack, ...savedTracks.value.filter((item) => item.id !== savedTrack.id)].slice(0, MAX_SAVED_TRACKS);
+      trackPoints.value = [];
+      persistSession();
+      return savedTrack;
+    }
+    function clearSavedTrack(trackId) {
+      savedTracks.value = savedTracks.value.filter((item) => item.id !== trackId);
+      persistSession();
+    }
+    function createSavedTrack(points) {
+      const payload = createGuideTrackPayload(points);
+      if (!payload) {
+        return null;
+      }
+      return {
+        id: `track-${payload.capturedAt}`,
+        title: formatSavedTrackTitle(payload.capturedAt),
+        ...payload
+      };
+    }
+    function normalizeSavedTrack(track) {
+      const normalized = normalizeGuideTrack(track);
+      if (!normalized) {
+        return null;
+      }
+      return {
+        id: String(track.id || `track-${normalized.capturedAt}`),
+        title: String(track.title || formatSavedTrackTitle(normalized.capturedAt)),
+        ...normalized
+      };
+    }
+    function normalizeTrackLocation(location2) {
+      const normalized = normalizeLocation(location2);
+      if (!normalized) {
+        return null;
+      }
+      if (shouldConvertGcjToWgs84(normalized)) {
+        const converted = gcj02ToWgs84(normalized.longitude, normalized.latitude);
+        if (converted) {
+          normalized.longitude = converted.longitude;
+          normalized.latitude = converted.latitude;
+          normalized.coordinateSystem = "wgs84";
+        }
+      }
+      return normalized;
+    }
+    function shouldConvertGcjToWgs84(location2) {
+      if (!isAppRuntime()) {
+        return false;
+      }
+      const coordinateSystem = String(location2.coordinateSystem || "").toLowerCase();
+      const source = String(location2.source || "").toLowerCase();
+      return coordinateSystem.includes("gcj") || source.includes("onlocationchange") || source.includes("plus.geolocation");
+    }
+    function shouldSkipTrackPoint(nextPoint, lastPoint) {
+      const accuracy = Number(nextPoint.accuracy || 0);
+      if (accuracy > MAX_ACCEPTABLE_ACCURACY) {
+        return true;
+      }
+      if (!lastPoint) {
+        return false;
+      }
+      const distanceMeters = getDistanceKm(lastPoint, nextPoint) * 1e3;
+      const elapsedSeconds = Math.max(1, (Number(nextPoint.timestamp || 0) - Number(lastPoint.timestamp || 0)) / 1e3);
+      const inferredSpeed = distanceMeters / elapsedSeconds;
+      if (distanceMeters < MIN_MOVEMENT_METERS && accuracy > 15) {
+        return true;
+      }
+      if (distanceMeters > MAX_WALKING_JUMP_METERS && inferredSpeed > MAX_HIKING_SPEED_MPS && accuracy > 20) {
+        return true;
+      }
+      return false;
+    }
+    function shouldReplaceCurrentLocation(previous, nextPoint) {
+      const previousAccuracy = Number((previous == null ? void 0 : previous.accuracy) || 0);
+      const nextAccuracy = Number((nextPoint == null ? void 0 : nextPoint.accuracy) || 0);
+      if (!previousAccuracy) {
+        return true;
+      }
+      return !nextAccuracy || nextAccuracy <= previousAccuracy;
+    }
+    function formatSavedTrackTitle(timestamp) {
+      const date = new Date(Number(timestamp || Date.now()));
+      const month = `${date.getMonth() + 1}`.padStart(2, "0");
+      const day = `${date.getDate()}`.padStart(2, "0");
+      const hours = `${date.getHours()}`.padStart(2, "0");
+      const minutes = `${date.getMinutes()}`.padStart(2, "0");
+      return `${month}-${day} ${hours}:${minutes} 徒步轨迹`;
+    }
+    function isAppRuntime() {
+      var _a;
+      return typeof plus !== "undefined" && ((_a = plus.os) == null ? void 0 : _a.name) === "Android";
+    }
     function persistSession() {
       saveHikingSession({
         isTracking: isTracking.value,
         lastLocation: currentLocation.value,
         points: trackPoints.value,
+        savedTracks: savedTracks.value,
         updatedAt: Date.now()
       });
     }
@@ -7821,6 +8187,7 @@ This will fail in production.`);
       isTracking,
       currentLocation,
       trackPoints,
+      savedTracks,
       locationError,
       hasMapLocation,
       mapCenter,
@@ -7829,7 +8196,9 @@ This will fail in production.`);
       hydrate,
       refreshLocation,
       startTracking,
-      stopTracking
+      stopTracking,
+      finishTracking,
+      clearSavedTrack
     };
   });
   const _sfc_main$b = {
@@ -7846,7 +8215,7 @@ This will fail in production.`);
       const locationOptions = vue.ref([]);
       const publishForm = vue.reactive(createDefaultPublishForm());
       const hikingStore = useHikingStore();
-      const { trackPoints, isTracking } = storeToRefs(hikingStore);
+      const { trackPoints, isTracking, savedTracks } = storeToRefs(hikingStore);
       const systemInfo = typeof uni.getSystemInfoSync === "function" ? uni.getSystemInfoSync() : {};
       const statusBarHeight = systemInfo.statusBarHeight || 20;
       const statusBarStyle = vue.computed(() => ({ height: `${statusBarHeight}px` }));
@@ -7899,11 +8268,47 @@ This will fail in production.`);
         warn: locationFailed.value
       }));
       const normalizedTrackPoints = vue.computed(() => Array.isArray(trackPoints.value) ? trackPoints.value.filter(Boolean) : []);
-      const attachableTrack = vue.computed(() => {
+      const liveTrack = vue.computed(() => {
         if (!normalizedTrackPoints.value.length) {
           return null;
         }
-        return createGuideTrackPayload(normalizedTrackPoints.value);
+        return {
+          id: "live-track",
+          title: isTracking.value ? "当前记录中轨迹" : "未结束的当前轨迹",
+          track: createGuideTrackPayload(normalizedTrackPoints.value),
+          isLive: true
+        };
+      });
+      const availableTracks = vue.computed(() => {
+        var _a;
+        const items = [];
+        if ((_a = liveTrack.value) == null ? void 0 : _a.track) {
+          items.push({
+            id: liveTrack.value.id,
+            title: liveTrack.value.title,
+            summary: summarizeTrack(liveTrack.value.track, isTracking.value ? "记录中" : "未结束"),
+            track: liveTrack.value.track
+          });
+        }
+        const normalizedSavedTracks = Array.isArray(savedTracks.value) ? savedTracks.value : [];
+        normalizedSavedTracks.forEach((item) => {
+          var _a2;
+          if (!((_a2 = item == null ? void 0 : item.points) == null ? void 0 : _a2.length)) {
+            return;
+          }
+          items.push({
+            id: item.id,
+            title: item.title || "已保存轨迹",
+            summary: summarizeTrack(item, "已保存"),
+            track: item
+          });
+        });
+        return items;
+      });
+      const attachableTrack = vue.computed(() => {
+        var _a;
+        const selected = availableTracks.value.find((item) => item.id === publishForm.selectedTrackId);
+        return (selected == null ? void 0 : selected.track) || ((_a = availableTracks.value[0]) == null ? void 0 : _a.track) || null;
       });
       const hasAttachableTrack = vue.computed(() => {
         var _a, _b;
@@ -7914,11 +8319,8 @@ This will fail in production.`);
         if (!track) {
           return "暂无可附带轨迹";
         }
-        const distanceKm = Number(track.distanceKm || sumTrackDistanceKm(track.points) || 0);
-        const pointCount = Number(track.pointCount || track.points.length || 0);
-        const durationText = formatTrackDuration(track.durationMs);
-        const trackingState = isTracking.value ? "记录中" : "已保存";
-        return `${trackingState} · ${distanceKm.toFixed(2)} km · ${durationText} · ${pointCount} 个轨迹点`;
+        const selected = availableTracks.value.find((item) => item.id === publishForm.selectedTrackId);
+        return (selected == null ? void 0 : selected.summary) || summarizeTrack(track, "已保存");
       });
       onLoad(() => {
         if (!currentUser.value) {
@@ -7933,14 +8335,18 @@ This will fail in production.`);
           return;
         }
         hikingStore.hydrate();
-        if (!hasAttachableTrack.value) {
-          publishForm.attachHikingTrack = false;
-        }
+        syncTrackSelection();
         loadCurrentLocation();
         setTimeout(() => {
           autoFocusTitle.value = true;
         }, 50);
       });
+      vue.watch(
+        () => availableTracks.value.map((item) => item.id).join("|"),
+        () => {
+          syncTrackSelection();
+        }
+      );
       function createDefaultPublishForm() {
         return {
           title: "",
@@ -7952,12 +8358,37 @@ This will fail in production.`);
           images: [],
           video: "",
           videoPoster: "",
-          attachHikingTrack: false
+          attachHikingTrack: false,
+          selectedTrackId: ""
         };
       }
       function handleTrackSwitchChange(event) {
         var _a;
         publishForm.attachHikingTrack = Boolean((_a = event == null ? void 0 : event.detail) == null ? void 0 : _a.value);
+        if (publishForm.attachHikingTrack && !publishForm.selectedTrackId) {
+          syncTrackSelection();
+        }
+      }
+      function selectTrackOption(trackId) {
+        publishForm.selectedTrackId = String(trackId || "");
+        publishForm.attachHikingTrack = true;
+      }
+      function syncTrackSelection() {
+        var _a;
+        const firstTrackId = ((_a = availableTracks.value[0]) == null ? void 0 : _a.id) || "";
+        if (!availableTracks.value.some((item) => item.id === publishForm.selectedTrackId)) {
+          publishForm.selectedTrackId = firstTrackId;
+        }
+        if (!firstTrackId) {
+          publishForm.attachHikingTrack = false;
+        }
+      }
+      function summarizeTrack(track, stateLabel) {
+        var _a;
+        const distanceKm = Number(track.distanceKm || sumTrackDistanceKm(track.points) || 0);
+        const pointCount = Number(track.pointCount || ((_a = track.points) == null ? void 0 : _a.length) || 0);
+        const durationText = formatTrackDuration(track.durationMs);
+        return `${stateLabel} · ${distanceKm.toFixed(2)} km · ${durationText} · ${pointCount} 个轨迹点`;
       }
       async function loadCurrentLocation() {
         locating.value = true;
@@ -8206,7 +8637,7 @@ This will fail in production.`);
         }
         return "";
       }
-      const __returned__ = { publishSubmitting, publishError, autoFocusTitle, locating, locationFailed, showLocationPicker, locationOptionsLoading, locationOptions, publishForm, hikingStore, trackPoints, isTracking, systemInfo, statusBarHeight, statusBarStyle, currentUser, authorAvatarUrl, authorInitial, derivedContentType, derivedSubCategory, locationTagText, mediaSummary, locationStatusText, locationStatusClass, normalizedTrackPoints, attachableTrack, hasAttachableTrack, trackSummaryText, createDefaultPublishForm, handleTrackSwitchChange, loadCurrentLocation, normalizeLocationPart: normalizeLocationPart2, formatLocationTag, loadNearbyLocationOptions, reloadCurrentLocation, openLocationPicker, closeLocationPicker, selectLocationOption, locationSourceText, inferSubCategory, mapCategoryName, goBack, removePublishImage, removePublishVideo, pickMedia, pickPublishImages, pickPublishVideo, submitPublishedGuide, validatePublishedGuide, computed: vue.computed, reactive: vue.reactive, ref: vue.ref, get storeToRefs() {
+      const __returned__ = { publishSubmitting, publishError, autoFocusTitle, locating, locationFailed, showLocationPicker, locationOptionsLoading, locationOptions, publishForm, hikingStore, trackPoints, isTracking, savedTracks, systemInfo, statusBarHeight, statusBarStyle, currentUser, authorAvatarUrl, authorInitial, derivedContentType, derivedSubCategory, locationTagText, mediaSummary, locationStatusText, locationStatusClass, normalizedTrackPoints, liveTrack, availableTracks, attachableTrack, hasAttachableTrack, trackSummaryText, createDefaultPublishForm, handleTrackSwitchChange, selectTrackOption, syncTrackSelection, summarizeTrack, loadCurrentLocation, normalizeLocationPart: normalizeLocationPart2, formatLocationTag, loadNearbyLocationOptions, reloadCurrentLocation, openLocationPicker, closeLocationPicker, selectLocationOption, locationSourceText, inferSubCategory, mapCategoryName, goBack, removePublishImage, removePublishVideo, pickMedia, pickPublishImages, pickPublishVideo, submitPublishedGuide, validatePublishedGuide, computed: vue.computed, reactive: vue.reactive, ref: vue.ref, watch: vue.watch, get storeToRefs() {
         return storeToRefs;
       }, get onLoad() {
         return onLoad;
@@ -8503,14 +8934,14 @@ This will fail in production.`);
         vue.createElementVNode("view", { class: "form-card track-card" }, [
           vue.createElementVNode("view", { class: "section-head" }, [
             vue.createElementVNode("text", { class: "field-label no-gap" }, "徒步轨迹"),
-            vue.createElementVNode("text", { class: "section-tip" }, "可选，把当前保存的徒步路线一起发出去")
+            vue.createElementVNode("text", { class: "section-tip" }, "可选，把当前或已保存的徒步路线一起发出去")
           ]),
           $setup.hasAttachableTrack ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 0,
             class: "track-body"
           }, [
             vue.createElementVNode("view", { class: "track-copy" }, [
-              vue.createElementVNode("text", { class: "track-title" }, "附带最近一次徒步记录"),
+              vue.createElementVNode("text", { class: "track-title" }, "附带徒步记录"),
               vue.createElementVNode(
                 "text",
                 { class: "track-desc" },
@@ -8524,8 +8955,47 @@ This will fail in production.`);
               color: "#ff7c62",
               onChange: $setup.handleTrackSwitchChange
             }, null, 40, ["checked"])
-          ])) : (vue.openBlock(), vue.createElementBlock("view", {
+          ])) : vue.createCommentVNode("v-if", true),
+          $setup.availableTracks.length ? (vue.openBlock(), vue.createElementBlock("view", {
             key: 1,
+            class: "track-option-list"
+          }, [
+            (vue.openBlock(true), vue.createElementBlock(
+              vue.Fragment,
+              null,
+              vue.renderList($setup.availableTracks, (item) => {
+                return vue.openBlock(), vue.createElementBlock("view", {
+                  key: item.id,
+                  class: vue.normalizeClass(["track-option", { active: $setup.publishForm.selectedTrackId === item.id }]),
+                  onClick: ($event) => $setup.selectTrackOption(item.id)
+                }, [
+                  vue.createElementVNode("view", null, [
+                    vue.createElementVNode(
+                      "text",
+                      { class: "track-option-title" },
+                      vue.toDisplayString(item.title),
+                      1
+                      /* TEXT */
+                    ),
+                    vue.createElementVNode(
+                      "text",
+                      { class: "track-option-meta" },
+                      vue.toDisplayString(item.summary),
+                      1
+                      /* TEXT */
+                    )
+                  ]),
+                  $setup.publishForm.selectedTrackId === item.id ? (vue.openBlock(), vue.createElementBlock("text", {
+                    key: 0,
+                    class: "track-option-check"
+                  }, "已选")) : vue.createCommentVNode("v-if", true)
+                ], 10, ["onClick"]);
+              }),
+              128
+              /* KEYED_FRAGMENT */
+            ))
+          ])) : (vue.openBlock(), vue.createElementBlock("view", {
+            key: 2,
             class: "track-empty"
           }, [
             vue.createElementVNode("text", { class: "track-empty-title" }, "还没有可附带的轨迹"),
@@ -8846,13 +9316,24 @@ ${infoText}`;
       const incomingContextSource = vue.ref("景区页");
       const incomingPrompt = vue.ref("");
       const incomingContext = vue.ref("");
+      let responseRevealTimer = null;
       const hasApiKey = vue.computed(() => Boolean(savedApiKey.value));
       const canSend = vue.computed(() => Boolean(draft.value.trim()) && !sending.value && hasApiKey.value);
       function getMessageBlocks(item) {
-        if (!(item == null ? void 0 : item.content)) {
+        const content = getRenderableMessageContent(item);
+        if (!content) {
           return [];
         }
-        return parseAssistantMarkdown(item.content);
+        return parseAssistantMarkdown(content);
+      }
+      function getRenderableMessageContent(item) {
+        if (!item) {
+          return "";
+        }
+        if (item.role === "assistant") {
+          return item.displayContent ?? item.content ?? "";
+        }
+        return item.content || "";
       }
       function parseAssistantMarkdown(content) {
         const lines = String(content).replace(/\r\n/g, "\n").split("\n");
@@ -8988,13 +9469,24 @@ ${infoText}`;
         try {
           const stored = uni.getStorageSync(AI_MESSAGE_STORAGE);
           const parsed = JSON.parse(stored || "[]");
-          return Array.isArray(parsed) ? parsed : [];
+          return Array.isArray(parsed) ? parsed.map((item) => ({
+            ...item,
+            displayContent: (item == null ? void 0 : item.role) === "assistant" ? item.displayContent || item.content || "" : void 0
+          })) : [];
         } catch (error) {
           return [];
         }
       }
       function persistMessages() {
-        uni.setStorageSync(AI_MESSAGE_STORAGE, JSON.stringify(messages.value));
+        uni.setStorageSync(AI_MESSAGE_STORAGE, JSON.stringify(messages.value.map((item) => {
+          if ((item == null ? void 0 : item.role) === "assistant") {
+            return {
+              ...item,
+              displayContent: void 0
+            };
+          }
+          return item;
+        })));
       }
       function createMessage(role, content) {
         return {
@@ -9045,6 +9537,7 @@ ${infoText}`;
         }
       }
       function clearConversation() {
+        stopResponseReveal();
         uni.showModal({
           title: "清空会话",
           content: "确认清空当前 AI 对话记录吗？清空后无法恢复。",
@@ -9074,6 +9567,7 @@ ${infoText}`;
           return;
         }
         errorMessage.value = "";
+        stopResponseReveal();
         const userMessage = createMessage("user", content);
         const nextMessages = [...messages.value, userMessage];
         messages.value = nextMessages;
@@ -9082,9 +9576,12 @@ ${infoText}`;
         await scrollToConversationBottom();
         try {
           const answer = await chatWithTravelAssistant(nextMessages, extraContext);
-          messages.value = [...nextMessages, createMessage("assistant", answer)];
-          persistMessages();
-          await scrollToConversationBottom();
+          const assistantMessage = {
+            ...createMessage("assistant", answer),
+            displayContent: ""
+          };
+          messages.value = [...nextMessages, assistantMessage];
+          await revealAssistantMessage(assistantMessage.id, answer);
         } catch (error) {
           messages.value = nextMessages;
           persistMessages();
@@ -9096,6 +9593,41 @@ ${infoText}`;
           });
         } finally {
           sending.value = false;
+        }
+      }
+      async function revealAssistantMessage(messageId, fullText) {
+        const text = String(fullText || "");
+        const chunkSize = text.length > 900 ? 24 : text.length > 400 ? 16 : 10;
+        let cursor = 0;
+        return new Promise((resolve) => {
+          const step = async () => {
+            const target = messages.value.find((item) => item.id === messageId);
+            if (!target) {
+              stopResponseReveal();
+              resolve();
+              return;
+            }
+            cursor = Math.min(text.length, cursor + chunkSize);
+            target.displayContent = text.slice(0, cursor);
+            messages.value = [...messages.value];
+            await scrollToConversationBottom();
+            if (cursor >= text.length) {
+              target.displayContent = text;
+              messages.value = [...messages.value];
+              persistMessages();
+              stopResponseReveal();
+              resolve();
+              return;
+            }
+            responseRevealTimer = setTimeout(step, 40);
+          };
+          step();
+        });
+      }
+      function stopResponseReveal() {
+        if (responseRevealTimer) {
+          clearTimeout(responseRevealTimer);
+          responseRevealTimer = null;
         }
       }
       async function scrollToConversationBottom() {
@@ -9139,7 +9671,11 @@ ${infoText}`;
         draft.value = "";
         sendQuestion(incomingPrompt.value, incomingContext.value);
       }
-      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, incomingContextTitle, incomingContextDesc, incomingContextSource, incomingPrompt, incomingContext, hasApiKey, canSend, getMessageBlocks, parseAssistantMarkdown, formatInlineMarkdown, decodeParam, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, scrollToConversationBottom, sendDraft, sendPresetQuestion, fillIncomingPrompt, sendIncomingPrompt, computed: vue.computed, nextTick: vue.nextTick, ref: vue.ref, get onLoad() {
+      const __returned__ = { presetQuestions, savedApiKey, apiKeyInput, draft, sending, testing, errorMessage, testResult, messages, incomingContextTitle, incomingContextDesc, incomingContextSource, incomingPrompt, incomingContext, get responseRevealTimer() {
+        return responseRevealTimer;
+      }, set responseRevealTimer(v) {
+        responseRevealTimer = v;
+      }, hasApiKey, canSend, getMessageBlocks, getRenderableMessageContent, parseAssistantMarkdown, formatInlineMarkdown, decodeParam, loadMessages, persistMessages, createMessage, saveApiKeyToStorage, runConnectionTest, clearConversation, sendQuestion, revealAssistantMessage, stopResponseReveal, scrollToConversationBottom, sendDraft, sendPresetQuestion, fillIncomingPrompt, sendIncomingPrompt, computed: vue.computed, nextTick: vue.nextTick, ref: vue.ref, get onLoad() {
         return onLoad;
       }, AppTabBar, get AI_MESSAGE_STORAGE() {
         return AI_MESSAGE_STORAGE;
@@ -9195,25 +9731,7 @@ ${infoText}`;
               )
             ]),
             vue.createElementVNode("view", { class: "hero-copy" }, [
-              vue.createElementVNode("text", { class: "hero-kicker" }, "Meet Xinjiang AI"),
-              vue.createElementVNode("text", { class: "banner-title" }, "AI 旅游助手"),
-              vue.createElementVNode("text", { class: "banner-subtitle" }, "面向新疆旅行场景的问答与行程建议")
-            ]),
-            vue.createElementVNode("view", { class: "hero-meta" }, [
-              vue.createElementVNode("view", { class: "meta-item" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "定位"),
-                vue.createElementVNode("text", { class: "meta-value" }, "目的地推荐")
-              ]),
-              vue.createElementVNode("view", { class: "meta-divider" }),
-              vue.createElementVNode("view", { class: "meta-item" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "能力"),
-                vue.createElementVNode("text", { class: "meta-value" }, "行程规划")
-              ]),
-              vue.createElementVNode("view", { class: "meta-divider" }),
-              vue.createElementVNode("view", { class: "meta-item" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "风格"),
-                vue.createElementVNode("text", { class: "meta-value" }, "简洁实用")
-              ])
+              vue.createElementVNode("text", { class: "banner-title" }, "灵鹿")
             ]),
             vue.createElementVNode("view", { class: "hero-status" }, [
               vue.createElementVNode(
@@ -9232,22 +9750,6 @@ ${infoText}`;
                 1
                 /* TEXT */
               )
-            ])
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "section capability-shell" }, [
-          vue.createElementVNode("view", { class: "capability-grid" }, [
-            vue.createElementVNode("view", { class: "capability-item" }, [
-              vue.createElementVNode("text", { class: "capability-name" }, "行程规划"),
-              vue.createElementVNode("text", { class: "capability-desc" }, "按天数给出新疆旅行安排")
-            ]),
-            vue.createElementVNode("view", { class: "capability-item" }, [
-              vue.createElementVNode("text", { class: "capability-name" }, "目的地选择"),
-              vue.createElementVNode("text", { class: "capability-desc" }, "结合景点资料给路线建议")
-            ]),
-            vue.createElementVNode("view", { class: "capability-item" }, [
-              vue.createElementVNode("text", { class: "capability-name" }, "出行提醒"),
-              vue.createElementVNode("text", { class: "capability-desc" }, "装备、预算与季节建议")
             ])
           ])
         ]),
@@ -9368,10 +9870,6 @@ ${infoText}`;
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
           vue.createElementVNode("view", { class: "dialogue-head" }, [
-            vue.createElementVNode("view", null, [
-              vue.createElementVNode("text", { class: "section-title" }, "智能顾问工作台"),
-              vue.createElementVNode("text", { class: "dialogue-note muted-text" }, "结构化输出新疆旅行建议")
-            ]),
             vue.createElementVNode(
               "view",
               {
@@ -9408,8 +9906,12 @@ ${infoText}`;
               key: 0,
               class: "empty-card"
             }, [
-              vue.createElementVNode("text", { class: "empty-title" }, "从一个具体问题开始"),
-              vue.createElementVNode("text", { class: "empty-desc muted-text" }, " 例如新疆第一次去怎么玩、喀纳斯安排几天、乌鲁木齐夜游吃什么。 ")
+              vue.createElementVNode("view", { class: "message-row assistant intro-row" }, [
+                vue.createElementVNode("view", { class: "message-bubble assistant-bubble intro-bubble" }, [
+                  vue.createElementVNode("text", { class: "message-role" }, "灵鹿"),
+                  vue.createElementVNode("text", { class: "message-content intro-content" }, "HI！我是灵鹿，有关于西域旅游的问题都可以问我哦！")
+                ])
+              ])
             ])) : (vue.openBlock(), vue.createElementBlock("view", {
               key: 1,
               class: "message-list"
@@ -9428,13 +9930,13 @@ ${infoText}`;
                       vue.createElementVNode(
                         "view",
                         {
-                          class: vue.normalizeClass(["message-bubble", { "assistant-bubble": item.role === "assistant" }])
+                          class: vue.normalizeClass(["message-bubble", item.role === "user" ? "user-bubble" : "assistant-bubble"])
                         },
                         [
                           vue.createElementVNode(
                             "text",
                             { class: "message-role" },
-                            vue.toDisplayString(item.role === "user" ? "用户" : "AI助手"),
+                            vue.toDisplayString(item.role === "user" ? "我" : "灵鹿"),
                             1
                             /* TEXT */
                           ),
@@ -9626,7 +10128,7 @@ ${infoText}`;
               class: "composer-input",
               "auto-height": "",
               maxlength: "800",
-              placeholder: "输入你的旅行问题，例如：新疆 7 天怎么安排？"
+              placeholder: "输入你想问灵鹿的问题，例如：新疆 7 天怎么安排？"
             },
             null,
             512
@@ -9638,7 +10140,7 @@ ${infoText}`;
             vue.createElementVNode(
               "text",
               { class: "muted-text composer-hint" },
-              vue.toDisplayString($setup.hasApiKey ? "已连接 AI 旅游助手" : "请先填写内部 Key"),
+              vue.toDisplayString($setup.hasApiKey ? "已连接灵鹿" : "请先填写内部 Key"),
               1
               /* TEXT */
             ),
@@ -9687,8 +10189,8 @@ ${infoText}`;
         return ((_a = currentUser.value) == null ? void 0 : _a.email) || "登录后同步收藏与行程";
       });
       const avatarUrl = vue.computed(() => {
-        var _a;
-        return ((_a = currentUser.value) == null ? void 0 : _a.avatar_url) || "";
+        var _a, _b;
+        return ((_a = currentUser.value) == null ? void 0 : _a.avatar_url) || ((_b = currentUser.value) == null ? void 0 : _b.avatar) || "";
       });
       const profileInitial = vue.computed(() => profileName.value.slice(0, 2));
       const profileStats = vue.computed(
@@ -9706,10 +10208,11 @@ ${infoText}`;
       onShow(() => {
         loadAuthState();
       });
-      function loadAuthState() {
+      async function loadAuthState() {
         authToken.value = getStoredAuthToken();
         currentUser.value = getStoredAuthUser();
         if (isLoggedIn.value) {
+          await refreshCurrentUser();
           loadMyStats();
           loadMyGuides();
           loadFavoriteGuides();
@@ -9723,6 +10226,22 @@ ${infoText}`;
           visitedCount: 0,
           interactionCount: 0
         };
+      }
+      async function refreshCurrentUser() {
+        if (!authToken.value) {
+          return;
+        }
+        try {
+          const res = await getMyProfile(authToken.value);
+          const nextUser = (res == null ? void 0 : res.user) || null;
+          if (!nextUser) {
+            return;
+          }
+          saveAuthSession({ token: authToken.value, user: nextUser });
+          currentUser.value = nextUser;
+        } catch {
+          currentUser.value = getStoredAuthUser();
+        }
       }
       async function loadMyStats() {
         var _a, _b, _c, _d;
@@ -9813,7 +10332,7 @@ ${infoText}`;
         editModalVisible.value = true;
       }
       async function saveProfile() {
-        var _a;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         const nickname = editNickname.value.trim();
         if (!nickname) {
           editModalVisible.value = false;
@@ -9826,8 +10345,14 @@ ${infoText}`;
         }
         try {
           const res = await updateUserProfile(authToken.value, payload);
-          saveAuthSession({ token: authToken.value, user: res.user });
-          currentUser.value = res.user;
+          const merged = {
+            ...currentUser.value,
+            ...res.user,
+            avatar_url: ((_b = res.user) == null ? void 0 : _b.avatar_url) || ((_c = currentUser.value) == null ? void 0 : _c.avatar_url) || ((_d = currentUser.value) == null ? void 0 : _d.avatar) || "",
+            avatar: ((_e = res.user) == null ? void 0 : _e.avatar) || ((_f = res.user) == null ? void 0 : _f.avatar_url) || ((_g = currentUser.value) == null ? void 0 : _g.avatar) || ((_h = currentUser.value) == null ? void 0 : _h.avatar_url) || ""
+          };
+          saveAuthSession({ token: authToken.value, user: merged });
+          currentUser.value = merged;
           editModalVisible.value = false;
           uni.showToast({ title: "资料已更新", icon: "success" });
         } catch (e) {
@@ -9843,7 +10368,7 @@ ${infoText}`;
       function goSettings() {
         uni.navigateTo({ url: "/pages/settings/index" });
       }
-      const __returned__ = { currentUser, authToken, myGuides, myGuidesLoading, favoriteGuides, favoriteGuidesLoading, accountStats, editModalVisible, editNickname, isLoggedIn, profileName, profileEmail, avatarUrl, profileInitial, profileStats, loadAuthState, loadMyStats, loadMyGuides, loadFavoriteGuides, chooseAvatar, openEditModal, saveProfile, goGuide, goAuth, goSettings, computed: vue.computed, ref: vue.ref, get onShow() {
+      const __returned__ = { currentUser, authToken, myGuides, myGuidesLoading, favoriteGuides, favoriteGuidesLoading, accountStats, editModalVisible, editNickname, isLoggedIn, profileName, profileEmail, avatarUrl, profileInitial, profileStats, loadAuthState, refreshCurrentUser, loadMyStats, loadMyGuides, loadFavoriteGuides, chooseAvatar, openEditModal, saveProfile, goGuide, goAuth, goSettings, computed: vue.computed, ref: vue.ref, get onShow() {
         return onShow;
       }, AppTabBar, CachedImage, get clearAuthSession() {
         return clearAuthSession;
@@ -9857,6 +10382,8 @@ ${infoText}`;
         return getMyFavoriteGuides;
       }, get getMyGuides() {
         return getMyGuides;
+      }, get getMyProfile() {
+        return getMyProfile;
       }, get getMyStats() {
         return getMyStats;
       }, get updateUserProfile() {
@@ -11895,6 +12422,26 @@ ${infoText}`;
       debugText: {
         type: String,
         default: ""
+      },
+      sunsetCountdownText: {
+        type: String,
+        default: ""
+      },
+      sunsetTimeText: {
+        type: String,
+        default: ""
+      },
+      sunsetRiskLevel: {
+        type: String,
+        default: "safe"
+      },
+      guardStatusText: {
+        type: String,
+        default: ""
+      },
+      guardStatusLevel: {
+        type: String,
+        default: "safe"
       }
     },
     setup(__props, { expose: __expose }) {
@@ -11906,6 +12453,35 @@ ${infoText}`;
   };
   function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "header-panel" }, [
+      $props.sunsetCountdownText ? (vue.openBlock(), vue.createElementBlock(
+        "view",
+        {
+          key: 0,
+          class: vue.normalizeClass(["sunset-banner", `risk-${$props.sunsetRiskLevel}`])
+        },
+        [
+          vue.createElementVNode("text", { class: "sunset-title" }, "日落时间"),
+          vue.createElementVNode(
+            "text",
+            { class: "sunset-countdown" },
+            vue.toDisplayString($props.sunsetCountdownText),
+            1
+            /* TEXT */
+          ),
+          $props.sunsetTimeText ? (vue.openBlock(), vue.createElementBlock(
+            "text",
+            {
+              key: 0,
+              class: "sunset-meta"
+            },
+            vue.toDisplayString($props.sunsetTimeText),
+            1
+            /* TEXT */
+          )) : vue.createCommentVNode("v-if", true)
+        ],
+        2
+        /* CLASS */
+      )) : vue.createCommentVNode("v-if", true),
       vue.createElementVNode("view", { class: "info-row" }, [
         vue.createElementVNode("view", { class: "gps-status" }, [
           vue.createElementVNode(
@@ -11945,6 +12521,25 @@ ${infoText}`;
           )
         ])
       ]),
+      $props.guardStatusText ? (vue.openBlock(), vue.createElementBlock(
+        "view",
+        {
+          key: 1,
+          class: vue.normalizeClass(["guard-banner", `guard-${$props.guardStatusLevel}`])
+        },
+        [
+          vue.createElementVNode("text", { class: "guard-title" }, "守护模式"),
+          vue.createElementVNode(
+            "text",
+            { class: "guard-text" },
+            vue.toDisplayString($props.guardStatusText),
+            1
+            /* TEXT */
+          )
+        ],
+        2
+        /* CLASS */
+      )) : vue.createCommentVNode("v-if", true),
       vue.createElementVNode("view", { class: "stats-grid" }, [
         vue.createElementVNode("view", { class: "stat-card" }, [
           vue.createElementVNode("view", { class: "label" }, "海拔 (m)"),
@@ -11981,7 +12576,7 @@ ${infoText}`;
         ])
       ]),
       $props.debugText ? (vue.openBlock(), vue.createElementBlock("view", {
-        key: 0,
+        key: 2,
         class: "debug-panel"
       }, [
         vue.createElementVNode("text", { class: "debug-title" }, "定位调试"),
@@ -12003,10 +12598,6 @@ ${infoText}`;
         type: Number,
         default: 15
       },
-      mapModeLabel: {
-        type: String,
-        default: "标准地图"
-      },
       mapModeKey: {
         type: String,
         default: "normal"
@@ -12020,7 +12611,7 @@ ${infoText}`;
         default: ""
       }
     },
-    emits: ["refresh", "recenter", "toggle-track", "cycle-map-mode"],
+    emits: ["refresh", "recenter", "toggle-track", "zoom-in", "zoom-out"],
     setup(__props, { expose: __expose }) {
       __expose();
       const hikingStore = useHikingStore();
@@ -12064,37 +12655,38 @@ ${infoText}`;
           vue.createElementVNode("text", { class: "fallback-desc" }, "已接入原生 GPS 定位与徒步地图桥接，获取到位置后会显示真实地图与轨迹。")
         ])
       ])),
-      vue.createElementVNode("view", {
-        class: "map-mode-switch",
-        onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("cycle-map-mode"))
-      }, [
-        vue.createElementVNode("text", { class: "map-mode-label" }, "切换地图"),
-        vue.createElementVNode(
-          "text",
-          { class: "map-mode-value" },
-          vue.toDisplayString($props.mapModeLabel),
-          1
-          /* TEXT */
-        )
-      ]),
       vue.createElementVNode("view", { class: "map-tools" }, [
+        vue.createElementVNode("view", { class: "zoom-group" }, [
+          vue.createElementVNode("view", {
+            class: "zoom-btn",
+            onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("zoom-in"))
+          }, [
+            vue.createElementVNode("text", { class: "zoom-symbol" }, "+")
+          ]),
+          vue.createElementVNode("view", {
+            class: "zoom-btn",
+            onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("zoom-out"))
+          }, [
+            vue.createElementVNode("text", { class: "zoom-symbol" }, "-")
+          ])
+        ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
-          onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("refresh"))
+          onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("refresh"))
         }, [
           vue.createElementVNode("text", { class: "icon" }, "刷"),
           vue.createElementVNode("text", { class: "text" }, "定位刷新")
         ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
-          onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("recenter"))
+          onClick: _cache[3] || (_cache[3] = ($event) => _ctx.$emit("recenter"))
         }, [
           vue.createElementVNode("text", { class: "icon" }, "回"),
           vue.createElementVNode("text", { class: "text" }, "回到当前")
         ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
-          onClick: _cache[3] || (_cache[3] = ($event) => _ctx.$emit("toggle-track"))
+          onClick: _cache[4] || (_cache[4] = ($event) => _ctx.$emit("toggle-track"))
         }, [
           vue.createElementVNode("text", { class: "icon" }, "记"),
           vue.createElementVNode(
@@ -12134,7 +12726,7 @@ ${infoText}`;
         default: () => []
       }
     },
-    emits: ["toggle-track", "toggle-guard", "sos-message"],
+    emits: ["toggle-track", "toggle-guard", "sos-message", "finish-track"],
     setup(__props, { expose: __expose, emit: __emit }) {
       __expose();
       const props = __props;
@@ -12159,6 +12751,12 @@ ${infoText}`;
       function handleSmsAction() {
         emit("sos-message");
         closeSosMenu();
+      }
+      function handleFinishLongPress() {
+        if (!props.isTracking) {
+          return;
+        }
+        emit("finish-track");
       }
       async function toggleSosFlash() {
         if (isSosFlashing.value) {
@@ -12185,7 +12783,7 @@ ${infoText}`;
           }
         } catch (error) {
           if ((error == null ? void 0 : error.message) !== "SOS stopped") {
-            formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:141", "[hiking-sos]", (error == null ? void 0 : error.message) || error);
+            formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:149", "[hiking-sos]", (error == null ? void 0 : error.message) || error);
           }
         } finally {
           if (token === sosLoopToken) {
@@ -12235,7 +12833,7 @@ ${infoText}`;
           }
           return true;
         } catch (error) {
-          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:196", "[hiking-sos] prepare torch failed", (error == null ? void 0 : error.message) || error);
+          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:204", "[hiking-sos] prepare torch failed", (error == null ? void 0 : error.message) || error);
           uni.showToast({
             title: "手电筒不可用，请检查权限或摄像头占用",
             icon: "none",
@@ -12273,7 +12871,7 @@ ${infoText}`;
           }
           cameraManager.setTorchMode(cameraId, Boolean(enabled));
         } catch (error) {
-          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:241", "[hiking-sos] set torch failed", (error == null ? void 0 : error.message) || error);
+          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:249", "[hiking-sos] set torch failed", (error == null ? void 0 : error.message) || error);
         }
       }
       function getCameraManager() {
@@ -12301,7 +12899,7 @@ ${infoText}`;
         return sosLoopToken;
       }, set sosLoopToken(v) {
         sosLoopToken = v;
-      }, toggleSosMenu, closeSosMenu, handleFlashlightAction, handleSmsAction, toggleSosFlash, runSosLoop, playLetter, flashPulse, stopSosFlash, prepareTorch, ensureActive, sleepIfActive, sleep, setTorchEnabled, getCameraManager, getPrimaryCameraId, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref };
+      }, toggleSosMenu, closeSosMenu, handleFlashlightAction, handleSmsAction, handleFinishLongPress, toggleSosFlash, runSosLoop, playLetter, flashPulse, stopSosFlash, prepareTorch, ensureActive, sleepIfActive, sleep, setTorchEnabled, getCameraManager, getPrimaryCameraId, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -12382,18 +12980,32 @@ ${infoText}`;
           vue.createElementVNode("text", { class: "label" }, "SOS")
         ]),
         vue.createElementVNode("view", { class: "main-action" }, [
-          vue.createElementVNode("view", {
-            class: "btn-circle start",
-            onClick: _cache[0] || (_cache[0] = ($event) => $setup.emit("toggle-track"))
-          }, [
-            vue.createElementVNode(
-              "text",
-              { class: "btn-text" },
-              vue.toDisplayString($props.isTracking ? "暂停" : "开始"),
-              1
-              /* TEXT */
-            )
-          ])
+          vue.createElementVNode(
+            "view",
+            {
+              class: "btn-circle start",
+              onClick: _cache[0] || (_cache[0] = ($event) => $setup.emit("toggle-track")),
+              onLongpress: $setup.handleFinishLongPress
+            },
+            [
+              vue.createElementVNode(
+                "text",
+                { class: "btn-text" },
+                vue.toDisplayString($props.isTracking ? "暂停" : "开始"),
+                1
+                /* TEXT */
+              )
+            ],
+            32
+            /* NEED_HYDRATION */
+          ),
+          vue.createElementVNode(
+            "text",
+            { class: "main-action-tip" },
+            vue.toDisplayString($props.isTracking ? "长按结束并保存" : "点击开始记录"),
+            1
+            /* TEXT */
+          )
         ]),
         vue.createElementVNode("view", { class: "side-action" }, [
           vue.createElementVNode(
@@ -12414,6 +13026,105 @@ ${infoText}`;
     ]);
   }
   const HikingBottomControls = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-b1d0f949"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingBottomControls.vue"]]);
+  const DEFAULT_DISTANCE_LIMIT_METERS = 40;
+  const DEFAULT_STATIONARY_MINUTES = 25;
+  const SUNSET_STATIONARY_MINUTES = 15;
+  const MAX_STALE_MINUTES = 8;
+  function evaluateStationaryRisk(options = {}) {
+    const {
+      isGuardMode = false,
+      isTracking = false,
+      trackPoints = [],
+      currentLocation = null,
+      now: now2 = Date.now(),
+      minutesToSunset = Infinity,
+      cooldownUntil = 0,
+      lastConfirmedAt = 0
+    } = options;
+    if (!isGuardMode || !isTracking) {
+      return buildIdleResult();
+    }
+    const normalizedCurrent = normalizeLocation(currentLocation);
+    if (!normalizedCurrent) {
+      return buildIdleResult();
+    }
+    const currentTime = Number(now2) || Date.now();
+    if (currentTime < Number(cooldownUntil || 0)) {
+      return buildIdleResult({ thresholdMinutes: getStationaryThresholdMinutes(minutesToSunset) });
+    }
+    const thresholdMinutes = getStationaryThresholdMinutes(minutesToSunset);
+    const staleMinutes = (currentTime - Number(normalizedCurrent.timestamp || 0)) / 6e4;
+    if (!Number.isFinite(staleMinutes) || staleMinutes > MAX_STALE_MINUTES) {
+      return buildIdleResult({ thresholdMinutes });
+    }
+    const points = collectRecentPoints(trackPoints, normalizedCurrent, currentTime, thresholdMinutes);
+    if (points.length < 2) {
+      return buildIdleResult({ thresholdMinutes });
+    }
+    const firstTimestamp = Number(points[0].timestamp || 0);
+    const observedMinutes = Math.floor((currentTime - firstTimestamp) / 6e4);
+    if (observedMinutes < thresholdMinutes) {
+      return buildIdleResult({ thresholdMinutes, observedMinutes });
+    }
+    const lastConfirmed = Number(lastConfirmedAt || 0);
+    if (lastConfirmed && currentTime - lastConfirmed < thresholdMinutes * 6e4) {
+      return buildIdleResult({ thresholdMinutes, observedMinutes });
+    }
+    const distanceMeters = Math.round(sumDistanceMeters(points));
+    const isActive = distanceMeters < DEFAULT_DISTANCE_LIMIT_METERS;
+    return {
+      active: isActive,
+      observedMinutes,
+      thresholdMinutes,
+      distanceMeters,
+      level: isActive ? thresholdMinutes <= SUNSET_STATIONARY_MINUTES ? "danger" : "warning" : "safe"
+    };
+  }
+  function formatStationaryStatus(risk) {
+    if (!(risk == null ? void 0 : risk.active)) {
+      return "守护中";
+    }
+    return `已停留 ${risk.observedMinutes} 分钟`;
+  }
+  function collectRecentPoints(trackPoints, currentLocation, currentTime, thresholdMinutes) {
+    const cutoff = currentTime - thresholdMinutes * 6e4;
+    const combined = [...Array.isArray(trackPoints) ? trackPoints : [], currentLocation].map(normalizeLocation).filter(Boolean).filter((item) => Number(item.timestamp || 0) >= cutoff).sort((left, right) => Number(left.timestamp || 0) - Number(right.timestamp || 0));
+    const unique = [];
+    const seen = /* @__PURE__ */ new Set();
+    combined.forEach((item) => {
+      const key = `${item.timestamp}-${item.latitude.toFixed(6)}-${item.longitude.toFixed(6)}`;
+      if (seen.has(key)) {
+        return;
+      }
+      seen.add(key);
+      unique.push(item);
+    });
+    return unique;
+  }
+  function sumDistanceMeters(points) {
+    let total = 0;
+    for (let index = 1; index < points.length; index += 1) {
+      total += getDistanceKm(points[index - 1], points[index]) * 1e3;
+    }
+    return total;
+  }
+  function getStationaryThresholdMinutes(minutesToSunset) {
+    const value = Number(minutesToSunset);
+    if (Number.isFinite(value) && value <= 120) {
+      return SUNSET_STATIONARY_MINUTES;
+    }
+    return DEFAULT_STATIONARY_MINUTES;
+  }
+  function buildIdleResult(extra = {}) {
+    return {
+      active: false,
+      observedMinutes: 0,
+      thresholdMinutes: DEFAULT_STATIONARY_MINUTES,
+      distanceMeters: 0,
+      level: "safe",
+      ...extra
+    };
+  }
   const hikingModeMock = {
     route: {
       title: "乌孙古道轻装徒步",
@@ -12501,6 +13212,83 @@ ${infoText}`;
       }
     }
   };
+  const ZENITH_DEGREES = 90.833;
+  function getSunsetInfo(location2, now2 = /* @__PURE__ */ new Date()) {
+    const latitude = Number(location2 == null ? void 0 : location2.latitude);
+    const longitude = Number(location2 == null ? void 0 : location2.longitude);
+    const currentDate = now2 instanceof Date ? now2 : new Date(now2);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude) || Number.isNaN(currentDate.getTime())) {
+      return null;
+    }
+    const dayOfYear = getDayOfYear(currentDate);
+    const timezoneOffsetMinutes = -currentDate.getTimezoneOffset();
+    const gamma = 2 * Math.PI / 365 * (dayOfYear - 1);
+    const equationOfTime = 229.18 * (75e-6 + 1868e-6 * Math.cos(gamma) - 0.032077 * Math.sin(gamma) - 0.014615 * Math.cos(2 * gamma) - 0.040849 * Math.sin(2 * gamma));
+    const solarDeclination = 6918e-6 - 0.399912 * Math.cos(gamma) + 0.070257 * Math.sin(gamma) - 6758e-6 * Math.cos(2 * gamma) + 907e-6 * Math.sin(2 * gamma) - 2697e-6 * Math.cos(3 * gamma) + 148e-5 * Math.sin(3 * gamma);
+    const latitudeRad = latitude * Math.PI / 180;
+    const zenithRad = ZENITH_DEGREES * Math.PI / 180;
+    const hourAngleCos = Math.cos(zenithRad) / (Math.cos(latitudeRad) * Math.cos(solarDeclination)) - Math.tan(latitudeRad) * Math.tan(solarDeclination);
+    if (hourAngleCos < -1 || hourAngleCos > 1) {
+      return null;
+    }
+    const hourAngle = Math.acos(hourAngleCos);
+    const solarNoonMinutes = 720 - 4 * longitude - equationOfTime + timezoneOffsetMinutes;
+    const sunsetMinutes = solarNoonMinutes + hourAngle * 180 / Math.PI * 4;
+    const sunsetAt = new Date(currentDate);
+    sunsetAt.setHours(0, 0, 0, 0);
+    sunsetAt.setMinutes(Math.round(sunsetMinutes));
+    const minutesToSunset = Math.round((sunsetAt.getTime() - currentDate.getTime()) / 6e4);
+    return {
+      sunsetAt,
+      minutesToSunset,
+      countdownText: formatSunsetCountdown(minutesToSunset),
+      localDateKey: formatLocalDateKey(currentDate)
+    };
+  }
+  function formatSunsetTime(value) {
+    const date = value instanceof Date ? value : new Date(value);
+    if (Number.isNaN(date.getTime())) {
+      return "--:--";
+    }
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return `${hours}:${minutes}`;
+  }
+  function formatSunsetCountdown(minutesToSunset) {
+    const minutes = Math.round(Number(minutesToSunset));
+    if (!Number.isFinite(minutes)) {
+      return "";
+    }
+    if (minutes < 0) {
+      const passedMinutes = Math.abs(minutes);
+      const hours2 = Math.floor(passedMinutes / 60);
+      const remainMinutes2 = passedMinutes % 60;
+      if (hours2 > 0) {
+        return `已过日落 ${hours2}小时${remainMinutes2}分`;
+      }
+      return `已过日落 ${remainMinutes2}分`;
+    }
+    const hours = Math.floor(minutes / 60);
+    const remainMinutes = minutes % 60;
+    if (hours > 0) {
+      return `距日落还有 ${hours}小时${remainMinutes}分`;
+    }
+    return `距日落还有 ${remainMinutes}分`;
+  }
+  function getDayOfYear(date) {
+    const start = new Date(date.getFullYear(), 0, 0);
+    const diff = date - start;
+    return Math.floor(diff / 864e5);
+  }
+  function formatLocalDateKey(date) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    return `${year}-${month}-${day}`;
+  }
+  const MIN_MAP_SCALE = 12;
+  const MAX_MAP_SCALE = 18;
+  const RECENTER_MAP_SCALE = 16;
   const _sfc_main$2 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
@@ -12520,6 +13308,13 @@ ${infoText}`;
       const currentMapMode = vue.ref(MAP_MODES[0].key);
       const networkOnline = vue.ref(true);
       const debugLogs = vue.ref([]);
+      const nowTick = vue.ref(Date.now());
+      const lastGuardPromptAt = vue.ref(0);
+      const guardCooldownUntil = vue.ref(0);
+      const lastGuardSafeAt = vue.ref(0);
+      const lastSunsetWarningLevel = vue.ref(0);
+      const lastSunsetWarningDate = vue.ref("");
+      let sunsetTimer = null;
       let hasPromptedLocationSettings = false;
       const coordinateText = vue.computed(() => {
         if (!currentLocation.value) {
@@ -12559,6 +13354,66 @@ ${infoText}`;
       });
       const headerModeText = vue.computed(() => `${isOffline.value ? "离线" : "在线"} · ${mapModeLabel.value}`);
       const debugText = vue.computed(() => debugLogs.value.join(" | "));
+      const sunsetInfo = vue.computed(() => getSunsetInfo(currentLocation.value, new Date(nowTick.value)));
+      const sunsetCountdownText = vue.computed(() => {
+        var _a;
+        return ((_a = sunsetInfo.value) == null ? void 0 : _a.countdownText) || "";
+      });
+      const sunsetTimeText = vue.computed(() => {
+        var _a;
+        return formatSunsetTime((_a = sunsetInfo.value) == null ? void 0 : _a.sunsetAt);
+      });
+      const sunsetRiskLevel = vue.computed(() => {
+        var _a;
+        const minutes = Number((_a = sunsetInfo.value) == null ? void 0 : _a.minutesToSunset);
+        if (!Number.isFinite(minutes)) {
+          return "safe";
+        }
+        if (minutes <= 0) {
+          return "passed";
+        }
+        if (minutes <= 60) {
+          return "danger";
+        }
+        if (minutes <= 120) {
+          return "warning";
+        }
+        return "safe";
+      });
+      const stationaryRisk = vue.computed(() => {
+        var _a;
+        return evaluateStationaryRisk({
+          isGuardMode: isGuardMode.value,
+          isTracking: isTracking.value,
+          trackPoints: trackPoints.value,
+          currentLocation: currentLocation.value,
+          now: nowTick.value,
+          minutesToSunset: (_a = sunsetInfo.value) == null ? void 0 : _a.minutesToSunset,
+          cooldownUntil: guardCooldownUntil.value,
+          lastConfirmedAt: lastGuardSafeAt.value
+        });
+      });
+      const guardStatusText = vue.computed(() => {
+        if (!isGuardMode.value) {
+          return "";
+        }
+        if (stationaryRisk.value.active) {
+          return `${formatStationaryStatus(stationaryRisk.value)}，请确认状态`;
+        }
+        return "守护中";
+      });
+      const guardStatusLevel = vue.computed(() => {
+        if (!isGuardMode.value) {
+          return "safe";
+        }
+        if (stationaryRisk.value.level === "danger") {
+          return "danger";
+        }
+        if (stationaryRisk.value.level === "warning") {
+          return "warning";
+        }
+        return "safe";
+      });
       const emergencyContactName = vue.computed(() => {
         var _a;
         return ((_a = hikingModeMock.emergency) == null ? void 0 : _a.primaryName) || "紧急联系人";
@@ -12576,13 +13431,73 @@ ${infoText}`;
       onLoad(async () => {
         hikingStore.hydrate();
         bindNetworkState();
+        startSunsetTimer();
         if (!currentLocation.value) {
           await refreshLocation();
         }
       });
+      vue.watch(
+        () => {
+          var _a, _b;
+          return [((_a = sunsetInfo.value) == null ? void 0 : _a.localDateKey) || "", ((_b = sunsetInfo.value) == null ? void 0 : _b.minutesToSunset) ?? null];
+        },
+        ([dateKey, minutes]) => {
+          if (!dateKey) {
+            lastSunsetWarningLevel.value = 0;
+            lastSunsetWarningDate.value = "";
+            return;
+          }
+          if (dateKey !== lastSunsetWarningDate.value) {
+            lastSunsetWarningDate.value = dateKey;
+            lastSunsetWarningLevel.value = 0;
+          }
+          const nextLevel = getSunsetWarningLevel(minutes);
+          if (!nextLevel || nextLevel <= lastSunsetWarningLevel.value) {
+            return;
+          }
+          lastSunsetWarningLevel.value = nextLevel;
+          showSunsetWarning(nextLevel, minutes);
+        },
+        { immediate: true }
+      );
+      vue.watch(
+        () => [stationaryRisk.value.active, stationaryRisk.value.observedMinutes, isGuardMode.value],
+        ([active, observedMinutes, guardEnabled]) => {
+          if (!guardEnabled || !active) {
+            return;
+          }
+          const currentTime = nowTick.value;
+          if (currentTime - Number(lastGuardPromptAt.value || 0) < 10 * 6e4) {
+            return;
+          }
+          lastGuardPromptAt.value = currentTime;
+          uni.showModal({
+            title: "守护提醒",
+            content: `你已连续停留约 ${observedMinutes} 分钟。若只是休息，请点“我安全”；若感觉不适或迷路，请尽快使用 SOS 求助。`,
+            confirmText: "我安全",
+            cancelText: "稍后提醒",
+            success: ({ confirm }) => {
+              if (confirm) {
+                acknowledgeGuardSafe(20);
+                uni.showToast({
+                  title: "已继续守护",
+                  icon: "none"
+                });
+                return;
+              }
+              guardCooldownUntil.value = Date.now() + 10 * 6e4;
+            },
+            fail: () => {
+              guardCooldownUntil.value = Date.now() + 10 * 6e4;
+            }
+          });
+        }
+      );
       onUnload(() => {
+        cleanup();
       });
       vue.onBeforeUnmount(() => {
+        cleanup();
       });
       function bindNetworkState() {
         if (typeof uni.getNetworkType === "function") {
@@ -12636,8 +13551,40 @@ ${infoText}`;
           });
         }
       }
+      async function handleFinishTrack() {
+        if (!isTracking.value) {
+          return;
+        }
+        uni.showModal({
+          title: "结束并保存轨迹",
+          content: "长按后将结束本次徒步记录，并把轨迹保存到发布页可选列表。",
+          confirmText: "结束保存",
+          cancelText: "继续记录",
+          success: async ({ confirm }) => {
+            var _a;
+            if (!confirm) {
+              return;
+            }
+            try {
+              const savedTrack = await hikingStore.finishTracking();
+              const pointCount = Number((savedTrack == null ? void 0 : savedTrack.pointCount) || ((_a = savedTrack == null ? void 0 : savedTrack.points) == null ? void 0 : _a.length) || 0);
+              uni.showToast({
+                title: pointCount ? `已保存 ${pointCount} 个点` : "轨迹已保存",
+                icon: "none",
+                duration: 2200
+              });
+            } catch (error) {
+              uni.showToast({
+                title: (error == null ? void 0 : error.message) || "结束保存失败",
+                icon: "none",
+                duration: 2500
+              });
+            }
+          }
+        });
+      }
       async function recenterMap() {
-        mapScale.value = 16;
+        mapScale.value = RECENTER_MAP_SCALE;
         if (!currentLocation.value) {
           await refreshLocation();
           return;
@@ -12647,11 +13594,31 @@ ${infoText}`;
           icon: "none"
         });
       }
-      async function cycleMapMode() {
-        uni.showToast({
-          title: "当前固定为高德卫星图",
-          icon: "none"
-        });
+      function zoomInMap() {
+        const nextScale = clampMapScale(mapScale.value + 1);
+        if (nextScale === mapScale.value) {
+          uni.showToast({
+            title: "已经放到最大了",
+            icon: "none"
+          });
+          return;
+        }
+        mapScale.value = nextScale;
+      }
+      function zoomOutMap() {
+        const nextScale = clampMapScale(mapScale.value - 1);
+        if (nextScale === mapScale.value) {
+          uni.showToast({
+            title: "已经缩到最小了",
+            icon: "none"
+          });
+          return;
+        }
+        mapScale.value = nextScale;
+      }
+      function clampMapScale(value) {
+        const scale = Number(value) || RECENTER_MAP_SCALE;
+        return Math.max(MIN_MAP_SCALE, Math.min(MAX_MAP_SCALE, Math.round(scale)));
       }
       function handleEmergencySms() {
         var _a;
@@ -12705,12 +13672,33 @@ ${infoText}`;
       }
       function toggleGuard() {
         isGuardMode.value = !isGuardMode.value;
+        if (isGuardMode.value) {
+          acknowledgeGuardSafe(5);
+        }
         uni.showToast({
           title: isGuardMode.value ? "守护模式已开启" : "守护模式已关闭",
           icon: "none"
         });
       }
       function cleanup() {
+        if (sunsetTimer) {
+          clearInterval(sunsetTimer);
+          sunsetTimer = null;
+        }
+      }
+      function startSunsetTimer() {
+        nowTick.value = Date.now();
+        if (sunsetTimer) {
+          clearInterval(sunsetTimer);
+        }
+        sunsetTimer = setInterval(() => {
+          nowTick.value = Date.now();
+        }, 6e4);
+      }
+      function acknowledgeGuardSafe(cooldownMinutes = 20) {
+        const currentTime = Date.now();
+        lastGuardSafeAt.value = currentTime;
+        guardCooldownUntil.value = currentTime + cooldownMinutes * 6e4;
       }
       function appendDebugLog(message) {
         const stamp = (/* @__PURE__ */ new Date()).toTimeString().slice(0, 8);
@@ -12736,6 +13724,54 @@ ${infoText}`;
             }
           }
         });
+      }
+      function getSunsetWarningLevel(minutes) {
+        const value = Number(minutes);
+        if (!Number.isFinite(value)) {
+          return 0;
+        }
+        if (value <= 0) {
+          return 3;
+        }
+        if (value <= 60) {
+          return 2;
+        }
+        if (value <= 120) {
+          return 1;
+        }
+        return 0;
+      }
+      function showSunsetWarning(level, minutes) {
+        if (!currentLocation.value) {
+          return;
+        }
+        const countdown = sunsetCountdownText.value || "日落临近";
+        if (level === 1) {
+          uni.showModal({
+            title: "日落提醒",
+            content: `${countdown}。天黑后风险会明显上升，请尽快评估是否原路下撤，避免继续深入。`,
+            confirmText: "知道了",
+            showCancel: false
+          });
+          return;
+        }
+        if (level === 2) {
+          uni.showModal({
+            title: "尽快下撤",
+            content: `${countdown}。现在已接近日落，建议立即停止继续深入，优先下撤或寻找安全停留点。`,
+            confirmText: "收到",
+            showCancel: false
+          });
+          return;
+        }
+        if (level === 3 && Number(minutes) > -30) {
+          uni.showModal({
+            title: "已过日落",
+            content: `${countdown}。请立即结束继续行进，优先确保视线、保暖和安全停留条件。`,
+            confirmText: "知道了",
+            showCancel: false
+          });
+        }
       }
       function formatLocationDebug(location2) {
         if (!location2) {
@@ -12783,18 +13819,30 @@ ${infoText}`;
           `高德链接：https://uri.amap.com/marker?position=${longitude},${latitude}&name=SOS位置`
         ].join("\n");
       }
-      const __returned__ = { MAP_MODES, hikingStore, isTracking, currentLocation, trackPoints, locationError, isGuardMode, mapScale, currentMapMode, networkOnline, debugLogs, get hasPromptedLocationSettings() {
+      const __returned__ = { MAP_MODES, MIN_MAP_SCALE, MAX_MAP_SCALE, RECENTER_MAP_SCALE, hikingStore, isTracking, currentLocation, trackPoints, locationError, isGuardMode, mapScale, currentMapMode, networkOnline, debugLogs, nowTick, lastGuardPromptAt, guardCooldownUntil, lastGuardSafeAt, lastSunsetWarningLevel, lastSunsetWarningDate, get sunsetTimer() {
+        return sunsetTimer;
+      }, set sunsetTimer(v) {
+        sunsetTimer = v;
+      }, get hasPromptedLocationSettings() {
         return hasPromptedLocationSettings;
       }, set hasPromptedLocationSettings(v) {
         hasPromptedLocationSettings = v;
-      }, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapModeLabel, headerModeText, debugText, emergencyContactName, emergencyContactPhones, offlineHint, bindNetworkState, refreshLocation, handleStart, recenterMap, cycleMapMode, handleEmergencySms, toggleGuard, cleanup, appendDebugLog, maybePromptLocationSettings, formatLocationDebug, buildEmergencySmsBody, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, get onLoad() {
+      }, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapModeLabel, headerModeText, debugText, sunsetInfo, sunsetCountdownText, sunsetTimeText, sunsetRiskLevel, stationaryRisk, guardStatusText, guardStatusLevel, emergencyContactName, emergencyContactPhones, offlineHint, bindNetworkState, refreshLocation, handleStart, handleFinishTrack, recenterMap, zoomInMap, zoomOutMap, clampMapScale, handleEmergencySms, toggleGuard, cleanup, startSunsetTimer, acknowledgeGuardSafe, appendDebugLog, maybePromptLocationSettings, getSunsetWarningLevel, showSunsetWarning, formatLocationDebug, buildEmergencySmsBody, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, watch: vue.watch, get onLoad() {
         return onLoad;
       }, get onUnload() {
         return onUnload;
       }, get storeToRefs() {
         return storeToRefs;
-      }, HikingHeaderPanel, HikingMapStage, HikingBottomControls, get hikingModeMock() {
+      }, HikingHeaderPanel, HikingMapStage, HikingBottomControls, get evaluateStationaryRisk() {
+        return evaluateStationaryRisk;
+      }, get formatStationaryStatus() {
+        return formatStationaryStatus;
+      }, get hikingModeMock() {
         return hikingModeMock;
+      }, get formatSunsetTime() {
+        return formatSunsetTime;
+      }, get getSunsetInfo() {
+        return getSunsetInfo;
       }, get formatCoordinate() {
         return formatCoordinate;
       }, get formatMetric() {
@@ -12821,19 +13869,24 @@ ${infoText}`;
         "accuracy-text": $setup.accuracyText,
         "is-offline": $setup.isOffline,
         "mode-text": $setup.headerModeText,
-        "debug-text": $setup.debugText
-      }, null, 8, ["gps-status-text", "coordinate-text", "altitude-text", "distance-text", "accuracy-text", "is-offline", "mode-text", "debug-text"]),
+        "debug-text": $setup.debugText,
+        "sunset-countdown-text": $setup.sunsetCountdownText,
+        "sunset-time-text": $setup.sunsetTimeText,
+        "sunset-risk-level": $setup.sunsetRiskLevel,
+        "guard-status-text": $setup.guardStatusText,
+        "guard-status-level": $setup.guardStatusLevel
+      }, null, 8, ["gps-status-text", "coordinate-text", "altitude-text", "distance-text", "accuracy-text", "is-offline", "mode-text", "debug-text", "sunset-countdown-text", "sunset-time-text", "sunset-risk-level", "guard-status-text", "guard-status-level"]),
       vue.createVNode($setup["HikingMapStage"], {
         "map-scale": $setup.mapScale,
-        "map-mode-label": $setup.mapModeLabel,
         "map-mode-key": $setup.currentMapMode,
         "is-offline": $setup.isOffline,
         "offline-hint": $setup.offlineHint,
         onRefresh: $setup.refreshLocation,
         onRecenter: $setup.recenterMap,
         onToggleTrack: $setup.handleStart,
-        onCycleMapMode: $setup.cycleMapMode
-      }, null, 8, ["map-scale", "map-mode-label", "map-mode-key", "is-offline", "offline-hint"]),
+        onZoomIn: $setup.zoomInMap,
+        onZoomOut: $setup.zoomOutMap
+      }, null, 8, ["map-scale", "map-mode-key", "is-offline", "offline-hint"]),
       vue.createVNode($setup["HikingBottomControls"], {
         "is-tracking": $setup.isTracking,
         "is-guard-mode": $setup.isGuardMode,
@@ -12841,6 +13894,7 @@ ${infoText}`;
         "emergency-contact-phones": $setup.emergencyContactPhones,
         onSosMessage: $setup.handleEmergencySms,
         onToggleTrack: $setup.handleStart,
+        onFinishTrack: $setup.handleFinishTrack,
         onToggleGuard: $setup.toggleGuard
       }, null, 8, ["is-tracking", "is-guard-mode", "emergency-contact-name", "emergency-contact-phones"])
     ]);
@@ -12866,9 +13920,26 @@ ${infoText}`;
         { short: "设", label: "通用设置" }
       ];
       onShow(() => {
+        loadAuthState();
+      });
+      async function loadAuthState() {
         authToken.value = getStoredAuthToken();
         currentUser.value = getStoredAuthUser();
-      });
+        if (!authToken.value) {
+          return;
+        }
+        try {
+          const res = await getMyProfile(authToken.value);
+          const nextUser = (res == null ? void 0 : res.user) || null;
+          if (!nextUser) {
+            return;
+          }
+          saveAuthSession({ token: authToken.value, user: nextUser });
+          currentUser.value = nextUser;
+        } catch {
+          currentUser.value = getStoredAuthUser();
+        }
+      }
       function goBack() {
         uni.navigateBack();
       }
@@ -12878,7 +13949,7 @@ ${infoText}`;
         editModalVisible.value = true;
       }
       async function saveProfile() {
-        var _a, _b, _c;
+        var _a, _b, _c, _d, _e, _f, _g, _h;
         const nickname = editNickname.value.trim();
         if (!nickname || nickname === ((_a = currentUser.value) == null ? void 0 : _a.nickname)) {
           editModalVisible.value = false;
@@ -12886,7 +13957,12 @@ ${infoText}`;
         }
         try {
           const res = await updateUserProfile(authToken.value, { nickname });
-          const merged = { ...currentUser.value, ...res.user, avatar_url: ((_b = currentUser.value) == null ? void 0 : _b.avatar_url) || ((_c = res.user) == null ? void 0 : _c.avatar_url) };
+          const merged = {
+            ...currentUser.value,
+            ...res.user,
+            avatar_url: ((_b = res.user) == null ? void 0 : _b.avatar_url) || ((_c = currentUser.value) == null ? void 0 : _c.avatar_url) || ((_d = currentUser.value) == null ? void 0 : _d.avatar) || "",
+            avatar: ((_e = res.user) == null ? void 0 : _e.avatar) || ((_f = res.user) == null ? void 0 : _f.avatar_url) || ((_g = currentUser.value) == null ? void 0 : _g.avatar) || ((_h = currentUser.value) == null ? void 0 : _h.avatar_url) || ""
+          };
           saveAuthSession({ token: authToken.value, user: merged });
           currentUser.value = merged;
           editModalVisible.value = false;
@@ -12908,7 +13984,7 @@ ${infoText}`;
           }
         });
       }
-      const __returned__ = { currentUser, authToken, editModalVisible, editNickname, isLoggedIn, profileName, menuItems, goBack, openEditModal, saveProfile, handleLogout, computed: vue.computed, ref: vue.ref, get onShow() {
+      const __returned__ = { currentUser, authToken, editModalVisible, editNickname, isLoggedIn, profileName, menuItems, loadAuthState, goBack, openEditModal, saveProfile, handleLogout, computed: vue.computed, ref: vue.ref, get onShow() {
         return onShow;
       }, get clearAuthSession() {
         return clearAuthSession;
@@ -12918,6 +13994,8 @@ ${infoText}`;
         return getStoredAuthUser;
       }, get saveAuthSession() {
         return saveAuthSession;
+      }, get getMyProfile() {
+        return getMyProfile;
       }, get updateUserProfile() {
         return updateUserProfile;
       } };

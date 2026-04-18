@@ -133,6 +133,17 @@
   border-radius: 50%;
   flex-shrink: 0;
 }
+.comment-avatar-placeholder[data-v-202be074] {
+  background: linear-gradient(135deg, #ffe8d6 0%, #ffd2c2 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.comment-avatar-placeholder-text[data-v-202be074] {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #b45309;
+}
 .author-name[data-v-202be074],
 .comment-name[data-v-202be074] {
   font-size: 1rem;
