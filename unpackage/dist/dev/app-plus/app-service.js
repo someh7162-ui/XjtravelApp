@@ -11,19 +11,19 @@ if (typeof Promise !== "undefined" && !Promise.prototype.finally) {
 }
 ;
 if (typeof uni !== "undefined" && uni && uni.requireGlobal) {
-  const global = uni.requireGlobal();
-  ArrayBuffer = global.ArrayBuffer;
-  Int8Array = global.Int8Array;
-  Uint8Array = global.Uint8Array;
-  Uint8ClampedArray = global.Uint8ClampedArray;
-  Int16Array = global.Int16Array;
-  Uint16Array = global.Uint16Array;
-  Int32Array = global.Int32Array;
-  Uint32Array = global.Uint32Array;
-  Float32Array = global.Float32Array;
-  Float64Array = global.Float64Array;
-  BigInt64Array = global.BigInt64Array;
-  BigUint64Array = global.BigUint64Array;
+  const global2 = uni.requireGlobal();
+  ArrayBuffer = global2.ArrayBuffer;
+  Int8Array = global2.Int8Array;
+  Uint8Array = global2.Uint8Array;
+  Uint8ClampedArray = global2.Uint8ClampedArray;
+  Int16Array = global2.Int16Array;
+  Uint16Array = global2.Uint16Array;
+  Int32Array = global2.Int32Array;
+  Uint32Array = global2.Uint32Array;
+  Float32Array = global2.Float32Array;
+  Float64Array = global2.Float64Array;
+  BigInt64Array = global2.BigInt64Array;
+  BigUint64Array = global2.BigUint64Array;
 }
 ;
 if (uni.restoreGlobal) {
@@ -130,13 +130,73 @@ if (uni.restoreGlobal) {
     ]);
   }
   const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["render", _sfc_render$h], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
+  const API_ORIGIN = "https://yd.frp-arm.com:44637";
+  const API_BASE_URL = `${API_ORIGIN}/api`;
+  const LEGACY_API_ORIGINS = [
+    "https://111.20.31.227:34144",
+    "http://111.20.31.227:34144",
+    "https://frp-arm.com:44637",
+    "http://frp-arm.com:44637"
+  ];
+  const LEGACY_API_HOSTS = [
+    "111.20.31.227:34144",
+    "frp-arm.com:44637"
+  ];
+  function normalizeApiAssetUrl(value) {
+    const raw = String(value || "").trim();
+    if (!raw) {
+      return "";
+    }
+    if (/^https?:\/\//i.test(raw)) {
+      const matched = LEGACY_API_ORIGINS.find((origin) => raw.startsWith(origin));
+      return matched ? `${API_ORIGIN}${raw.slice(matched.length)}` : raw;
+    }
+    const matchedHost = LEGACY_API_HOSTS.find((host) => {
+      return raw === host || raw.startsWith(`${host}/`) || raw.startsWith(`${host}?`);
+    });
+    if (matchedHost) {
+      const suffix = raw.slice(matchedHost.length);
+      return suffix.startsWith("/") || suffix.startsWith("?") ? `${API_ORIGIN}${suffix}` : `${API_ORIGIN}/${suffix}`;
+    }
+    if (raw.startsWith("/")) {
+      return `${API_ORIGIN}${raw}`;
+    }
+    return `${API_ORIGIN}/${raw}`;
+  }
+  function hasApiBaseUrl() {
+    return Boolean(API_BASE_URL && API_BASE_URL.trim());
+  }
+  function normalizeLegacyUrl(value) {
+    const text = String(value || "");
+    if (!text) {
+      return "";
+    }
+    if (/^https?:\/\//i.test(text) || /^(111\.20\.31\.227:34144|frp-arm\.com:44637)(\/|\?|$)/i.test(text) || text.startsWith("/")) {
+      return normalizeApiAssetUrl(text);
+    }
+    return text;
+  }
+  function normalizePayloadUrls(value) {
+    if (Array.isArray(value)) {
+      return value.map(normalizePayloadUrls);
+    }
+    if (value && typeof value === "object") {
+      return Object.fromEntries(
+        Object.entries(value).map(([key, item]) => [key, normalizePayloadUrls(item)])
+      );
+    }
+    if (typeof value === "string") {
+      return normalizeLegacyUrl(value);
+    }
+    return value;
+  }
   function parseResponseData(text) {
     const raw = String(text || "");
     if (!raw) {
       return {};
     }
     try {
-      return JSON.parse(raw);
+      return normalizePayloadUrls(JSON.parse(raw));
     } catch (error) {
       return raw;
     }
@@ -186,7 +246,10 @@ if (uni.restoreGlobal) {
     return new Promise((resolve, reject) => {
       uni.request({
         ...options,
-        success: (res) => resolve(res),
+        success: (res) => resolve({
+          ...res,
+          data: normalizePayloadUrls(res.data)
+        }),
         fail: (error) => reject(error)
       });
     });
@@ -199,11 +262,12 @@ if (uni.restoreGlobal) {
   }
   function downloadRemoteFile(url) {
     return new Promise((resolve, reject) => {
-      if (/^https:/i.test(String(url || "")) && typeof plus !== "undefined" && plus.downloader && typeof plus.downloader.createDownload === "function") {
+      const normalizedUrl = normalizeLegacyUrl(url);
+      if (/^https:/i.test(String(normalizedUrl || "")) && typeof plus !== "undefined" && plus.downloader && typeof plus.downloader.createDownload === "function") {
         const filename = `_doc/cache/image-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-        const task = plus.downloader.createDownload(url, { filename }, (download, status) => {
-          if (status === 200 && download.filename) {
-            resolve({ statusCode: status, tempFilePath: download.filename });
+        const task = plus.downloader.createDownload(normalizedUrl, { filename }, (download2, status) => {
+          if (status === 200 && download2.filename) {
+            resolve({ statusCode: status, tempFilePath: download2.filename });
             return;
           }
           reject(new Error(`下载失败(${status || 0})`));
@@ -212,7 +276,7 @@ if (uni.restoreGlobal) {
         return;
       }
       uni.downloadFile({
-        url,
+        url: normalizedUrl,
         success: (res) => resolve(res),
         fail: (error) => reject(error)
       });
@@ -240,6 +304,10 @@ if (uni.restoreGlobal) {
       imageClass: {
         type: String,
         default: ""
+      },
+      fallbackToRemote: {
+        type: Boolean,
+        default: true
       }
     },
     setup(__props, { expose: __expose }) {
@@ -247,6 +315,30 @@ if (uni.restoreGlobal) {
       const props = __props;
       const loading = vue.ref(true);
       const currentSrc = vue.ref("");
+      function canUseRemoteFallback() {
+        const platform = uni.getSystemInfoSync().platform;
+        return props.fallbackToRemote && (platform === "devtools" || platform === "web");
+      }
+      function canUseDirectRemote(url) {
+        const raw = String(url || "");
+        return canUseRemoteFallback() || props.fallbackToRemote && raw.startsWith(API_ORIGIN);
+      }
+      function toDisplayPath(filePath) {
+        const raw = String(filePath || "").trim();
+        if (!raw) {
+          return "";
+        }
+        if (/^(https?:|file:|content:|blob:|data:)/i.test(raw)) {
+          return raw;
+        }
+        if (typeof plus !== "undefined" && plus.io && typeof plus.io.convertLocalFileSystemURL === "function") {
+          const absolutePath = plus.io.convertLocalFileSystemURL(raw);
+          if (absolutePath) {
+            return absolutePath.startsWith("file://") ? absolutePath : `file://${absolutePath}`;
+          }
+        }
+        return raw;
+      }
       function storageKey(url) {
         return `cached-image:${encodeURIComponent(url)}`;
       }
@@ -258,23 +350,23 @@ if (uni.restoreGlobal) {
         }
         loading.value = true;
         if (!/^https?:\/\//.test(url)) {
-          currentSrc.value = url;
+          currentSrc.value = toDisplayPath(url);
           loading.value = false;
           return;
         }
         const key = storageKey(url);
         const cachedPath = uni.getStorageSync(key);
         if (cachedPath) {
-          currentSrc.value = cachedPath;
+          currentSrc.value = toDisplayPath(cachedPath);
           loading.value = false;
           return;
         }
-        currentSrc.value = url;
-        const platform = uni.getSystemInfoSync().platform;
-        if (platform === "devtools" || platform === "web") {
+        if (canUseDirectRemote(url)) {
+          currentSrc.value = url;
           loading.value = false;
           return;
         }
+        currentSrc.value = "";
         try {
           const downloadRes = await downloadRemoteFile(url);
           if (downloadRes.statusCode !== 200 || !downloadRes.tempFilePath) {
@@ -283,16 +375,19 @@ if (uni.restoreGlobal) {
           }
           if (typeof plus !== "undefined" && downloadRes.tempFilePath.startsWith("_doc/")) {
             uni.setStorageSync(key, downloadRes.tempFilePath);
-            currentSrc.value = downloadRes.tempFilePath;
+            currentSrc.value = toDisplayPath(downloadRes.tempFilePath);
             return;
           }
           const saveRes = await uni.saveFile({ tempFilePath: downloadRes.tempFilePath });
           if (saveRes.savedFilePath) {
             uni.setStorageSync(key, saveRes.savedFilePath);
-            currentSrc.value = saveRes.savedFilePath;
+            currentSrc.value = toDisplayPath(saveRes.savedFilePath);
+            return;
           }
         } catch (error) {
-          currentSrc.value = url;
+          if (canUseDirectRemote(url)) {
+            currentSrc.value = url;
+          }
         } finally {
           loading.value = false;
         }
@@ -302,7 +397,11 @@ if (uni.restoreGlobal) {
       }
       function handleError() {
         loading.value = false;
-        currentSrc.value = props.src;
+        if (canUseDirectRemote(props.src)) {
+          currentSrc.value = props.src;
+          return;
+        }
+        currentSrc.value = "";
       }
       vue.watch(
         () => props.src,
@@ -311,8 +410,10 @@ if (uni.restoreGlobal) {
         },
         { immediate: true }
       );
-      const __returned__ = { props, loading, currentSrc, storageKey, resolveImage, handleLoad, handleError, ref: vue.ref, watch: vue.watch, get downloadRemoteFile() {
+      const __returned__ = { props, loading, currentSrc, canUseRemoteFallback, canUseDirectRemote, toDisplayPath, storageKey, resolveImage, handleLoad, handleError, ref: vue.ref, watch: vue.watch, get downloadRemoteFile() {
         return downloadRemoteFile;
+      }, get API_ORIGIN() {
+        return API_ORIGIN;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -350,7 +451,7 @@ if (uni.restoreGlobal) {
   function createScenicSpot({
     id,
     name,
-    location,
+    location: location2,
     region,
     category,
     rating,
@@ -368,7 +469,7 @@ if (uni.restoreGlobal) {
     return {
       id,
       name,
-      location,
+      location: location2,
       region: normalizeRegion(region),
       category,
       rating,
@@ -2240,7 +2341,7 @@ if (uni.restoreGlobal) {
   function getDouyinSearchUrl(keyword) {
     return `https://www.douyin.com/search/${encodeURIComponent(keyword)}?type=live`;
   }
-  const AMAP_WEB_KEY = "b16ee0a6a8f641e974a51521ca00b6f0";
+  const AMAP_WEB_KEY = "c76a2f7390ccb7c9d095cc9ff1408aee";
   function hasAmapKey() {
     return Boolean(AMAP_WEB_KEY) && !AMAP_WEB_KEY.includes("请在这里填入");
   }
@@ -2380,27 +2481,50 @@ if (uni.restoreGlobal) {
     }
     return data.route.paths[0];
   }
-  async function getCurrentLocation() {
+  async function getCurrentLocation(options = {}) {
     await ensureLocationPermission();
-    const attempts = [
-      { label: "uni-gcj02", run: () => requestUniLocation("gcj02") },
-      { label: "uni-wgs84", run: () => requestUniLocation("wgs84") },
-      { label: "plus-geolocation", run: () => requestPlusLocation() }
-    ];
+    const attempts = [];
+    const gpsTimeout = Number(options.gpsTimeout || 18e3);
+    const networkTimeout = Number(options.networkTimeout || 6e3);
+    const preferredProviders = Array.isArray(options.providers) ? options.providers.map((item) => String(item || "").toLowerCase()).filter(Boolean) : null;
+    const allowsProvider = (name) => !preferredProviders || preferredProviders.includes(String(name || "").toLowerCase());
+    if (isAndroidRuntime()) {
+      if (allowsProvider("gps")) {
+        attempts.push({
+          label: "android-gps",
+          run: () => requestAndroidProviderLocation("gps", { ...options, timeout: gpsTimeout, maximumAgeMs: Number(options.gpsMaximumAgeMs || 12e4) })
+        });
+      }
+      if (allowsProvider("network")) {
+        attempts.push({
+          label: "android-network",
+          run: () => requestAndroidProviderLocation("network", { ...options, timeout: networkTimeout, maximumAgeMs: Number(options.networkMaximumAgeMs || 3e4) })
+        });
+      }
+    }
+    if (allowsProvider("system") || allowsProvider("plus-geolocation")) {
+      attempts.push({ label: "plus-geolocation", run: () => requestPlusLocation(options) });
+    }
+    if (allowsProvider("gcj02") || allowsProvider("uni-gcj02")) {
+      attempts.push({ label: "uni-gcj02", run: () => requestUniLocation("gcj02") });
+    }
+    if (allowsProvider("wgs84") || allowsProvider("uni-wgs84")) {
+      attempts.push({ label: "uni-wgs84", run: () => requestUniLocation("wgs84") });
+    }
     let lastError = null;
     const errors = [];
     for (const attempt of attempts) {
       try {
-        const location = await attempt.run();
-        if (location) {
-          formatAppLog("log", "at services/amap.js:188", `[hiking-location] success via ${attempt.label}`, location);
-          return location;
+        const location2 = await attempt.run();
+        if (location2) {
+          formatAppLog("log", "at services/amap.js:219", `[hiking-location] success via ${attempt.label}`, location2);
+          return location2;
         }
       } catch (error) {
         lastError = error;
         const message = normalizeLocationError(error);
         errors.push(`${attempt.label}: ${message}`);
-        formatAppLog("warn", "at services/amap.js:195", `[hiking-location] failed via ${attempt.label}`, error);
+        formatAppLog("warn", "at services/amap.js:226", `[hiking-location] failed via ${attempt.label}`, error);
       }
     }
     const detail = errors.length ? `；${errors.join(" | ")}` : "";
@@ -2428,6 +2552,9 @@ if (uni.restoreGlobal) {
       return "系统定位服务未开启，请先打开手机定位开关";
     }
     return text || raw || "定位失败，请检查系统定位服务是否开启";
+  }
+  function isAndroidRuntime() {
+    return typeof plus !== "undefined" && plus.os && plus.os.name === "Android" && plus.android;
   }
   function ensureLocationPermission() {
     return new Promise((resolve, reject) => {
@@ -2496,7 +2623,7 @@ if (uni.restoreGlobal) {
       main.startActivity(intent);
       return true;
     } catch (error) {
-      formatAppLog("warn", "at services/amap.js:315", "[hiking-location] open settings failed", error);
+      formatAppLog("warn", "at services/amap.js:350", "[hiking-location] open settings failed", error);
       return false;
     }
   }
@@ -2507,12 +2634,19 @@ if (uni.restoreGlobal) {
         isHighAccuracy: true,
         highAccuracyExpireTime: 12e3,
         geocode: false,
-        success: resolve,
+        success: (location2) => {
+          resolve({
+            ...location2,
+            provider: `uni-${type}`,
+            coordinateSystem: type,
+            source: "uni.getLocation"
+          });
+        },
         fail: reject
       });
     });
   }
-  function requestPlusLocation() {
+  function requestPlusLocation(options = {}) {
     return new Promise((resolve, reject) => {
       if (typeof plus === "undefined" || !plus.geolocation || typeof plus.geolocation.getCurrentPosition !== "function") {
         reject(new Error("当前环境不支持 plus 定位"));
@@ -2527,8 +2661,11 @@ if (uni.restoreGlobal) {
             altitude: Number(coords.altitude || 0),
             accuracy: Number(coords.accuracy || 0),
             speed: Number(coords.speed || 0),
+            bearing: Number(coords.heading || 0),
             timestamp: Number(position.timestamp || Date.now()),
-            provider: "plus-geolocation"
+            provider: String(coords.provider || position.provider || "plus-geolocation"),
+            coordinateSystem: String(position.coordsType || options.coordsType || "gcj02"),
+            source: "plus.geolocation"
           });
         },
         (error) => {
@@ -2536,13 +2673,137 @@ if (uni.restoreGlobal) {
         },
         {
           enableHighAccuracy: true,
-          timeout: 12e3,
+          timeout: Number(options.timeout || 12e3),
           maximumAge: 0,
           provider: "system",
-          coordsType: "gcj02"
+          coordsType: options.coordsType || "gcj02"
         }
       );
     });
+  }
+  function requestAndroidProviderLocation(providerName, options = {}) {
+    return new Promise((resolve, reject) => {
+      if (!isAndroidRuntime()) {
+        reject(new Error("当前环境不支持 Android 原生定位"));
+        return;
+      }
+      let locationManager = null;
+      let listener = null;
+      let timer = null;
+      let finished = false;
+      const cleanup = () => {
+        if (timer) {
+          clearTimeout(timer);
+          timer = null;
+        }
+        if (locationManager && listener) {
+          try {
+            locationManager.removeUpdates(listener);
+          } catch (error) {
+          }
+        }
+        listener = null;
+        locationManager = null;
+      };
+      const finishResolve = (value) => {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        cleanup();
+        resolve(value);
+      };
+      const finishReject = (error) => {
+        if (finished) {
+          return;
+        }
+        finished = true;
+        cleanup();
+        reject(error);
+      };
+      try {
+        const main = plus.android.runtimeMainActivity();
+        const Context = plus.android.importClass("android.content.Context");
+        plus.android.importClass("android.location.LocationManager");
+        const locationManagerObject = main.getSystemService(Context.LOCATION_SERVICE);
+        plus.android.importClass(locationManagerObject);
+        locationManager = locationManagerObject;
+        if (!locationManager || !locationManager.isProviderEnabled(providerName)) {
+          finishReject(new Error(providerName === "gps" ? "GPS 未开启" : "网络定位不可用"));
+          return;
+        }
+        const cached = normalizeAndroidLocation(locationManager.getLastKnownLocation(providerName), providerName, "android-last-known");
+        const maximumAgeMs = Number(options.maximumAgeMs || 15e3);
+        if (cached && Date.now() - cached.timestamp <= maximumAgeMs) {
+          finishResolve(cached);
+          return;
+        }
+        listener = plus.android.implements("android.location.LocationListener", {
+          onLocationChanged(location2) {
+            const normalized = normalizeAndroidLocation(location2, providerName, "android-live");
+            if (normalized) {
+              finishResolve(normalized);
+            }
+          },
+          onProviderDisabled(name) {
+            finishReject(new Error(`${String(name || providerName).toUpperCase()} 已关闭`));
+          },
+          onProviderEnabled() {
+          },
+          onStatusChanged() {
+          }
+        });
+        const timeout = Number(options.timeout || (providerName === "gps" ? 8e3 : 5e3));
+        timer = setTimeout(() => {
+          const lastKnown = normalizeAndroidLocation(locationManager.getLastKnownLocation(providerName), providerName, "android-timeout-last-known");
+          if (lastKnown) {
+            finishResolve(lastKnown);
+            return;
+          }
+          finishReject(new Error(`${providerName.toUpperCase()} 定位超时`));
+        }, timeout);
+        if (typeof locationManager.requestSingleUpdate === "function") {
+          locationManager.requestSingleUpdate(providerName, listener, main.getMainLooper());
+          return;
+        }
+        locationManager.requestLocationUpdates(providerName, 0, 0, listener, main.getMainLooper());
+      } catch (error) {
+        finishReject(new Error(normalizeLocationError(error)));
+      }
+    });
+  }
+  function normalizeAndroidLocation(location2, providerName, source) {
+    if (!location2) {
+      return null;
+    }
+    try {
+      plus.android.importClass(location2);
+    } catch (error) {
+      return null;
+    }
+    const latitude = Number(location2.getLatitude());
+    const longitude = Number(location2.getLongitude());
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+    const altitude = typeof location2.hasAltitude === "function" && location2.hasAltitude() ? Number(location2.getAltitude()) : 0;
+    const accuracy = typeof location2.hasAccuracy === "function" && location2.hasAccuracy() ? Number(location2.getAccuracy()) : 0;
+    const speed = typeof location2.hasSpeed === "function" && location2.hasSpeed() ? Number(location2.getSpeed()) : 0;
+    const bearing = typeof location2.hasBearing === "function" && location2.hasBearing() ? Number(location2.getBearing()) : 0;
+    const timestamp = Number(location2.getTime ? location2.getTime() : Date.now());
+    const provider = String(location2.getProvider ? location2.getProvider() : providerName || "android-location");
+    return {
+      latitude,
+      longitude,
+      altitude,
+      accuracy,
+      speed,
+      bearing,
+      timestamp,
+      provider,
+      coordinateSystem: "wgs84",
+      source
+    };
   }
   const _sfc_main$g = {
     __name: "index",
@@ -2577,10 +2838,10 @@ if (uni.restoreGlobal) {
       ];
       onLoad(async () => {
         try {
-          const location = await getCurrentLocation();
+          const location2 = await getCurrentLocation();
           currentCoords.value = {
-            longitude: location.longitude,
-            latitude: location.latitude
+            longitude: location2.longitude,
+            latitude: location2.latitude
           };
         } catch (error) {
           currentCoords.value = null;
@@ -2930,29 +3191,6 @@ if (uni.restoreGlobal) {
     ]);
   }
   const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$g, [["render", _sfc_render$f], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
-  const API_ORIGIN = "https://yd.frp-arm.com:44637";
-  const API_BASE_URL = `${API_ORIGIN}/api`;
-  const LEGACY_API_ORIGINS = [
-    "https://111.20.31.227:34144",
-    "https://frp-arm.com:44637"
-  ];
-  function normalizeApiAssetUrl(value) {
-    const raw = String(value || "").trim();
-    if (!raw) {
-      return "";
-    }
-    if (/^https?:\/\//i.test(raw)) {
-      const matched = LEGACY_API_ORIGINS.find((origin) => raw.startsWith(origin));
-      return matched ? `${API_ORIGIN}${raw.slice(matched.length)}` : raw;
-    }
-    if (raw.startsWith("/")) {
-      return `${API_ORIGIN}${raw}`;
-    }
-    return `${API_ORIGIN}/${raw}`;
-  }
-  function hasApiBaseUrl() {
-    return Boolean(API_BASE_URL && API_BASE_URL.trim());
-  }
   function request$3(url, data = {}) {
     return new Promise((resolve, reject) => {
       uni.request({
@@ -3273,6 +3511,16 @@ if (uni.restoreGlobal) {
   function hasAuthApiBaseUrl() {
     return Boolean(AUTH_API_BASE_URL && AUTH_API_BASE_URL.trim());
   }
+  function normalizeStoredUser(user) {
+    if (!user || typeof user !== "object") {
+      return user;
+    }
+    return {
+      ...user,
+      avatar_url: normalizeApiAssetUrl(user.avatar_url),
+      avatar: normalizeApiAssetUrl(user.avatar)
+    };
+  }
   function getStoredAuthToken() {
     const token = uni.getStorageSync(AUTH_TOKEN_STORAGE);
     return typeof token === "string" ? token : "";
@@ -3280,377 +3528,207 @@ if (uni.restoreGlobal) {
   function getStoredAuthUser() {
     try {
       const raw = uni.getStorageSync(AUTH_USER_STORAGE);
-      return raw ? JSON.parse(raw) : null;
+      return raw ? normalizeStoredUser(JSON.parse(raw)) : null;
     } catch (error) {
       return null;
     }
   }
   function saveAuthSession({ token, user }) {
     uni.setStorageSync(AUTH_TOKEN_STORAGE, token || "");
-    uni.setStorageSync(AUTH_USER_STORAGE, JSON.stringify(user || null));
+    uni.setStorageSync(AUTH_USER_STORAGE, JSON.stringify(normalizeStoredUser(user) || null));
   }
   function clearAuthSession() {
     uni.removeStorageSync(AUTH_TOKEN_STORAGE);
     uni.removeStorageSync(AUTH_USER_STORAGE);
   }
-  const guideList = [
-    {
-      id: "first-time-xinjiang",
-      title: "第一次来新疆，7 天怎么安排更顺路",
-      category: "行程规划",
-      readTime: "6 分钟阅读",
-      author: "云起天山编辑部",
-      publishDate: "2026-04-15",
-      views: "2.3k",
-      likes: "318",
-      location: "北疆经典线",
-      image: "https://upload.wikimedia.org/wikipedia/commons/d/d1/Nalati_Grassland_2.jpg",
-      excerpt: "适合第一次来新疆的用户，从乌鲁木齐出发，串联赛里木湖、伊犁草原和独库沿线。",
-      highlights: ["路线顺", "适合第一次来", "风景密度高"],
-      sections: [
-        {
-          title: "推荐节奏",
-          paragraphs: [
-            "如果你是第一次来新疆，建议不要一上来就铺太大范围。7 天时间更适合集中体验北疆经典风景线，减少每天换城市的疲惫感。",
-            "常见走法是乌鲁木齐进出，沿赛里木湖、霍城、伊宁、那拉提、独库公路北段或巴音布鲁克做一个顺时针闭环。"
-          ]
-        },
-        {
-          title: "行程拆分",
-          paragraphs: [
-            "第 1 天落地乌鲁木齐，适应节奏，晚上可以去大巴扎或新疆博物馆。",
-            "第 2 到 3 天重点走赛里木湖、果子沟、霍城一线，第 4 到 5 天进入伊犁草原景区，第 6 到 7 天根据通车情况安排独库沿线或返回乌鲁木齐。"
-          ]
-        },
-        {
-          title: "适合人群",
-          paragraphs: [
-            "适合第一次来新疆、想看代表性风景、又不想每天都在赶路的游客。",
-            "如果你更偏爱人文、老城和集市，可以把第一次行程改成南疆线。"
-          ]
-        }
-      ],
-      tips: ["旺季住宿至少提前 5 到 10 天预订", "独库公路通车时间要提前确认", "每天车程控制在 4 到 6 小时体验更好"]
-    },
-    {
-      id: "self-drive-checklist",
-      title: "新疆自驾前，这份准备清单先收好",
-      category: "自驾建议",
-      readTime: "5 分钟阅读",
-      author: "云起天山编辑部",
-      publishDate: "2026-04-15",
-      views: "1.8k",
-      likes: "246",
-      location: "全疆通用",
-      image: "https://bkimg.cdn.bcebos.com/pic/78310a55b319ebc4b7452225007dd8fc1e178a82b84e?x-bce-process=image/resize,m_lfit,w_536,limit_1/quality,Q_70",
-      excerpt: "新疆路程长、景点分散，自驾前确认证件、车辆状态、导航和补给，比临时做决定更重要。",
-      highlights: ["证件准备", "路线确认", "补给提醒"],
-      sections: [
-        {
-          title: "出发前检查",
-          paragraphs: [
-            "建议提前确认驾驶证、身份证、租车订单或保险资料，手机里同时准备离线地图和酒店订单截图。",
-            "车辆方面优先检查轮胎、刹车、玻璃水、备胎和手机充电接口，长线自驾不要忽略这些基础项。"
-          ]
-        },
-        {
-          title: "路线判断",
-          paragraphs: [
-            "新疆不是每一段都适合临时起意，特别是独库公路、山口、沙漠边缘路线和牧区道路。建议提前确认天气、施工和通行情况。",
-            "如果单日车程超过 600 公里，建议中间插入休息城市，否则体验会明显下降。"
-          ]
-        },
-        {
-          title: "补给重点",
-          paragraphs: [
-            "矿泉水、轻食、防晒、纸巾和应急药品最好固定放在车内一个收纳袋里。",
-            "进入长距离路段前，尽量在县城或服务区把油量和饮水都补满。"
-          ]
-        }
-      ],
-      tips: ["山路和长下坡不要连续疲劳驾驶", "尊重限速与检查站规定", "别把导航预计时长当成真实到达时长"]
-    },
-    {
-      id: "food-guide",
-      title: "新疆吃什么不容易踩雷",
-      category: "吃喝推荐",
-      readTime: "7 分钟阅读",
-      author: "云起天山编辑部",
-      publishDate: "2026-04-15",
-      views: "3.1k",
-      likes: "402",
-      location: "城市与古城",
-      image: "https://upload.wikimedia.org/wikipedia/commons/f/fc/East_gate_of_the_Ancient_City_of_Kashi_%2820230923104429%29.jpg",
-      excerpt: "抓饭、拌面、烤包子、馕和酸奶都值得尝，但点单方式和就餐时段也会影响体验。",
-      highlights: ["高频美食", "点单建议", "夜市提醒"],
-      sections: [
-        {
-          title: "第一次可以先吃什么",
-          paragraphs: [
-            "第一次来新疆，比较稳妥的入门组合是抓饭、烤肉、拌面、烤包子和酸奶。既能快速感受地方风味，也不容易因为口味太重而不适应。",
-            "如果你在喀什或库车，可以把古城散步和夜市安排在同一晚，体验会更完整。"
-          ]
-        },
-        {
-          title: "点单建议",
-          paragraphs: [
-            "新疆很多餐厅分量偏大，2 个人点 3 道主食型菜已经足够，建议先少点再加。",
-            "烤肉、抓饭、馕坑肉这类热菜尽量趁热吃，口感差异很明显。"
-          ]
-        },
-        {
-          title: "小提醒",
-          paragraphs: [
-            "景区内餐饮更适合应急补给，想认真吃一顿通常还是回到市区或县城更稳。",
-            "如果肠胃比较敏感，饮品和冰品不要一次性尝太多种。"
-          ]
-        }
-      ],
-      tips: ["夜市更适合边走边吃，不用一次点太多", "热门老店高峰期要排队", "早餐可以多试试奶茶、包子、馕"]
-    },
-    {
-      id: "desert-safety",
-      title: "去沙漠玩之前，一定先看这 6 条提醒",
-      category: "安全提醒",
-      readTime: "5 分钟阅读",
-      author: "云起天山编辑部",
-      publishDate: "2026-04-15",
-      views: "1.5k",
-      likes: "228",
-      location: "吐鲁番/南疆",
-      image: "https://upload.wikimedia.org/wikipedia/commons/1/1d/%E4%B8%AD%E5%9B%BD%E6%96%B0%E7%96%86%E9%84%AF%E5%96%84%E5%8E%BF%E5%BA%93%E6%9C%A8%E5%A1%94%E6%A0%BC%E6%B2%99%E6%BC%A0_China_Xinjiang%2C_Piqan_County_Desert_Chi_-_panoramio.jpg",
-      excerpt: "不论是库木塔格还是沙漠公路边体验项目，补水、防晒、结伴和服从景区安排都是底线。",
-      highlights: ["防晒", "补水", "别单独深入"],
-      sections: [
-        {
-          title: "为什么沙漠更需要准备",
-          paragraphs: [
-            "沙漠环境看起来开阔，但高温、风沙和缺少遮挡会让体感消耗远快于普通景区。",
-            "特别是正午时段，拍照 20 分钟和暴晒 20 分钟，感受完全不是一回事。"
-          ]
-        },
-        {
-          title: "最重要的 3 件事",
-          paragraphs: [
-            "第一是补水，第二是防晒，第三是不要脱离既定路线。无论是徒步、越野还是娱乐项目，都要把这三点放在最前面。",
-            "如果带老人和孩子，尽量把沙漠活动安排在日落前后。"
-          ]
-        },
-        {
-          title: "拍照和游玩建议",
-          paragraphs: [
-            "拍照衣服可以选择纯色或亮色，但鞋子更重要，最好穿能防沙、包裹脚背的款式。",
-            "如果遇到大风天，优先缩短停留时间，不要硬撑。"
-          ]
-        }
-      ],
-      tips: ["至少准备 1 到 2 瓶饮水", "不要轻易离开观景和活动区域", "风沙大时优先保护眼睛和电子设备"]
-    },
-    {
-      id: "tianshan-hiking",
-      title: "天山徒步装备，不想漏东西就照着带",
-      category: "户外探险",
-      readTime: "6 分钟阅读",
-      author: "云起天山编辑部",
-      publishDate: "2026-04-15",
-      views: "1.2k",
-      likes: "173",
-      location: "天山/草原线",
-      image: "https://upload.wikimedia.org/wikipedia/commons/8/87/%E5%A4%A9%E5%B1%B1%E5%A4%A9%E6%B1%A02_-_panoramio.jpg",
-      excerpt: "高山景区看起来温柔，实际天气和地形变化很快，鞋服、保暖层和应急物品不能省。",
-      highlights: ["保暖层", "徒步鞋", "轻量应急"],
-      sections: [
-        {
-          title: "基础装备",
-          paragraphs: [
-            "鞋子优先级最高，徒步鞋或抓地更好的运动鞋比拍照鞋更重要。",
-            "衣物建议按排汗层、保暖层、外层防风来准备，这样更适合新疆昼夜温差大的情况。"
-          ]
-        },
-        {
-          title: "随身物品",
-          paragraphs: [
-            "水、能量棒、防晒、充电宝、纸巾和简单药品建议都放进一个轻量双肩包。",
-            "如果行程里包含骑马或长距离观景车，衣物耐脏和防风也会比好看更重要。"
-          ]
-        },
-        {
-          title: "不建议省掉的项目",
-          paragraphs: [
-            "帽子、墨镜和外套不要因为天气预报晴朗就省掉。",
-            "山里天气说变就变，提前带上比临时后悔更划算。"
-          ]
-        }
-      ],
-      tips: ["不要穿新鞋上长线", "高海拔别忽视保暖", "雨具和一次性雨披可以备一个"]
-    },
-    {
-      id: "stay-where",
-      title: "新疆住宿怎么选，住景区还是住县城",
-      category: "住宿建议",
-      readTime: "5 分钟阅读",
-      author: "云起天山编辑部",
-      publishDate: "2026-04-15",
-      views: "1.6k",
-      likes: "201",
-      location: "全疆通用",
-      image: "https://upload.wikimedia.org/wikipedia/commons/3/3f/%E6%96%B0%E7%96%86-%E7%A6%BE%E6%9C%A8.%E9%BB%84%E6%98%8F_-_panoramio.jpg",
-      excerpt: "如果你更看重晨雾、日出和景区氛围，就住景区；如果更看重舒适度和性价比，住县城会更稳。",
-      highlights: ["景区住宿", "县城住宿", "预订时机"],
-      sections: [
-        {
-          title: "住景区的优点",
-          paragraphs: [
-            "像禾木、喀纳斯、那拉提这类地方，住进去的最大优势是早晚时段更自由，能避开一部分日间人流。",
-            "如果你想拍晨雾、日出或者夜空，景区住宿通常更值。"
-          ]
-        },
-        {
-          title: "住县城的优点",
-          paragraphs: [
-            "县城通常选择更多，洗漱、餐饮、停车和补给也更方便，适合自驾用户和带老人孩子的家庭。",
-            "缺点是第二天需要更早出发，才能赶在合适时段进入景区。"
-          ]
-        },
-        {
-          title: "预订建议",
-          paragraphs: [
-            "旺季先锁定核心节点住宿，再反推整体路线，会比先排路线再找房更稳。",
-            "如果是 7 到 8 月、十一或暑期亲子时段，尽量提前预订可取消房型。"
-          ]
-        }
-      ],
-      tips: ["核心景区旺季房量紧张", "自驾尽量关注停车条件", "景区住宿更适合拍早晚景色"]
-    }
-  ];
-  const guideAuthors = [
-    {
-      nickname: "北境慢游局",
-      avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=160"
-    },
-    {
-      nickname: "公路旅人阿远",
-      avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=160"
-    },
-    {
-      nickname: "喀什夜色札记",
-      avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=160"
-    },
-    {
-      nickname: "边地安全官",
-      avatar: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=160"
-    },
-    {
-      nickname: "天山装备社",
-      avatar: "https://images.unsplash.com/photo-1504593811423-6dd665756598?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=160"
-    },
-    {
-      nickname: "住哪儿研究所",
-      avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&q=80&w=160"
-    }
-  ];
-  const guideFeedMeta = {
-    "first-time-xinjiang": {
-      primaryTab: "发现",
-      cityTab: "同城",
-      subCategory: "推荐",
-      contentType: "图文",
-      likesCount: 318,
-      saveCount: 126,
-      commentCount: 42,
-      coverAspectRatio: 1.28,
-      badgeCount: 3,
-      locationTag: "乌鲁木齐出发"
-    },
-    "self-drive-checklist": {
-      primaryTab: "发现",
-      cityTab: "同城",
-      subCategory: "自驾",
-      contentType: "视频",
-      likesCount: 246,
-      saveCount: 108,
-      commentCount: 30,
-      coverAspectRatio: 1.55,
-      badgeCount: 8,
-      locationTag: "独库热议"
-    },
-    "food-guide": {
-      primaryTab: "发现",
-      cityTab: "同城",
-      subCategory: "美食",
-      contentType: "图文",
-      likesCount: 402,
-      saveCount: 176,
-      commentCount: 58,
-      coverAspectRatio: 1.38,
-      badgeCount: 12,
-      locationTag: "喀什夜市"
-    },
-    "desert-safety": {
-      primaryTab: "发现",
-      cityTab: "同城",
-      subCategory: "安全",
-      contentType: "视频",
-      likesCount: 228,
-      saveCount: 96,
-      commentCount: 27,
-      coverAspectRatio: 1.62,
-      badgeCount: 5,
-      locationTag: "吐鲁番提醒"
-    },
-    "tianshan-hiking": {
-      primaryTab: "关注",
-      cityTab: "同城",
-      subCategory: "徒步",
-      contentType: "图文",
-      likesCount: 173,
-      saveCount: 89,
-      commentCount: 21,
-      coverAspectRatio: 1.48,
-      badgeCount: 2,
-      locationTag: "天山装备"
-    },
-    "stay-where": {
-      primaryTab: "发现",
-      cityTab: "同城",
-      subCategory: "住宿",
-      contentType: "图文",
-      likesCount: 201,
-      saveCount: 92,
-      commentCount: 18,
-      coverAspectRatio: 1.7,
-      badgeCount: 6,
-      locationTag: "旺季订房"
-    }
-  };
-  function enrichGuide(item, index) {
-    const author = guideAuthors[index % guideAuthors.length];
-    const feedMeta = guideFeedMeta[item.id] || {};
-    return {
-      ...item,
-      nickname: author.nickname,
-      authorAvatar: author.avatar,
-      primaryTab: feedMeta.primaryTab || "发现",
-      cityTab: feedMeta.cityTab || "同城",
-      subCategory: feedMeta.subCategory || "推荐",
-      contentType: feedMeta.contentType || "图文",
-      likesCount: feedMeta.likesCount || Number.parseInt(item.likes, 10) || 0,
-      saveCount: feedMeta.saveCount || 0,
-      commentCount: feedMeta.commentCount || 0,
-      coverAspectRatio: feedMeta.coverAspectRatio || 1.45,
-      badgeCount: feedMeta.badgeCount || 0,
-      locationTag: feedMeta.locationTag || item.location
-    };
-  }
-  function getGuideList() {
-    return guideList.map((item, index) => enrichGuide(item, index));
-  }
-  function getGuideById(id) {
-    const index = guideList.findIndex((item) => item.id === id);
-    if (index === -1) {
+  function normalizeLocation(location2) {
+    if (!location2) {
       return null;
     }
-    return enrichGuide(guideList[index], index);
+    const latitude = Number(location2.latitude);
+    const longitude = Number(location2.longitude);
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      return null;
+    }
+    return {
+      latitude,
+      longitude,
+      altitude: Number(location2.altitude || 0),
+      accuracy: Number(location2.accuracy || 0),
+      speed: Number(location2.speed || 0),
+      bearing: Number(location2.bearing || location2.heading || 0),
+      timestamp: Number(location2.timestamp || Date.now()),
+      provider: String(location2.provider || location2.sourceProvider || ""),
+      source: String(location2.source || ""),
+      coordinateSystem: String(location2.coordinateSystem || location2.coordsType || "")
+    };
+  }
+  function formatCoordinate(value, type) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return "--";
+    }
+    const suffix = type === "lat" ? numeric >= 0 ? "N" : "S" : numeric >= 0 ? "E" : "W";
+    return `${Math.abs(numeric).toFixed(5)}deg${suffix}`;
+  }
+  function getDistanceKm(from, to) {
+    const start = normalizeLocation(from);
+    const end = normalizeLocation(to);
+    if (!start || !end) {
+      return 0;
+    }
+    const rad = Math.PI / 180;
+    const lat1 = start.latitude * rad;
+    const lat2 = end.latitude * rad;
+    const deltaLat = lat2 - lat1;
+    const deltaLng = (end.longitude - start.longitude) * rad;
+    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
+    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  function sumTrackDistanceKm(points = []) {
+    if (!Array.isArray(points) || points.length < 2) {
+      return 0;
+    }
+    let total = 0;
+    for (let index = 1; index < points.length; index += 1) {
+      total += getDistanceKm(points[index - 1], points[index]);
+    }
+    return total;
+  }
+  function buildTrackPolyline(points = []) {
+    if (!Array.isArray(points) || !points.length) {
+      return [];
+    }
+    return [
+      {
+        points: points.map(normalizeLocation).filter(Boolean).map((item) => ({ latitude: item.latitude, longitude: item.longitude })),
+        color: "#FF7A00",
+        width: 5,
+        borderColor: "#C14F00",
+        borderWidth: 1
+      }
+    ];
+  }
+  function buildCurrentMarker(location2, isTracking = false) {
+    const normalized = normalizeLocation(location2);
+    if (!normalized) {
+      return [];
+    }
+    return [
+      {
+        id: 1,
+        latitude: normalized.latitude,
+        longitude: normalized.longitude,
+        width: 30,
+        height: 30,
+        callout: {
+          content: isTracking ? "记录中" : "当前位置",
+          display: "ALWAYS",
+          fontSize: 11,
+          borderRadius: 12,
+          bgColor: "#1C1C1E",
+          color: "#FFFFFF",
+          padding: 6
+        }
+      }
+    ];
+  }
+  function formatMetric(value, digits = 0) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric) || numeric <= 0) {
+      return "--";
+    }
+    return numeric.toFixed(digits);
+  }
+  function normalizeGuideTrack(track) {
+    if (!track) {
+      return null;
+    }
+    const source = Array.isArray(track) ? { points: track } : track;
+    const points = Array.isArray(source.points) ? source.points.map(normalizeLocation).filter(Boolean) : [];
+    if (!points.length) {
+      return null;
+    }
+    const startPoint = points[0];
+    const endPoint = points[points.length - 1];
+    const durationMs = resolveTrackDuration(source.durationMs, startPoint, endPoint);
+    const distanceKm = resolveTrackDistance(source.distanceKm, points);
+    const altitudeGain = resolveAltitudeGain(source.altitudeGain, points);
+    return {
+      points,
+      pointCount: Number(source.pointCount) || points.length,
+      startPoint,
+      endPoint,
+      distanceKm,
+      durationMs,
+      altitudeGain,
+      capturedAt: Number(source.capturedAt) || endPoint.timestamp || Date.now()
+    };
+  }
+  function createGuideTrackPayload(points = [], extras = {}) {
+    const normalized = normalizeGuideTrack({ points, ...extras });
+    if (!normalized) {
+      return null;
+    }
+    return {
+      points: normalized.points,
+      pointCount: normalized.pointCount,
+      distanceKm: normalized.distanceKm,
+      durationMs: normalized.durationMs,
+      altitudeGain: normalized.altitudeGain,
+      capturedAt: normalized.capturedAt,
+      startPoint: normalized.startPoint,
+      endPoint: normalized.endPoint
+    };
+  }
+  function formatTrackDuration(durationMs) {
+    const totalMinutes = Math.max(0, Math.round(Number(durationMs || 0) / 6e4));
+    if (!totalMinutes) {
+      return "刚开始";
+    }
+    const hours = Math.floor(totalMinutes / 60);
+    const minutes = totalMinutes % 60;
+    if (!hours) {
+      return `${minutes} 分钟`;
+    }
+    if (!minutes) {
+      return `${hours} 小时`;
+    }
+    return `${hours} 小时 ${minutes} 分钟`;
+  }
+  function resolveTrackDuration(rawDuration, startPoint, endPoint) {
+    const durationMs = Number(rawDuration);
+    if (Number.isFinite(durationMs) && durationMs > 0) {
+      return durationMs;
+    }
+    const startTime = Number((startPoint == null ? void 0 : startPoint.timestamp) || 0);
+    const endTime = Number((endPoint == null ? void 0 : endPoint.timestamp) || 0);
+    if (startTime > 0 && endTime >= startTime) {
+      return endTime - startTime;
+    }
+    return 0;
+  }
+  function resolveTrackDistance(rawDistance, points) {
+    const distanceKm = Number(rawDistance);
+    if (Number.isFinite(distanceKm) && distanceKm > 0) {
+      return distanceKm;
+    }
+    return sumTrackDistanceKm(points);
+  }
+  function resolveAltitudeGain(rawAltitudeGain, points) {
+    var _a, _b;
+    const altitudeGain = Number(rawAltitudeGain);
+    if (Number.isFinite(altitudeGain) && altitudeGain > 0) {
+      return altitudeGain;
+    }
+    let totalGain = 0;
+    for (let index = 1; index < points.length; index += 1) {
+      const delta = Number(((_a = points[index]) == null ? void 0 : _a.altitude) || 0) - Number(((_b = points[index - 1]) == null ? void 0 : _b.altitude) || 0);
+      if (delta > 0) {
+        totalGain += delta;
+      }
+    }
+    return totalGain;
   }
   const PUBLISHED_GUIDES_STORAGE = "meet-xinjiang-published-guides";
   const defaultCoverOptions = [
@@ -3680,6 +3758,7 @@ if (uni.restoreGlobal) {
     const contentType = deriveContentType(item, images);
     const previewImage = images[0] || item.videoPoster || item.image || "";
     const summaryText = item.excerpt || item.summary || "";
+    const hikingTrack = normalizeGuideTrack(item.hikingTrack);
     return {
       id: item.id,
       title: item.title,
@@ -3713,6 +3792,7 @@ if (uni.restoreGlobal) {
       videoPoster: item.videoPoster || "",
       summaryText,
       hasMedia: Boolean(previewImage || item.video),
+      hikingTrack,
       isUserPublished: true
     };
   }
@@ -3837,7 +3917,8 @@ if (uni.restoreGlobal) {
       images: Array.isArray(item.images) ? item.images.map(normalizeApiAssetUrl).filter(Boolean) : [],
       authorAvatar: normalizeApiAssetUrl(item.authorAvatar),
       video: normalizeApiAssetUrl(item.video),
-      videoPoster: normalizeApiAssetUrl(item.videoPoster)
+      videoPoster: normalizeApiAssetUrl(item.videoPoster),
+      hikingTrack: normalizeGuideTrack(item.hikingTrack)
     };
   }
   function uploadGuideMedia(filePath, mediaType = "image", token = getStoredAuthToken()) {
@@ -3897,14 +3978,14 @@ if (uni.restoreGlobal) {
   async function getGuideFeed(params = {}) {
     const publishedGuides = getPublishedGuides();
     if (!hasGuideApi()) {
-      return [...publishedGuides, ...getGuideList()];
+      return publishedGuides;
     }
     const data = await request$2("GET", "/guides", params);
     return Array.isArray(data == null ? void 0 : data.list) ? data.list.map(normalizeGuideEntity) : [];
   }
   async function getGuideDetail(id) {
     if (!hasGuideApi()) {
-      return getPublishedGuideById(id) || getGuideById(id);
+      return getPublishedGuideById(id);
     }
     const data = await request$2("GET", `/guides/${encodeURIComponent(id)}`);
     return normalizeGuideEntity((data == null ? void 0 : data.data) || null);
@@ -4144,8 +4225,8 @@ if (uni.restoreGlobal) {
         }
         cityLoading.value = true;
         try {
-          const location = await getCurrentLocation();
-          const regeo = await reverseGeocode(location.longitude, location.latitude);
+          const location2 = await getCurrentLocation();
+          const regeo = await reverseGeocode(location2.longitude, location2.latitude);
           const city = normalizeCityName(
             ((_a = regeo == null ? void 0 : regeo.addressComponent) == null ? void 0 : _a.city) || ((_b = regeo == null ? void 0 : regeo.addressComponent) == null ? void 0 : _b.district) || ""
           );
@@ -4691,6 +4772,336 @@ if (uni.restoreGlobal) {
     ]);
   }
   const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$e, [["render", _sfc_render$d], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
+  const TIANDITU_PROVIDER = "tianditu";
+  const TIANDITU_KEY = "58f4f23a5a026d8bc9f289c7156b0b1a";
+  function hasTiandituKey() {
+    return Boolean(TIANDITU_KEY) && !TIANDITU_KEY.includes("请在这里填入");
+  }
+  const TIANDITU_LAYERS = {
+    vector: {
+      layer: "vec_w",
+      annotation: "cva_w",
+      label: "天地图矢量"
+    },
+    imagery: {
+      layer: "img_w",
+      annotation: "cia_w",
+      label: "天地图影像"
+    },
+    terrain: {
+      layer: "ter_w",
+      annotation: "cta_w",
+      label: "天地图地形"
+    }
+  };
+  function buildTileUrl(layer) {
+    if (!hasTiandituKey() || !layer) {
+      return "";
+    }
+    return `https://t0.tianditu.gov.cn/DataServer?T=${encodeURIComponent(layer)}&x={x}&y={y}&l={z}&tk=${encodeURIComponent(TIANDITU_KEY)}`;
+  }
+  function getTiandituLayerConfig(mode = "terrain") {
+    const config = TIANDITU_LAYERS[mode] || TIANDITU_LAYERS.terrain;
+    return {
+      provider: TIANDITU_PROVIDER,
+      mode,
+      label: config.label,
+      tileUrl: buildTileUrl(config.layer),
+      annotationUrl: buildTileUrl(config.annotation),
+      ready: hasTiandituKey()
+    };
+  }
+  const TILE_SIZE = 256;
+  const TILE_RADIUS = 2;
+  const _sfc_main$d = {
+    __name: "HikingTileMapCompat",
+    props: {
+      mapCenter: {
+        type: Object,
+        default: null
+      },
+      mapScale: {
+        type: Number,
+        default: 15
+      },
+      mapPolyline: {
+        type: Array,
+        default: () => []
+      },
+      mapMarkers: {
+        type: Array,
+        default: () => []
+      },
+      mapModeKey: {
+        type: String,
+        default: "normal"
+      }
+    },
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const GRID_SIZE = (TILE_RADIUS * 2 + 1) * TILE_SIZE;
+      const props = __props;
+      const tileErrorCount = vue.ref(0);
+      const mapMode = vue.computed(() => {
+        if (props.mapModeKey === "satellite") {
+          return "imagery";
+        }
+        if (props.mapModeKey === "terrain") {
+          return "terrain";
+        }
+        return "vector";
+      });
+      const tileConfig = vue.computed(() => getTiandituLayerConfig(mapMode.value));
+      const zoomLevel = vue.computed(() => {
+        const raw = Math.round(Number(props.mapScale || 15));
+        return Math.max(3, Math.min(18, raw));
+      });
+      const projectedCenter = vue.computed(() => {
+        var _a, _b;
+        return projectToTile((_a = props.mapCenter) == null ? void 0 : _a.longitude, (_b = props.mapCenter) == null ? void 0 : _b.latitude, zoomLevel.value);
+      });
+      const gridStyle = vue.computed(() => {
+        if (!projectedCenter.value) {
+          return {};
+        }
+        const translateX = -((TILE_RADIUS + projectedCenter.value.fracX) * TILE_SIZE);
+        const translateY = -((TILE_RADIUS + projectedCenter.value.fracY) * TILE_SIZE);
+        return {
+          width: `${GRID_SIZE}px`,
+          height: `${GRID_SIZE}px`,
+          transform: `translate(${translateX}px, ${translateY}px)`
+        };
+      });
+      const tiles = vue.computed(() => {
+        if (!projectedCenter.value || !tileConfig.value.ready || !tileConfig.value.tileUrl) {
+          return [];
+        }
+        const total = 2 ** zoomLevel.value;
+        const list = [];
+        for (let row = -TILE_RADIUS; row <= TILE_RADIUS; row += 1) {
+          for (let col = -TILE_RADIUS; col <= TILE_RADIUS; col += 1) {
+            const tileX = modulo(projectedCenter.value.tileX + col, total);
+            const tileY = clamp(projectedCenter.value.tileY + row, 0, total - 1);
+            const left = (col + TILE_RADIUS) * TILE_SIZE;
+            const top = (row + TILE_RADIUS) * TILE_SIZE;
+            list.push({
+              key: `${zoomLevel.value}-${tileX}-${tileY}`,
+              baseUrl: fillTileUrl(tileConfig.value.tileUrl, tileX, tileY, zoomLevel.value),
+              annotationUrl: tileConfig.value.annotationUrl ? fillTileUrl(tileConfig.value.annotationUrl, tileX, tileY, zoomLevel.value) : "",
+              style: `left:${left}px;top:${top}px;width:${TILE_SIZE}px;height:${TILE_SIZE}px;`
+            });
+          }
+        }
+        return list;
+      });
+      const markerDots = vue.computed(() => {
+        const list = (Array.isArray(props.mapMarkers) && props.mapMarkers.length ? props.mapMarkers : [props.mapCenter]).map((item, index) => {
+          const point = projectPoint(item == null ? void 0 : item.longitude, item == null ? void 0 : item.latitude);
+          if (!point) {
+            return null;
+          }
+          return {
+            key: `marker-${index}`,
+            style: `left:${point.x - 18}px;top:${point.y - 18}px;`
+          };
+        }).filter(Boolean);
+        return list.slice(0, 3);
+      });
+      const trackSegments = vue.computed(() => {
+        var _a, _b, _c, _d;
+        const line = Array.isArray(props.mapPolyline) ? props.mapPolyline[0] : null;
+        const points = Array.isArray(line == null ? void 0 : line.points) ? line.points : [];
+        const color = (line == null ? void 0 : line.color) || "#ff7a00";
+        const width = Math.max(4, Number((line == null ? void 0 : line.width) || 5));
+        const segments = [];
+        for (let index = 1; index < points.length; index += 1) {
+          const start = projectPoint((_a = points[index - 1]) == null ? void 0 : _a.longitude, (_b = points[index - 1]) == null ? void 0 : _b.latitude);
+          const end = projectPoint((_c = points[index]) == null ? void 0 : _c.longitude, (_d = points[index]) == null ? void 0 : _d.latitude);
+          if (!start || !end) {
+            continue;
+          }
+          const dx = end.x - start.x;
+          const dy = end.y - start.y;
+          const length = Math.sqrt(dx * dx + dy * dy);
+          if (!Number.isFinite(length) || length < 1) {
+            continue;
+          }
+          const angle = Math.atan2(dy, dx);
+          segments.push({
+            key: `segment-${index}`,
+            style: `left:${start.x}px;top:${start.y - width / 2}px;width:${length}px;height:${width}px;background:${color};transform:rotate(${angle}rad);`
+          });
+        }
+        return segments;
+      });
+      function projectPoint(longitude, latitude) {
+        if (!projectedCenter.value) {
+          return null;
+        }
+        const projected = projectToTile(longitude, latitude, zoomLevel.value);
+        if (!projected) {
+          return null;
+        }
+        const originX = projectedCenter.value.tileX - TILE_RADIUS;
+        const originY = projectedCenter.value.tileY - TILE_RADIUS;
+        return {
+          x: (projected.worldX - originX) * TILE_SIZE,
+          y: (projected.worldY - originY) * TILE_SIZE
+        };
+      }
+      function projectToTile(longitude, latitude, zoom) {
+        const lng = Number(longitude);
+        const lat = Number(latitude);
+        if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+          return null;
+        }
+        const boundedLat = clamp(lat, -85.05112878, 85.05112878);
+        const total = 2 ** zoom;
+        const worldX = (lng + 180) / 360 * total;
+        const rad = boundedLat * Math.PI / 180;
+        const worldY = (1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * total;
+        const tileX = Math.floor(worldX);
+        const tileY = Math.floor(worldY);
+        return {
+          worldX,
+          worldY,
+          tileX,
+          tileY,
+          fracX: worldX - tileX,
+          fracY: worldY - tileY
+        };
+      }
+      function fillTileUrl(template, x, y, z) {
+        return String(template || "").replace("{x}", String(x)).replace("{y}", String(y)).replace("{z}", String(z));
+      }
+      function clamp(value, min, max) {
+        return Math.min(max, Math.max(min, value));
+      }
+      function modulo(value, max) {
+        return (value % max + max) % max;
+      }
+      function handleTileError() {
+        tileErrorCount.value += 1;
+      }
+      const __returned__ = { TILE_SIZE, TILE_RADIUS, GRID_SIZE, props, tileErrorCount, mapMode, tileConfig, zoomLevel, projectedCenter, gridStyle, tiles, markerDots, trackSegments, projectPoint, projectToTile, fillTileUrl, clamp, modulo, handleTileError, computed: vue.computed, ref: vue.ref, get getTiandituLayerConfig() {
+        return getTiandituLayerConfig;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$c(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "tile-map" }, [
+      vue.createElementVNode(
+        "view",
+        {
+          class: "tile-grid",
+          style: vue.normalizeStyle($setup.gridStyle)
+        },
+        [
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.tiles, (tile) => {
+              return vue.openBlock(), vue.createElementBlock(
+                vue.Fragment,
+                {
+                  key: tile.key
+                },
+                [
+                  vue.createElementVNode("image", {
+                    class: "tile-image",
+                    src: tile.baseUrl,
+                    mode: "scaleToFill",
+                    style: vue.normalizeStyle(tile.style),
+                    onError: $setup.handleTileError
+                  }, null, 44, ["src"]),
+                  tile.annotationUrl ? (vue.openBlock(), vue.createElementBlock("image", {
+                    key: 0,
+                    class: "tile-image tile-annotation",
+                    src: tile.annotationUrl,
+                    mode: "scaleToFill",
+                    style: vue.normalizeStyle(tile.style),
+                    onError: $setup.handleTileError
+                  }, null, 44, ["src"])) : vue.createCommentVNode("v-if", true)
+                ],
+                64
+                /* STABLE_FRAGMENT */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          )),
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.trackSegments, (segment) => {
+              return vue.openBlock(), vue.createElementBlock(
+                "view",
+                {
+                  key: segment.key,
+                  class: "track-segment",
+                  style: vue.normalizeStyle(segment.style)
+                },
+                null,
+                4
+                /* STYLE */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          )),
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.markerDots, (marker) => {
+              return vue.openBlock(), vue.createElementBlock(
+                "view",
+                {
+                  key: marker.key,
+                  class: "marker-dot",
+                  style: vue.normalizeStyle(marker.style)
+                },
+                [
+                  vue.createElementVNode("view", { class: "marker-core" })
+                ],
+                4
+                /* STYLE */
+              );
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ],
+        4
+        /* STYLE */
+      )
+    ]);
+  }
+  const HikingTileMapCompat = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$c], ["__scopeId", "data-v-949360fd"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingTileMapCompat.vue"]]);
+  function normalizeUser(user) {
+    if (!user || typeof user !== "object") {
+      return user;
+    }
+    return {
+      ...user,
+      avatar_url: normalizeApiAssetUrl(user.avatar_url),
+      avatar: normalizeApiAssetUrl(user.avatar)
+    };
+  }
+  function normalizeResponseData(data) {
+    if (!data || typeof data !== "object") {
+      return data;
+    }
+    return {
+      ...data,
+      user: normalizeUser(data.user),
+      data: data.data && typeof data.data === "object" ? {
+        ...data.data,
+        avatar_url: normalizeApiAssetUrl(data.data.avatar_url)
+      } : data.data
+    };
+  }
   function request$1(path, data) {
     return new Promise((resolve, reject) => {
       if (!hasAuthApiBaseUrl()) {
@@ -4714,7 +5125,7 @@ if (uni.restoreGlobal) {
           reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
           return;
         }
-        resolve(res.data || {});
+        resolve(normalizeResponseData(res.data || {}));
       }).catch((error) => {
         reject(new Error((error == null ? void 0 : error.message) || "无法连接认证服务，请检查服务器地址或网络。"));
       });
@@ -4749,7 +5160,7 @@ if (uni.restoreGlobal) {
           reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
           return;
         }
-        resolve(res.data || {});
+        resolve(normalizeResponseData(res.data || {}));
       }).catch((error) => reject(new Error((error == null ? void 0 : error.message) || "无法连接服务器")));
     });
   }
@@ -4770,7 +5181,7 @@ if (uni.restoreGlobal) {
             reject(new Error((data == null ? void 0 : data.message) || "上传失败"));
             return;
           }
-          resolve(data);
+          resolve(normalizeResponseData(data));
         },
         fail: () => reject(new Error("上传失败，请检查网络"))
       });
@@ -4794,7 +5205,7 @@ if (uni.restoreGlobal) {
   function unfollowUser(token, userId) {
     return authRequest(`/users/${encodeURIComponent(userId)}/follow`, "DELETE", token, void 0);
   }
-  const _sfc_main$d = {
+  const _sfc_main$c = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -4854,6 +5265,16 @@ if (uni.restoreGlobal) {
         }
         return `已展示最新 ${comments.value.length} 条评论`;
       });
+      function commentAvatar(comment) {
+        var _a, _b, _c, _d;
+        if (comment == null ? void 0 : comment.avatarUrl) {
+          return comment.avatarUrl;
+        }
+        if ((comment == null ? void 0 : comment.authorId) && ((_a = currentUser.value) == null ? void 0 : _a.id) && comment.authorId === currentUser.value.id) {
+          return ((_b = currentUser.value) == null ? void 0 : _b.avatar_url) || ((_c = guide.value) == null ? void 0 : _c.authorAvatar) || "";
+        }
+        return ((_d = guide.value) == null ? void 0 : _d.authorAvatar) || "";
+      }
       const followButtonText = vue.computed(() => {
         var _a, _b, _c;
         if (!((_a = guide.value) == null ? void 0 : _a.authorId)) {
@@ -4872,6 +5293,40 @@ if (uni.restoreGlobal) {
           return [];
         }
         return [guide.value.locationTag, ...guide.value.highlights || []].filter(Boolean).map((item) => String(item).replace(/^#/, "").trim()).filter(Boolean).slice(0, 4);
+      });
+      const guideTrack = vue.computed(() => {
+        var _a;
+        return ((_a = guide.value) == null ? void 0 : _a.hikingTrack) || null;
+      });
+      const guideTrackCenter = vue.computed(() => {
+        var _a, _b;
+        return ((_a = guideTrack.value) == null ? void 0 : _a.endPoint) || ((_b = guideTrack.value) == null ? void 0 : _b.startPoint) || null;
+      });
+      const guideTrackPolyline = vue.computed(() => {
+        var _a;
+        return buildTrackPolyline(((_a = guideTrack.value) == null ? void 0 : _a.points) || []);
+      });
+      const guideTrackMarkers = vue.computed(() => buildCurrentMarker(guideTrackCenter.value, false));
+      const guideTrackDistanceText = vue.computed(() => {
+        var _a;
+        const distanceKm = Number(((_a = guideTrack.value) == null ? void 0 : _a.distanceKm) || 0);
+        return distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "--";
+      });
+      const guideTrackDurationText = vue.computed(() => {
+        var _a;
+        return formatTrackDuration(((_a = guideTrack.value) == null ? void 0 : _a.durationMs) || 0);
+      });
+      const guideTrackAscentText = vue.computed(() => {
+        var _a;
+        const ascent = Number(((_a = guideTrack.value) == null ? void 0 : _a.altitudeGain) || 0);
+        return ascent > 0 ? `${Math.round(ascent)} m` : "--";
+      });
+      const guideTrackCoordinateText = vue.computed(() => {
+        const point = guideTrackCenter.value;
+        if (!point) {
+          return "--";
+        }
+        return `${formatCoordinate(point.latitude, "lat")} / ${formatCoordinate(point.longitude, "lng")}`;
       });
       const searchHint = vue.computed(() => {
         var _a;
@@ -5191,7 +5646,7 @@ if (uni.restoreGlobal) {
         }
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       }
-      const __returned__ = { guide, activeImageIndex, followLoading, detailLoading, isLiked, isSaved, likeCount, saveCount, likeSubmitting, saveSubmitting, comments, commentInput, commentSubmitting, commentInputFocused, commentsLoading, commentError, commentDeletingId, systemInfo, statusBarHeight, statusBarStyle, guideImages, hasVideo, currentUser, isOwnAuthor, showFollowButton, commentInputAvatar, commentSubmitDisabled, commentSummary, followButtonText, detailTags, searchHint, toggleLike, toggleSave, focusComment, handleCommentBlur, loadComments, reloadComments, submitComment, promptLoginForComment, removeComment, goBack, handleSwiperChange, previewImage, handleFollowTap, formatCount, formatPublishMeta, formatCommentTime, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { guide, activeImageIndex, followLoading, detailLoading, isLiked, isSaved, likeCount, saveCount, likeSubmitting, saveSubmitting, comments, commentInput, commentSubmitting, commentInputFocused, commentsLoading, commentError, commentDeletingId, systemInfo, statusBarHeight, statusBarStyle, guideImages, hasVideo, currentUser, isOwnAuthor, showFollowButton, commentInputAvatar, commentSubmitDisabled, commentSummary, commentAvatar, followButtonText, detailTags, guideTrack, guideTrackCenter, guideTrackPolyline, guideTrackMarkers, guideTrackDistanceText, guideTrackDurationText, guideTrackAscentText, guideTrackCoordinateText, searchHint, toggleLike, toggleSave, focusComment, handleCommentBlur, loadComments, reloadComments, submitComment, promptLoginForComment, removeComment, goBack, handleSwiperChange, previewImage, handleFollowTap, formatCount, formatPublishMeta, formatCommentTime, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
       }, CachedImage, get clearAuthSession() {
         return clearAuthSession;
@@ -5199,7 +5654,15 @@ if (uni.restoreGlobal) {
         return getStoredAuthToken;
       }, get getStoredAuthUser() {
         return getStoredAuthUser;
-      }, get followUser() {
+      }, get formatTrackDuration() {
+        return formatTrackDuration;
+      }, get buildCurrentMarker() {
+        return buildCurrentMarker;
+      }, get buildTrackPolyline() {
+        return buildTrackPolyline;
+      }, get formatCoordinate() {
+        return formatCoordinate;
+      }, HikingTileMapCompat, get followUser() {
         return followUser;
       }, get unfollowUser() {
         return unfollowUser;
@@ -5224,7 +5687,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$c(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$b(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "detail-page page-shell" }, [
       $setup.guide ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -5246,10 +5709,11 @@ if (uni.restoreGlobal) {
             onClick: $setup.goBack
           }, "‹"),
           vue.createElementVNode("view", { class: "author-strip" }, [
-            vue.createElementVNode("image", {
-              class: "author-avatar",
+            vue.createVNode($setup["CachedImage"], {
               src: $setup.guide.authorAvatar,
-              mode: "aspectFill"
+              "container-class": "author-avatar-shell",
+              "image-class": "author-avatar",
+              style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
             }, null, 8, ["src"]),
             vue.createElementVNode("view", { class: "author-copy" }, [
               vue.createElementVNode(
@@ -5430,6 +5894,75 @@ if (uni.restoreGlobal) {
             )
           ])
         ]),
+        $setup.guideTrack ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "track-section section"
+        }, [
+          vue.createElementVNode("view", { class: "track-section-head" }, [
+            vue.createElementVNode("view", null, [
+              vue.createElementVNode("text", { class: "track-section-title" }, "附带徒步轨迹"),
+              vue.createElementVNode("text", { class: "track-section-subtitle" }, "这条笔记同步了一段真实路线，可直接查看大致走向。")
+            ]),
+            vue.createElementVNode(
+              "text",
+              { class: "track-section-badge" },
+              vue.toDisplayString($setup.guideTrack.pointCount) + " 点",
+              1
+              /* TEXT */
+            )
+          ]),
+          vue.createElementVNode("view", { class: "track-stat-row" }, [
+            vue.createElementVNode("view", { class: "track-stat-card" }, [
+              vue.createElementVNode(
+                "text",
+                { class: "track-stat-value" },
+                vue.toDisplayString($setup.guideTrackDistanceText),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("text", { class: "track-stat-label" }, "路线距离")
+            ]),
+            vue.createElementVNode("view", { class: "track-stat-card" }, [
+              vue.createElementVNode(
+                "text",
+                { class: "track-stat-value" },
+                vue.toDisplayString($setup.guideTrackDurationText),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("text", { class: "track-stat-label" }, "记录时长")
+            ]),
+            vue.createElementVNode("view", { class: "track-stat-card" }, [
+              vue.createElementVNode(
+                "text",
+                { class: "track-stat-value" },
+                vue.toDisplayString($setup.guideTrackAscentText),
+                1
+                /* TEXT */
+              ),
+              vue.createElementVNode("text", { class: "track-stat-label" }, "累计爬升")
+            ])
+          ]),
+          vue.createElementVNode("view", { class: "track-map-shell" }, [
+            vue.createVNode($setup["HikingTileMapCompat"], {
+              "map-center": $setup.guideTrackCenter,
+              "map-scale": 14,
+              "map-polyline": $setup.guideTrackPolyline,
+              "map-markers": $setup.guideTrackMarkers,
+              "map-mode-key": "satellite"
+            }, null, 8, ["map-center", "map-polyline", "map-markers"])
+          ]),
+          vue.createElementVNode("view", { class: "track-meta-row" }, [
+            vue.createElementVNode("text", { class: "track-meta-label" }, "终点坐标"),
+            vue.createElementVNode(
+              "text",
+              { class: "track-meta-value" },
+              vue.toDisplayString($setup.guideTrackCoordinateText),
+              1
+              /* TEXT */
+            )
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
         vue.createElementVNode("view", { class: "comment-head section" }, [
           vue.createElementVNode("view", null, [
             vue.createElementVNode(
@@ -5453,20 +5986,21 @@ if (uni.restoreGlobal) {
           class: "input-preview section",
           onClick: $setup.focusComment
         }, [
-          vue.createElementVNode("image", {
-            class: "comment-avatar",
+          vue.createVNode($setup["CachedImage"], {
             src: $setup.commentInputAvatar,
-            mode: "aspectFill"
+            "container-class": "comment-avatar-shell",
+            "image-class": "comment-avatar",
+            style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
           }, null, 8, ["src"]),
           vue.createElementVNode("view", { class: "fake-input" }, "留下你的想法吧")
         ]),
         $setup.commentsLoading ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 0,
+          key: 1,
           class: "comment-state section"
         }, [
           vue.createElementVNode("text", { class: "comment-state-text" }, "评论加载中...")
         ])) : $setup.commentError ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 1,
+          key: 2,
           class: "comment-state section"
         }, [
           vue.createElementVNode(
@@ -5481,7 +6015,7 @@ if (uni.restoreGlobal) {
             onClick: $setup.reloadComments
           }, "重新加载")
         ])) : $setup.comments.length ? (vue.openBlock(), vue.createElementBlock("view", {
-          key: 2,
+          key: 3,
           class: "comment-list section"
         }, [
           (vue.openBlock(true), vue.createElementBlock(
@@ -5492,10 +6026,11 @@ if (uni.restoreGlobal) {
                 key: c.id,
                 class: "comment-item"
               }, [
-                vue.createElementVNode("image", {
-                  class: "comment-avatar",
-                  src: c.avatarUrl || $setup.guide.authorAvatar,
-                  mode: "aspectFill"
+                vue.createVNode($setup["CachedImage"], {
+                  src: $setup.commentAvatar(c),
+                  "container-class": "comment-avatar-shell",
+                  "image-class": "comment-avatar",
+                  style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
                 }, null, 8, ["src"]),
                 vue.createElementVNode("view", { class: "comment-body-wrap" }, [
                   vue.createElementVNode("view", { class: "comment-row-top" }, [
@@ -5542,7 +6077,7 @@ if (uni.restoreGlobal) {
             /* KEYED_FRAGMENT */
           ))
         ])) : (vue.openBlock(), vue.createElementBlock("view", {
-          key: 3,
+          key: 4,
           class: "comment-state section empty-comment-state"
         }, [
           vue.createElementVNode("text", { class: "comment-state-text" }, "还没有评论，来抢个沙发吧。")
@@ -5650,8 +6185,1654 @@ if (uni.restoreGlobal) {
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$c], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
-  const _sfc_main$c = {
+  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$b], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  var isVue2 = false;
+  function set(target, key, val) {
+    if (Array.isArray(target)) {
+      target.length = Math.max(target.length, key);
+      target.splice(key, 1, val);
+      return val;
+    }
+    target[key] = val;
+    return val;
+  }
+  function del(target, key) {
+    if (Array.isArray(target)) {
+      target.splice(key, 1);
+      return;
+    }
+    delete target[key];
+  }
+  function getDevtoolsGlobalHook() {
+    return getTarget().__VUE_DEVTOOLS_GLOBAL_HOOK__;
+  }
+  function getTarget() {
+    return typeof navigator !== "undefined" && typeof window !== "undefined" ? window : typeof global !== "undefined" ? global : {};
+  }
+  const isProxyAvailable = typeof Proxy === "function";
+  const HOOK_SETUP = "devtools-plugin:setup";
+  const HOOK_PLUGIN_SETTINGS_SET = "plugin:settings:set";
+  let supported;
+  let perf;
+  function isPerformanceSupported() {
+    var _a;
+    if (supported !== void 0) {
+      return supported;
+    }
+    if (typeof window !== "undefined" && window.performance) {
+      supported = true;
+      perf = window.performance;
+    } else if (typeof global !== "undefined" && ((_a = global.perf_hooks) === null || _a === void 0 ? void 0 : _a.performance)) {
+      supported = true;
+      perf = global.perf_hooks.performance;
+    } else {
+      supported = false;
+    }
+    return supported;
+  }
+  function now() {
+    return isPerformanceSupported() ? perf.now() : Date.now();
+  }
+  class ApiProxy {
+    constructor(plugin, hook) {
+      this.target = null;
+      this.targetQueue = [];
+      this.onQueue = [];
+      this.plugin = plugin;
+      this.hook = hook;
+      const defaultSettings = {};
+      if (plugin.settings) {
+        for (const id in plugin.settings) {
+          const item = plugin.settings[id];
+          defaultSettings[id] = item.defaultValue;
+        }
+      }
+      const localSettingsSaveId = `__vue-devtools-plugin-settings__${plugin.id}`;
+      let currentSettings = Object.assign({}, defaultSettings);
+      try {
+        const raw = localStorage.getItem(localSettingsSaveId);
+        const data = JSON.parse(raw);
+        Object.assign(currentSettings, data);
+      } catch (e) {
+      }
+      this.fallbacks = {
+        getSettings() {
+          return currentSettings;
+        },
+        setSettings(value) {
+          try {
+            localStorage.setItem(localSettingsSaveId, JSON.stringify(value));
+          } catch (e) {
+          }
+          currentSettings = value;
+        },
+        now() {
+          return now();
+        }
+      };
+      if (hook) {
+        hook.on(HOOK_PLUGIN_SETTINGS_SET, (pluginId, value) => {
+          if (pluginId === this.plugin.id) {
+            this.fallbacks.setSettings(value);
+          }
+        });
+      }
+      this.proxiedOn = new Proxy({}, {
+        get: (_target, prop) => {
+          if (this.target) {
+            return this.target.on[prop];
+          } else {
+            return (...args) => {
+              this.onQueue.push({
+                method: prop,
+                args
+              });
+            };
+          }
+        }
+      });
+      this.proxiedTarget = new Proxy({}, {
+        get: (_target, prop) => {
+          if (this.target) {
+            return this.target[prop];
+          } else if (prop === "on") {
+            return this.proxiedOn;
+          } else if (Object.keys(this.fallbacks).includes(prop)) {
+            return (...args) => {
+              this.targetQueue.push({
+                method: prop,
+                args,
+                resolve: () => {
+                }
+              });
+              return this.fallbacks[prop](...args);
+            };
+          } else {
+            return (...args) => {
+              return new Promise((resolve) => {
+                this.targetQueue.push({
+                  method: prop,
+                  args,
+                  resolve
+                });
+              });
+            };
+          }
+        }
+      });
+    }
+    async setRealTarget(target) {
+      this.target = target;
+      for (const item of this.onQueue) {
+        this.target.on[item.method](...item.args);
+      }
+      for (const item of this.targetQueue) {
+        item.resolve(await this.target[item.method](...item.args));
+      }
+    }
+  }
+  function setupDevtoolsPlugin(pluginDescriptor, setupFn) {
+    const descriptor = pluginDescriptor;
+    const target = getTarget();
+    const hook = getDevtoolsGlobalHook();
+    const enableProxy = isProxyAvailable && descriptor.enableEarlyProxy;
+    if (hook && (target.__VUE_DEVTOOLS_PLUGIN_API_AVAILABLE__ || !enableProxy)) {
+      hook.emit(HOOK_SETUP, pluginDescriptor, setupFn);
+    } else {
+      const proxy = enableProxy ? new ApiProxy(descriptor, hook) : null;
+      const list = target.__VUE_DEVTOOLS_PLUGINS__ = target.__VUE_DEVTOOLS_PLUGINS__ || [];
+      list.push({
+        pluginDescriptor: descriptor,
+        setupFn,
+        proxy
+      });
+      if (proxy)
+        setupFn(proxy.proxiedTarget);
+    }
+  }
+  /*!
+   * pinia v2.1.7
+   * (c) 2023 Eduardo San Martin Morote
+   * @license MIT
+   */
+  let activePinia;
+  const setActivePinia = (pinia) => activePinia = pinia;
+  const piniaSymbol = Symbol("pinia");
+  function isPlainObject(o) {
+    return o && typeof o === "object" && Object.prototype.toString.call(o) === "[object Object]" && typeof o.toJSON !== "function";
+  }
+  var MutationType;
+  (function(MutationType2) {
+    MutationType2["direct"] = "direct";
+    MutationType2["patchObject"] = "patch object";
+    MutationType2["patchFunction"] = "patch function";
+  })(MutationType || (MutationType = {}));
+  const IS_CLIENT = typeof window !== "undefined";
+  const USE_DEVTOOLS = IS_CLIENT;
+  const _global = /* @__PURE__ */ (() => typeof window === "object" && window.window === window ? window : typeof self === "object" && self.self === self ? self : typeof global === "object" && global.global === global ? global : typeof globalThis === "object" ? globalThis : { HTMLElement: null })();
+  function bom(blob, { autoBom = false } = {}) {
+    if (autoBom && /^\s*(?:text\/\S*|application\/xml|\S*\/\S*\+xml)\s*;.*charset\s*=\s*utf-8/i.test(blob.type)) {
+      return new Blob([String.fromCharCode(65279), blob], { type: blob.type });
+    }
+    return blob;
+  }
+  function download(url, name, opts) {
+    const xhr = new XMLHttpRequest();
+    xhr.open("GET", url);
+    xhr.responseType = "blob";
+    xhr.onload = function() {
+      saveAs(xhr.response, name, opts);
+    };
+    xhr.onerror = function() {
+      console.error("could not download file");
+    };
+    xhr.send();
+  }
+  function corsEnabled(url) {
+    const xhr = new XMLHttpRequest();
+    xhr.open("HEAD", url, false);
+    try {
+      xhr.send();
+    } catch (e) {
+    }
+    return xhr.status >= 200 && xhr.status <= 299;
+  }
+  function click(node) {
+    try {
+      node.dispatchEvent(new MouseEvent("click"));
+    } catch (e) {
+      const evt = document.createEvent("MouseEvents");
+      evt.initMouseEvent("click", true, true, window, 0, 0, 0, 80, 20, false, false, false, false, 0, null);
+      node.dispatchEvent(evt);
+    }
+  }
+  const _navigator = typeof navigator === "object" ? navigator : { userAgent: "" };
+  const isMacOSWebView = /* @__PURE__ */ (() => /Macintosh/.test(_navigator.userAgent) && /AppleWebKit/.test(_navigator.userAgent) && !/Safari/.test(_navigator.userAgent))();
+  const saveAs = !IS_CLIENT ? () => {
+  } : (
+    // Use download attribute first if possible (#193 Lumia mobile) unless this is a macOS WebView or mini program
+    typeof HTMLAnchorElement !== "undefined" && "download" in HTMLAnchorElement.prototype && !isMacOSWebView ? downloadSaveAs : (
+      // Use msSaveOrOpenBlob as a second approach
+      "msSaveOrOpenBlob" in _navigator ? msSaveAs : (
+        // Fallback to using FileReader and a popup
+        fileSaverSaveAs
+      )
+    )
+  );
+  function downloadSaveAs(blob, name = "download", opts) {
+    const a = document.createElement("a");
+    a.download = name;
+    a.rel = "noopener";
+    if (typeof blob === "string") {
+      a.href = blob;
+      if (a.origin !== location.origin) {
+        if (corsEnabled(a.href)) {
+          download(blob, name, opts);
+        } else {
+          a.target = "_blank";
+          click(a);
+        }
+      } else {
+        click(a);
+      }
+    } else {
+      a.href = URL.createObjectURL(blob);
+      setTimeout(function() {
+        URL.revokeObjectURL(a.href);
+      }, 4e4);
+      setTimeout(function() {
+        click(a);
+      }, 0);
+    }
+  }
+  function msSaveAs(blob, name = "download", opts) {
+    if (typeof blob === "string") {
+      if (corsEnabled(blob)) {
+        download(blob, name, opts);
+      } else {
+        const a = document.createElement("a");
+        a.href = blob;
+        a.target = "_blank";
+        setTimeout(function() {
+          click(a);
+        });
+      }
+    } else {
+      navigator.msSaveOrOpenBlob(bom(blob, opts), name);
+    }
+  }
+  function fileSaverSaveAs(blob, name, opts, popup) {
+    popup = popup || open("", "_blank");
+    if (popup) {
+      popup.document.title = popup.document.body.innerText = "downloading...";
+    }
+    if (typeof blob === "string")
+      return download(blob, name, opts);
+    const force = blob.type === "application/octet-stream";
+    const isSafari = /constructor/i.test(String(_global.HTMLElement)) || "safari" in _global;
+    const isChromeIOS = /CriOS\/[\d]+/.test(navigator.userAgent);
+    if ((isChromeIOS || force && isSafari || isMacOSWebView) && typeof FileReader !== "undefined") {
+      const reader = new FileReader();
+      reader.onloadend = function() {
+        let url = reader.result;
+        if (typeof url !== "string") {
+          popup = null;
+          throw new Error("Wrong reader.result type");
+        }
+        url = isChromeIOS ? url : url.replace(/^data:[^;]*;/, "data:attachment/file;");
+        if (popup) {
+          popup.location.href = url;
+        } else {
+          location.assign(url);
+        }
+        popup = null;
+      };
+      reader.readAsDataURL(blob);
+    } else {
+      const url = URL.createObjectURL(blob);
+      if (popup)
+        popup.location.assign(url);
+      else
+        location.href = url;
+      popup = null;
+      setTimeout(function() {
+        URL.revokeObjectURL(url);
+      }, 4e4);
+    }
+  }
+  function toastMessage(message, type) {
+    const piniaMessage = "🍍 " + message;
+    if (typeof __VUE_DEVTOOLS_TOAST__ === "function") {
+      __VUE_DEVTOOLS_TOAST__(piniaMessage, type);
+    } else if (type === "error") {
+      console.error(piniaMessage);
+    } else if (type === "warn") {
+      console.warn(piniaMessage);
+    } else {
+      console.log(piniaMessage);
+    }
+  }
+  function isPinia(o) {
+    return "_a" in o && "install" in o;
+  }
+  function checkClipboardAccess() {
+    if (!("clipboard" in navigator)) {
+      toastMessage(`Your browser doesn't support the Clipboard API`, "error");
+      return true;
+    }
+  }
+  function checkNotFocusedError(error) {
+    if (error instanceof Error && error.message.toLowerCase().includes("document is not focused")) {
+      toastMessage('You need to activate the "Emulate a focused page" setting in the "Rendering" panel of devtools.', "warn");
+      return true;
+    }
+    return false;
+  }
+  async function actionGlobalCopyState(pinia) {
+    if (checkClipboardAccess())
+      return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(pinia.state.value));
+      toastMessage("Global state copied to clipboard.");
+    } catch (error) {
+      if (checkNotFocusedError(error))
+        return;
+      toastMessage(`Failed to serialize the state. Check the console for more details.`, "error");
+      console.error(error);
+    }
+  }
+  async function actionGlobalPasteState(pinia) {
+    if (checkClipboardAccess())
+      return;
+    try {
+      loadStoresState(pinia, JSON.parse(await navigator.clipboard.readText()));
+      toastMessage("Global state pasted from clipboard.");
+    } catch (error) {
+      if (checkNotFocusedError(error))
+        return;
+      toastMessage(`Failed to deserialize the state from clipboard. Check the console for more details.`, "error");
+      console.error(error);
+    }
+  }
+  async function actionGlobalSaveState(pinia) {
+    try {
+      saveAs(new Blob([JSON.stringify(pinia.state.value)], {
+        type: "text/plain;charset=utf-8"
+      }), "pinia-state.json");
+    } catch (error) {
+      toastMessage(`Failed to export the state as JSON. Check the console for more details.`, "error");
+      console.error(error);
+    }
+  }
+  let fileInput;
+  function getFileOpener() {
+    if (!fileInput) {
+      fileInput = document.createElement("input");
+      fileInput.type = "file";
+      fileInput.accept = ".json";
+    }
+    function openFile() {
+      return new Promise((resolve, reject) => {
+        fileInput.onchange = async () => {
+          const files = fileInput.files;
+          if (!files)
+            return resolve(null);
+          const file = files.item(0);
+          if (!file)
+            return resolve(null);
+          return resolve({ text: await file.text(), file });
+        };
+        fileInput.oncancel = () => resolve(null);
+        fileInput.onerror = reject;
+        fileInput.click();
+      });
+    }
+    return openFile;
+  }
+  async function actionGlobalOpenStateFile(pinia) {
+    try {
+      const open2 = getFileOpener();
+      const result = await open2();
+      if (!result)
+        return;
+      const { text, file } = result;
+      loadStoresState(pinia, JSON.parse(text));
+      toastMessage(`Global state imported from "${file.name}".`);
+    } catch (error) {
+      toastMessage(`Failed to import the state from JSON. Check the console for more details.`, "error");
+      console.error(error);
+    }
+  }
+  function loadStoresState(pinia, state) {
+    for (const key in state) {
+      const storeState = pinia.state.value[key];
+      if (storeState) {
+        Object.assign(storeState, state[key]);
+      } else {
+        pinia.state.value[key] = state[key];
+      }
+    }
+  }
+  function formatDisplay(display) {
+    return {
+      _custom: {
+        display
+      }
+    };
+  }
+  const PINIA_ROOT_LABEL = "🍍 Pinia (root)";
+  const PINIA_ROOT_ID = "_root";
+  function formatStoreForInspectorTree(store) {
+    return isPinia(store) ? {
+      id: PINIA_ROOT_ID,
+      label: PINIA_ROOT_LABEL
+    } : {
+      id: store.$id,
+      label: store.$id
+    };
+  }
+  function formatStoreForInspectorState(store) {
+    if (isPinia(store)) {
+      const storeNames = Array.from(store._s.keys());
+      const storeMap = store._s;
+      const state2 = {
+        state: storeNames.map((storeId) => ({
+          editable: true,
+          key: storeId,
+          value: store.state.value[storeId]
+        })),
+        getters: storeNames.filter((id) => storeMap.get(id)._getters).map((id) => {
+          const store2 = storeMap.get(id);
+          return {
+            editable: false,
+            key: id,
+            value: store2._getters.reduce((getters, key) => {
+              getters[key] = store2[key];
+              return getters;
+            }, {})
+          };
+        })
+      };
+      return state2;
+    }
+    const state = {
+      state: Object.keys(store.$state).map((key) => ({
+        editable: true,
+        key,
+        value: store.$state[key]
+      }))
+    };
+    if (store._getters && store._getters.length) {
+      state.getters = store._getters.map((getterName) => ({
+        editable: false,
+        key: getterName,
+        value: store[getterName]
+      }));
+    }
+    if (store._customProperties.size) {
+      state.customProperties = Array.from(store._customProperties).map((key) => ({
+        editable: true,
+        key,
+        value: store[key]
+      }));
+    }
+    return state;
+  }
+  function formatEventData(events) {
+    if (!events)
+      return {};
+    if (Array.isArray(events)) {
+      return events.reduce((data, event) => {
+        data.keys.push(event.key);
+        data.operations.push(event.type);
+        data.oldValue[event.key] = event.oldValue;
+        data.newValue[event.key] = event.newValue;
+        return data;
+      }, {
+        oldValue: {},
+        keys: [],
+        operations: [],
+        newValue: {}
+      });
+    } else {
+      return {
+        operation: formatDisplay(events.type),
+        key: formatDisplay(events.key),
+        oldValue: events.oldValue,
+        newValue: events.newValue
+      };
+    }
+  }
+  function formatMutationType(type) {
+    switch (type) {
+      case MutationType.direct:
+        return "mutation";
+      case MutationType.patchFunction:
+        return "$patch";
+      case MutationType.patchObject:
+        return "$patch";
+      default:
+        return "unknown";
+    }
+  }
+  let isTimelineActive = true;
+  const componentStateTypes = [];
+  const MUTATIONS_LAYER_ID = "pinia:mutations";
+  const INSPECTOR_ID = "pinia";
+  const { assign: assign$1 } = Object;
+  const getStoreType = (id) => "🍍 " + id;
+  function registerPiniaDevtools(app, pinia) {
+    setupDevtoolsPlugin({
+      id: "dev.esm.pinia",
+      label: "Pinia 🍍",
+      logo: "https://pinia.vuejs.org/logo.svg",
+      packageName: "pinia",
+      homepage: "https://pinia.vuejs.org",
+      componentStateTypes,
+      app
+    }, (api) => {
+      if (typeof api.now !== "function") {
+        toastMessage("You seem to be using an outdated version of Vue Devtools. Are you still using the Beta release instead of the stable one? You can find the links at https://devtools.vuejs.org/guide/installation.html.");
+      }
+      api.addTimelineLayer({
+        id: MUTATIONS_LAYER_ID,
+        label: `Pinia 🍍`,
+        color: 15064968
+      });
+      api.addInspector({
+        id: INSPECTOR_ID,
+        label: "Pinia 🍍",
+        icon: "storage",
+        treeFilterPlaceholder: "Search stores",
+        actions: [
+          {
+            icon: "content_copy",
+            action: () => {
+              actionGlobalCopyState(pinia);
+            },
+            tooltip: "Serialize and copy the state"
+          },
+          {
+            icon: "content_paste",
+            action: async () => {
+              await actionGlobalPasteState(pinia);
+              api.sendInspectorTree(INSPECTOR_ID);
+              api.sendInspectorState(INSPECTOR_ID);
+            },
+            tooltip: "Replace the state with the content of your clipboard"
+          },
+          {
+            icon: "save",
+            action: () => {
+              actionGlobalSaveState(pinia);
+            },
+            tooltip: "Save the state as a JSON file"
+          },
+          {
+            icon: "folder_open",
+            action: async () => {
+              await actionGlobalOpenStateFile(pinia);
+              api.sendInspectorTree(INSPECTOR_ID);
+              api.sendInspectorState(INSPECTOR_ID);
+            },
+            tooltip: "Import the state from a JSON file"
+          }
+        ],
+        nodeActions: [
+          {
+            icon: "restore",
+            tooltip: 'Reset the state (with "$reset")',
+            action: (nodeId) => {
+              const store = pinia._s.get(nodeId);
+              if (!store) {
+                toastMessage(`Cannot reset "${nodeId}" store because it wasn't found.`, "warn");
+              } else if (typeof store.$reset !== "function") {
+                toastMessage(`Cannot reset "${nodeId}" store because it doesn't have a "$reset" method implemented.`, "warn");
+              } else {
+                store.$reset();
+                toastMessage(`Store "${nodeId}" reset.`);
+              }
+            }
+          }
+        ]
+      });
+      api.on.inspectComponent((payload, ctx) => {
+        const proxy = payload.componentInstance && payload.componentInstance.proxy;
+        if (proxy && proxy._pStores) {
+          const piniaStores = payload.componentInstance.proxy._pStores;
+          Object.values(piniaStores).forEach((store) => {
+            payload.instanceData.state.push({
+              type: getStoreType(store.$id),
+              key: "state",
+              editable: true,
+              value: store._isOptionsAPI ? {
+                _custom: {
+                  value: vue.toRaw(store.$state),
+                  actions: [
+                    {
+                      icon: "restore",
+                      tooltip: "Reset the state of this store",
+                      action: () => store.$reset()
+                    }
+                  ]
+                }
+              } : (
+                // NOTE: workaround to unwrap transferred refs
+                Object.keys(store.$state).reduce((state, key) => {
+                  state[key] = store.$state[key];
+                  return state;
+                }, {})
+              )
+            });
+            if (store._getters && store._getters.length) {
+              payload.instanceData.state.push({
+                type: getStoreType(store.$id),
+                key: "getters",
+                editable: false,
+                value: store._getters.reduce((getters, key) => {
+                  try {
+                    getters[key] = store[key];
+                  } catch (error) {
+                    getters[key] = error;
+                  }
+                  return getters;
+                }, {})
+              });
+            }
+          });
+        }
+      });
+      api.on.getInspectorTree((payload) => {
+        if (payload.app === app && payload.inspectorId === INSPECTOR_ID) {
+          let stores = [pinia];
+          stores = stores.concat(Array.from(pinia._s.values()));
+          payload.rootNodes = (payload.filter ? stores.filter((store) => "$id" in store ? store.$id.toLowerCase().includes(payload.filter.toLowerCase()) : PINIA_ROOT_LABEL.toLowerCase().includes(payload.filter.toLowerCase())) : stores).map(formatStoreForInspectorTree);
+        }
+      });
+      api.on.getInspectorState((payload) => {
+        if (payload.app === app && payload.inspectorId === INSPECTOR_ID) {
+          const inspectedStore = payload.nodeId === PINIA_ROOT_ID ? pinia : pinia._s.get(payload.nodeId);
+          if (!inspectedStore) {
+            return;
+          }
+          if (inspectedStore) {
+            payload.state = formatStoreForInspectorState(inspectedStore);
+          }
+        }
+      });
+      api.on.editInspectorState((payload, ctx) => {
+        if (payload.app === app && payload.inspectorId === INSPECTOR_ID) {
+          const inspectedStore = payload.nodeId === PINIA_ROOT_ID ? pinia : pinia._s.get(payload.nodeId);
+          if (!inspectedStore) {
+            return toastMessage(`store "${payload.nodeId}" not found`, "error");
+          }
+          const { path } = payload;
+          if (!isPinia(inspectedStore)) {
+            if (path.length !== 1 || !inspectedStore._customProperties.has(path[0]) || path[0] in inspectedStore.$state) {
+              path.unshift("$state");
+            }
+          } else {
+            path.unshift("state");
+          }
+          isTimelineActive = false;
+          payload.set(inspectedStore, path, payload.state.value);
+          isTimelineActive = true;
+        }
+      });
+      api.on.editComponentState((payload) => {
+        if (payload.type.startsWith("🍍")) {
+          const storeId = payload.type.replace(/^🍍\s*/, "");
+          const store = pinia._s.get(storeId);
+          if (!store) {
+            return toastMessage(`store "${storeId}" not found`, "error");
+          }
+          const { path } = payload;
+          if (path[0] !== "state") {
+            return toastMessage(`Invalid path for store "${storeId}":
+${path}
+Only state can be modified.`);
+          }
+          path[0] = "$state";
+          isTimelineActive = false;
+          payload.set(store, path, payload.state.value);
+          isTimelineActive = true;
+        }
+      });
+    });
+  }
+  function addStoreToDevtools(app, store) {
+    if (!componentStateTypes.includes(getStoreType(store.$id))) {
+      componentStateTypes.push(getStoreType(store.$id));
+    }
+    setupDevtoolsPlugin({
+      id: "dev.esm.pinia",
+      label: "Pinia 🍍",
+      logo: "https://pinia.vuejs.org/logo.svg",
+      packageName: "pinia",
+      homepage: "https://pinia.vuejs.org",
+      componentStateTypes,
+      app,
+      settings: {
+        logStoreChanges: {
+          label: "Notify about new/deleted stores",
+          type: "boolean",
+          defaultValue: true
+        }
+        // useEmojis: {
+        //   label: 'Use emojis in messages ⚡️',
+        //   type: 'boolean',
+        //   defaultValue: true,
+        // },
+      }
+    }, (api) => {
+      const now2 = typeof api.now === "function" ? api.now.bind(api) : Date.now;
+      store.$onAction(({ after, onError, name, args }) => {
+        const groupId = runningActionId++;
+        api.addTimelineEvent({
+          layerId: MUTATIONS_LAYER_ID,
+          event: {
+            time: now2(),
+            title: "🛫 " + name,
+            subtitle: "start",
+            data: {
+              store: formatDisplay(store.$id),
+              action: formatDisplay(name),
+              args
+            },
+            groupId
+          }
+        });
+        after((result) => {
+          activeAction = void 0;
+          api.addTimelineEvent({
+            layerId: MUTATIONS_LAYER_ID,
+            event: {
+              time: now2(),
+              title: "🛬 " + name,
+              subtitle: "end",
+              data: {
+                store: formatDisplay(store.$id),
+                action: formatDisplay(name),
+                args,
+                result
+              },
+              groupId
+            }
+          });
+        });
+        onError((error) => {
+          activeAction = void 0;
+          api.addTimelineEvent({
+            layerId: MUTATIONS_LAYER_ID,
+            event: {
+              time: now2(),
+              logType: "error",
+              title: "💥 " + name,
+              subtitle: "end",
+              data: {
+                store: formatDisplay(store.$id),
+                action: formatDisplay(name),
+                args,
+                error
+              },
+              groupId
+            }
+          });
+        });
+      }, true);
+      store._customProperties.forEach((name) => {
+        vue.watch(() => vue.unref(store[name]), (newValue, oldValue) => {
+          api.notifyComponentUpdate();
+          api.sendInspectorState(INSPECTOR_ID);
+          if (isTimelineActive) {
+            api.addTimelineEvent({
+              layerId: MUTATIONS_LAYER_ID,
+              event: {
+                time: now2(),
+                title: "Change",
+                subtitle: name,
+                data: {
+                  newValue,
+                  oldValue
+                },
+                groupId: activeAction
+              }
+            });
+          }
+        }, { deep: true });
+      });
+      store.$subscribe(({ events, type }, state) => {
+        api.notifyComponentUpdate();
+        api.sendInspectorState(INSPECTOR_ID);
+        if (!isTimelineActive)
+          return;
+        const eventData = {
+          time: now2(),
+          title: formatMutationType(type),
+          data: assign$1({ store: formatDisplay(store.$id) }, formatEventData(events)),
+          groupId: activeAction
+        };
+        if (type === MutationType.patchFunction) {
+          eventData.subtitle = "⤵️";
+        } else if (type === MutationType.patchObject) {
+          eventData.subtitle = "🧩";
+        } else if (events && !Array.isArray(events)) {
+          eventData.subtitle = events.type;
+        }
+        if (events) {
+          eventData.data["rawEvent(s)"] = {
+            _custom: {
+              display: "DebuggerEvent",
+              type: "object",
+              tooltip: "raw DebuggerEvent[]",
+              value: events
+            }
+          };
+        }
+        api.addTimelineEvent({
+          layerId: MUTATIONS_LAYER_ID,
+          event: eventData
+        });
+      }, { detached: true, flush: "sync" });
+      const hotUpdate = store._hotUpdate;
+      store._hotUpdate = vue.markRaw((newStore) => {
+        hotUpdate(newStore);
+        api.addTimelineEvent({
+          layerId: MUTATIONS_LAYER_ID,
+          event: {
+            time: now2(),
+            title: "🔥 " + store.$id,
+            subtitle: "HMR update",
+            data: {
+              store: formatDisplay(store.$id),
+              info: formatDisplay(`HMR update`)
+            }
+          }
+        });
+        api.notifyComponentUpdate();
+        api.sendInspectorTree(INSPECTOR_ID);
+        api.sendInspectorState(INSPECTOR_ID);
+      });
+      const { $dispose } = store;
+      store.$dispose = () => {
+        $dispose();
+        api.notifyComponentUpdate();
+        api.sendInspectorTree(INSPECTOR_ID);
+        api.sendInspectorState(INSPECTOR_ID);
+        api.getSettings().logStoreChanges && toastMessage(`Disposed "${store.$id}" store 🗑`);
+      };
+      api.notifyComponentUpdate();
+      api.sendInspectorTree(INSPECTOR_ID);
+      api.sendInspectorState(INSPECTOR_ID);
+      api.getSettings().logStoreChanges && toastMessage(`"${store.$id}" store installed 🆕`);
+    });
+  }
+  let runningActionId = 0;
+  let activeAction;
+  function patchActionForGrouping(store, actionNames, wrapWithProxy) {
+    const actions = actionNames.reduce((storeActions, actionName) => {
+      storeActions[actionName] = vue.toRaw(store)[actionName];
+      return storeActions;
+    }, {});
+    for (const actionName in actions) {
+      store[actionName] = function() {
+        const _actionId = runningActionId;
+        const trackedStore = wrapWithProxy ? new Proxy(store, {
+          get(...args) {
+            activeAction = _actionId;
+            return Reflect.get(...args);
+          },
+          set(...args) {
+            activeAction = _actionId;
+            return Reflect.set(...args);
+          }
+        }) : store;
+        activeAction = _actionId;
+        const retValue = actions[actionName].apply(trackedStore, arguments);
+        activeAction = void 0;
+        return retValue;
+      };
+    }
+  }
+  function devtoolsPlugin({ app, store, options }) {
+    if (store.$id.startsWith("__hot:")) {
+      return;
+    }
+    store._isOptionsAPI = !!options.state;
+    patchActionForGrouping(store, Object.keys(options.actions), store._isOptionsAPI);
+    const originalHotUpdate = store._hotUpdate;
+    vue.toRaw(store)._hotUpdate = function(newStore) {
+      originalHotUpdate.apply(this, arguments);
+      patchActionForGrouping(store, Object.keys(newStore._hmrPayload.actions), !!store._isOptionsAPI);
+    };
+    addStoreToDevtools(
+      app,
+      // FIXME: is there a way to allow the assignment from Store<Id, S, G, A> to StoreGeneric?
+      store
+    );
+  }
+  function createPinia() {
+    const scope = vue.effectScope(true);
+    const state = scope.run(() => vue.ref({}));
+    let _p = [];
+    let toBeInstalled = [];
+    const pinia = vue.markRaw({
+      install(app) {
+        setActivePinia(pinia);
+        {
+          pinia._a = app;
+          app.provide(piniaSymbol, pinia);
+          app.config.globalProperties.$pinia = pinia;
+          if (USE_DEVTOOLS) {
+            registerPiniaDevtools(app, pinia);
+          }
+          toBeInstalled.forEach((plugin) => _p.push(plugin));
+          toBeInstalled = [];
+        }
+      },
+      use(plugin) {
+        if (!this._a && !isVue2) {
+          toBeInstalled.push(plugin);
+        } else {
+          _p.push(plugin);
+        }
+        return this;
+      },
+      _p,
+      // it's actually undefined here
+      // @ts-expect-error
+      _a: null,
+      _e: scope,
+      _s: /* @__PURE__ */ new Map(),
+      state
+    });
+    if (USE_DEVTOOLS && typeof Proxy !== "undefined") {
+      pinia.use(devtoolsPlugin);
+    }
+    return pinia;
+  }
+  function patchObject(newState, oldState) {
+    for (const key in oldState) {
+      const subPatch = oldState[key];
+      if (!(key in newState)) {
+        continue;
+      }
+      const targetValue = newState[key];
+      if (isPlainObject(targetValue) && isPlainObject(subPatch) && !vue.isRef(subPatch) && !vue.isReactive(subPatch)) {
+        newState[key] = patchObject(targetValue, subPatch);
+      } else {
+        {
+          newState[key] = subPatch;
+        }
+      }
+    }
+    return newState;
+  }
+  const noop = () => {
+  };
+  function addSubscription(subscriptions, callback, detached, onCleanup = noop) {
+    subscriptions.push(callback);
+    const removeSubscription = () => {
+      const idx = subscriptions.indexOf(callback);
+      if (idx > -1) {
+        subscriptions.splice(idx, 1);
+        onCleanup();
+      }
+    };
+    if (!detached && vue.getCurrentScope()) {
+      vue.onScopeDispose(removeSubscription);
+    }
+    return removeSubscription;
+  }
+  function triggerSubscriptions(subscriptions, ...args) {
+    subscriptions.slice().forEach((callback) => {
+      callback(...args);
+    });
+  }
+  const fallbackRunWithContext = (fn) => fn();
+  function mergeReactiveObjects(target, patchToApply) {
+    if (target instanceof Map && patchToApply instanceof Map) {
+      patchToApply.forEach((value, key) => target.set(key, value));
+    }
+    if (target instanceof Set && patchToApply instanceof Set) {
+      patchToApply.forEach(target.add, target);
+    }
+    for (const key in patchToApply) {
+      if (!patchToApply.hasOwnProperty(key))
+        continue;
+      const subPatch = patchToApply[key];
+      const targetValue = target[key];
+      if (isPlainObject(targetValue) && isPlainObject(subPatch) && target.hasOwnProperty(key) && !vue.isRef(subPatch) && !vue.isReactive(subPatch)) {
+        target[key] = mergeReactiveObjects(targetValue, subPatch);
+      } else {
+        target[key] = subPatch;
+      }
+    }
+    return target;
+  }
+  const skipHydrateSymbol = Symbol("pinia:skipHydration");
+  function shouldHydrate(obj) {
+    return !isPlainObject(obj) || !obj.hasOwnProperty(skipHydrateSymbol);
+  }
+  const { assign } = Object;
+  function isComputed(o) {
+    return !!(vue.isRef(o) && o.effect);
+  }
+  function createOptionsStore(id, options, pinia, hot) {
+    const { state, actions, getters } = options;
+    const initialState = pinia.state.value[id];
+    let store;
+    function setup() {
+      if (!initialState && !hot) {
+        {
+          pinia.state.value[id] = state ? state() : {};
+        }
+      }
+      const localState = hot ? (
+        // use ref() to unwrap refs inside state TODO: check if this is still necessary
+        vue.toRefs(vue.ref(state ? state() : {}).value)
+      ) : vue.toRefs(pinia.state.value[id]);
+      return assign(localState, actions, Object.keys(getters || {}).reduce((computedGetters, name) => {
+        if (name in localState) {
+          console.warn(`[🍍]: A getter cannot have the same name as another state property. Rename one of them. Found with "${name}" in store "${id}".`);
+        }
+        computedGetters[name] = vue.markRaw(vue.computed(() => {
+          setActivePinia(pinia);
+          const store2 = pinia._s.get(id);
+          return getters[name].call(store2, store2);
+        }));
+        return computedGetters;
+      }, {}));
+    }
+    store = createSetupStore(id, setup, options, pinia, hot, true);
+    return store;
+  }
+  function createSetupStore($id, setup, options = {}, pinia, hot, isOptionsStore) {
+    let scope;
+    const optionsForPlugin = assign({ actions: {} }, options);
+    if (!pinia._e.active) {
+      throw new Error("Pinia destroyed");
+    }
+    const $subscribeOptions = {
+      deep: true
+      // flush: 'post',
+    };
+    {
+      $subscribeOptions.onTrigger = (event) => {
+        if (isListening) {
+          debuggerEvents = event;
+        } else if (isListening == false && !store._hotUpdating) {
+          if (Array.isArray(debuggerEvents)) {
+            debuggerEvents.push(event);
+          } else {
+            console.error("🍍 debuggerEvents should be an array. This is most likely an internal Pinia bug.");
+          }
+        }
+      };
+    }
+    let isListening;
+    let isSyncListening;
+    let subscriptions = [];
+    let actionSubscriptions = [];
+    let debuggerEvents;
+    const initialState = pinia.state.value[$id];
+    if (!isOptionsStore && !initialState && !hot) {
+      {
+        pinia.state.value[$id] = {};
+      }
+    }
+    const hotState = vue.ref({});
+    let activeListener;
+    function $patch(partialStateOrMutator) {
+      let subscriptionMutation;
+      isListening = isSyncListening = false;
+      {
+        debuggerEvents = [];
+      }
+      if (typeof partialStateOrMutator === "function") {
+        partialStateOrMutator(pinia.state.value[$id]);
+        subscriptionMutation = {
+          type: MutationType.patchFunction,
+          storeId: $id,
+          events: debuggerEvents
+        };
+      } else {
+        mergeReactiveObjects(pinia.state.value[$id], partialStateOrMutator);
+        subscriptionMutation = {
+          type: MutationType.patchObject,
+          payload: partialStateOrMutator,
+          storeId: $id,
+          events: debuggerEvents
+        };
+      }
+      const myListenerId = activeListener = Symbol();
+      vue.nextTick().then(() => {
+        if (activeListener === myListenerId) {
+          isListening = true;
+        }
+      });
+      isSyncListening = true;
+      triggerSubscriptions(subscriptions, subscriptionMutation, pinia.state.value[$id]);
+    }
+    const $reset = isOptionsStore ? function $reset2() {
+      const { state } = options;
+      const newState = state ? state() : {};
+      this.$patch(($state) => {
+        assign($state, newState);
+      });
+    } : (
+      /* istanbul ignore next */
+      () => {
+        throw new Error(`🍍: Store "${$id}" is built using the setup syntax and does not implement $reset().`);
+      }
+    );
+    function $dispose() {
+      scope.stop();
+      subscriptions = [];
+      actionSubscriptions = [];
+      pinia._s.delete($id);
+    }
+    function wrapAction(name, action) {
+      return function() {
+        setActivePinia(pinia);
+        const args = Array.from(arguments);
+        const afterCallbackList = [];
+        const onErrorCallbackList = [];
+        function after(callback) {
+          afterCallbackList.push(callback);
+        }
+        function onError(callback) {
+          onErrorCallbackList.push(callback);
+        }
+        triggerSubscriptions(actionSubscriptions, {
+          args,
+          name,
+          store,
+          after,
+          onError
+        });
+        let ret;
+        try {
+          ret = action.apply(this && this.$id === $id ? this : store, args);
+        } catch (error) {
+          triggerSubscriptions(onErrorCallbackList, error);
+          throw error;
+        }
+        if (ret instanceof Promise) {
+          return ret.then((value) => {
+            triggerSubscriptions(afterCallbackList, value);
+            return value;
+          }).catch((error) => {
+            triggerSubscriptions(onErrorCallbackList, error);
+            return Promise.reject(error);
+          });
+        }
+        triggerSubscriptions(afterCallbackList, ret);
+        return ret;
+      };
+    }
+    const _hmrPayload = /* @__PURE__ */ vue.markRaw({
+      actions: {},
+      getters: {},
+      state: [],
+      hotState
+    });
+    const partialStore = {
+      _p: pinia,
+      // _s: scope,
+      $id,
+      $onAction: addSubscription.bind(null, actionSubscriptions),
+      $patch,
+      $reset,
+      $subscribe(callback, options2 = {}) {
+        const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
+        const stopWatcher = scope.run(() => vue.watch(() => pinia.state.value[$id], (state) => {
+          if (options2.flush === "sync" ? isSyncListening : isListening) {
+            callback({
+              storeId: $id,
+              type: MutationType.direct,
+              events: debuggerEvents
+            }, state);
+          }
+        }, assign({}, $subscribeOptions, options2)));
+        return removeSubscription;
+      },
+      $dispose
+    };
+    const store = vue.reactive(assign(
+      {
+        _hmrPayload,
+        _customProperties: vue.markRaw(/* @__PURE__ */ new Set())
+        // devtools custom properties
+      },
+      partialStore
+      // must be added later
+      // setupStore
+    ));
+    pinia._s.set($id, store);
+    const runWithContext = pinia._a && pinia._a.runWithContext || fallbackRunWithContext;
+    const setupStore = runWithContext(() => pinia._e.run(() => (scope = vue.effectScope()).run(setup)));
+    for (const key in setupStore) {
+      const prop = setupStore[key];
+      if (vue.isRef(prop) && !isComputed(prop) || vue.isReactive(prop)) {
+        if (hot) {
+          set(hotState.value, key, vue.toRef(setupStore, key));
+        } else if (!isOptionsStore) {
+          if (initialState && shouldHydrate(prop)) {
+            if (vue.isRef(prop)) {
+              prop.value = initialState[key];
+            } else {
+              mergeReactiveObjects(prop, initialState[key]);
+            }
+          }
+          {
+            pinia.state.value[$id][key] = prop;
+          }
+        }
+        {
+          _hmrPayload.state.push(key);
+        }
+      } else if (typeof prop === "function") {
+        const actionValue = hot ? prop : wrapAction(key, prop);
+        {
+          setupStore[key] = actionValue;
+        }
+        {
+          _hmrPayload.actions[key] = prop;
+        }
+        optionsForPlugin.actions[key] = prop;
+      } else {
+        if (isComputed(prop)) {
+          _hmrPayload.getters[key] = isOptionsStore ? (
+            // @ts-expect-error
+            options.getters[key]
+          ) : prop;
+          if (IS_CLIENT) {
+            const getters = setupStore._getters || // @ts-expect-error: same
+            (setupStore._getters = vue.markRaw([]));
+            getters.push(key);
+          }
+        }
+      }
+    }
+    {
+      assign(store, setupStore);
+      assign(vue.toRaw(store), setupStore);
+    }
+    Object.defineProperty(store, "$state", {
+      get: () => hot ? hotState.value : pinia.state.value[$id],
+      set: (state) => {
+        if (hot) {
+          throw new Error("cannot set hotState");
+        }
+        $patch(($state) => {
+          assign($state, state);
+        });
+      }
+    });
+    {
+      store._hotUpdate = vue.markRaw((newStore) => {
+        store._hotUpdating = true;
+        newStore._hmrPayload.state.forEach((stateKey) => {
+          if (stateKey in store.$state) {
+            const newStateTarget = newStore.$state[stateKey];
+            const oldStateSource = store.$state[stateKey];
+            if (typeof newStateTarget === "object" && isPlainObject(newStateTarget) && isPlainObject(oldStateSource)) {
+              patchObject(newStateTarget, oldStateSource);
+            } else {
+              newStore.$state[stateKey] = oldStateSource;
+            }
+          }
+          set(store, stateKey, vue.toRef(newStore.$state, stateKey));
+        });
+        Object.keys(store.$state).forEach((stateKey) => {
+          if (!(stateKey in newStore.$state)) {
+            del(store, stateKey);
+          }
+        });
+        isListening = false;
+        isSyncListening = false;
+        pinia.state.value[$id] = vue.toRef(newStore._hmrPayload, "hotState");
+        isSyncListening = true;
+        vue.nextTick().then(() => {
+          isListening = true;
+        });
+        for (const actionName in newStore._hmrPayload.actions) {
+          const action = newStore[actionName];
+          set(store, actionName, wrapAction(actionName, action));
+        }
+        for (const getterName in newStore._hmrPayload.getters) {
+          const getter = newStore._hmrPayload.getters[getterName];
+          const getterValue = isOptionsStore ? (
+            // special handling of options api
+            vue.computed(() => {
+              setActivePinia(pinia);
+              return getter.call(store, store);
+            })
+          ) : getter;
+          set(store, getterName, getterValue);
+        }
+        Object.keys(store._hmrPayload.getters).forEach((key) => {
+          if (!(key in newStore._hmrPayload.getters)) {
+            del(store, key);
+          }
+        });
+        Object.keys(store._hmrPayload.actions).forEach((key) => {
+          if (!(key in newStore._hmrPayload.actions)) {
+            del(store, key);
+          }
+        });
+        store._hmrPayload = newStore._hmrPayload;
+        store._getters = newStore._getters;
+        store._hotUpdating = false;
+      });
+    }
+    if (USE_DEVTOOLS) {
+      const nonEnumerable = {
+        writable: true,
+        configurable: true,
+        // avoid warning on devtools trying to display this property
+        enumerable: false
+      };
+      ["_p", "_hmrPayload", "_getters", "_customProperties"].forEach((p) => {
+        Object.defineProperty(store, p, assign({ value: store[p] }, nonEnumerable));
+      });
+    }
+    pinia._p.forEach((extender) => {
+      if (USE_DEVTOOLS) {
+        const extensions = scope.run(() => extender({
+          store,
+          app: pinia._a,
+          pinia,
+          options: optionsForPlugin
+        }));
+        Object.keys(extensions || {}).forEach((key) => store._customProperties.add(key));
+        assign(store, extensions);
+      } else {
+        assign(store, scope.run(() => extender({
+          store,
+          app: pinia._a,
+          pinia,
+          options: optionsForPlugin
+        })));
+      }
+    });
+    if (store.$state && typeof store.$state === "object" && typeof store.$state.constructor === "function" && !store.$state.constructor.toString().includes("[native code]")) {
+      console.warn(`[🍍]: The "state" must be a plain object. It cannot be
+	state: () => new MyClass()
+Found in store "${store.$id}".`);
+    }
+    if (initialState && isOptionsStore && options.hydrate) {
+      options.hydrate(store.$state, initialState);
+    }
+    isListening = true;
+    isSyncListening = true;
+    return store;
+  }
+  function defineStore(idOrOptions, setup, setupOptions) {
+    let id;
+    let options;
+    const isSetupStore = typeof setup === "function";
+    if (typeof idOrOptions === "string") {
+      id = idOrOptions;
+      options = isSetupStore ? setupOptions : setup;
+    } else {
+      options = idOrOptions;
+      id = idOrOptions.id;
+      if (typeof id !== "string") {
+        throw new Error(`[🍍]: "defineStore()" must be passed a store id as its first argument.`);
+      }
+    }
+    function useStore(pinia, hot) {
+      const hasContext = vue.hasInjectionContext();
+      pinia = // in test mode, ignore the argument provided as we can always retrieve a
+      // pinia instance with getActivePinia()
+      pinia || (hasContext ? vue.inject(piniaSymbol, null) : null);
+      if (pinia)
+        setActivePinia(pinia);
+      if (!activePinia) {
+        throw new Error(`[🍍]: "getActivePinia()" was called but there was no active Pinia. Are you trying to use a store before calling "app.use(pinia)"?
+See https://pinia.vuejs.org/core-concepts/outside-component-usage.html for help.
+This will fail in production.`);
+      }
+      pinia = activePinia;
+      if (!pinia._s.has(id)) {
+        if (isSetupStore) {
+          createSetupStore(id, setup, options, pinia);
+        } else {
+          createOptionsStore(id, options, pinia);
+        }
+        {
+          useStore._pinia = pinia;
+        }
+      }
+      const store = pinia._s.get(id);
+      if (hot) {
+        const hotId = "__hot:" + id;
+        const newStore = isSetupStore ? createSetupStore(hotId, setup, options, pinia, true) : createOptionsStore(hotId, assign({}, options), pinia, true);
+        hot._hotUpdate(newStore);
+        delete pinia.state.value[hotId];
+        pinia._s.delete(hotId);
+      }
+      if (IS_CLIENT) {
+        const currentInstance = vue.getCurrentInstance();
+        if (currentInstance && currentInstance.proxy && // avoid adding stores that are just built for hot module replacement
+        !hot) {
+          const vm = currentInstance.proxy;
+          const cache = "_pStores" in vm ? vm._pStores : vm._pStores = {};
+          cache[id] = store;
+        }
+      }
+      return store;
+    }
+    useStore.$id = id;
+    return useStore;
+  }
+  function storeToRefs(store) {
+    {
+      store = vue.toRaw(store);
+      const refs = {};
+      for (const key in store) {
+        const value = store[key];
+        if (vue.isRef(value) || vue.isReactive(value)) {
+          refs[key] = // ---
+          vue.toRef(store, key);
+        }
+      }
+      return refs;
+    }
+  }
+  const HIKING_SESSION_KEY = "meet-xinjiang-hiking-session";
+  function readSession() {
+    const raw = uni.getStorageSync(HIKING_SESSION_KEY);
+    if (!raw) {
+      return null;
+    }
+    try {
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : null;
+    } catch (error) {
+      return null;
+    }
+  }
+  function writeSession(session) {
+    uni.setStorageSync(HIKING_SESSION_KEY, JSON.stringify(session || {}));
+  }
+  function getHikingSession() {
+    return readSession();
+  }
+  function saveHikingSession(session) {
+    writeSession(session);
+    return session;
+  }
+  const MAX_TRACK_POINTS = 1200;
+  let listenerBound = false;
+  let locationUpdating = false;
+  const useHikingStore = defineStore("hiking", () => {
+    const isTracking = vue.ref(false);
+    const currentLocation = vue.ref(null);
+    const trackPoints = vue.ref([]);
+    const locationError = vue.ref("");
+    const hydrated = vue.ref(false);
+    const mapCenter = vue.computed(() => {
+      if (!currentLocation.value) {
+        return null;
+      }
+      return {
+        latitude: currentLocation.value.latitude,
+        longitude: currentLocation.value.longitude
+      };
+    });
+    const hasMapLocation = vue.computed(() => Boolean(mapCenter.value));
+    const mapPolyline = vue.computed(() => buildTrackPolyline(trackPoints.value));
+    const mapMarkers = vue.computed(() => buildCurrentMarker(currentLocation.value, isTracking.value));
+    function hydrate() {
+      if (hydrated.value) {
+        return;
+      }
+      const session = getHikingSession();
+      if (session) {
+        currentLocation.value = normalizeLocation(session.lastLocation);
+        trackPoints.value = Array.isArray(session.points) ? session.points.map(normalizeLocation).filter(Boolean) : [];
+        isTracking.value = Boolean(session.isTracking);
+      }
+      hydrated.value = true;
+      if (isTracking.value) {
+        ensureLocationListener();
+        startLocationUpdates().catch((error) => {
+          locationError.value = (error == null ? void 0 : error.message) || "定位监听启动失败";
+        });
+      }
+    }
+    function ensureLocationListener() {
+      if (listenerBound || typeof uni.onLocationChange !== "function") {
+        return;
+      }
+      uni.onLocationChange((payload) => {
+        const nextLocation = normalizeLocation({
+          ...payload,
+          provider: (payload == null ? void 0 : payload.provider) || (payload == null ? void 0 : payload.sourceProvider) || "uni-location-update",
+          source: (payload == null ? void 0 : payload.source) || "uni.onLocationChange"
+        });
+        if (!nextLocation) {
+          return;
+        }
+        currentLocation.value = nextLocation;
+        locationError.value = "";
+        if (isTracking.value) {
+          appendTrackPoint(nextLocation);
+        } else {
+          persistSession();
+        }
+      });
+      listenerBound = true;
+    }
+    async function startLocationUpdates() {
+      if (locationUpdating || typeof uni.startLocationUpdate !== "function") {
+        return;
+      }
+      locationUpdating = true;
+      await new Promise((resolve, reject) => {
+        uni.startLocationUpdate({
+          success: resolve,
+          fail: reject
+        });
+      });
+    }
+    async function startTracking() {
+      hydrate();
+      ensureLocationListener();
+      try {
+        await startLocationUpdates();
+        isTracking.value = true;
+        locationError.value = "";
+        persistSession();
+        if (!currentLocation.value) {
+          await refreshLocation({ appendWhenTracking: true });
+        }
+      } catch (error) {
+        isTracking.value = false;
+        locationError.value = (error == null ? void 0 : error.message) || "开始记录失败";
+        persistSession();
+        throw error;
+      }
+    }
+    async function stopTracking() {
+      isTracking.value = false;
+      persistSession();
+      if (typeof uni.stopLocationUpdate !== "function") {
+        locationUpdating = false;
+        return;
+      }
+      await new Promise((resolve) => {
+        uni.stopLocationUpdate({
+          complete: () => {
+            locationUpdating = false;
+            resolve();
+          }
+        });
+      });
+    }
+    async function refreshLocation(options = {}) {
+      hydrate();
+      const location2 = normalizeLocation(await getCurrentLocation({
+        highAccuracy: true,
+        allowGpsOffline: true,
+        gpsTimeout: 18e3,
+        networkTimeout: 6e3,
+        ...options
+      }));
+      if (!location2) {
+        throw new Error("定位结果无效");
+      }
+      currentLocation.value = location2;
+      locationError.value = "";
+      if (isTracking.value || options.appendWhenTracking) {
+        appendTrackPoint(location2);
+      } else {
+        persistSession();
+      }
+      return location2;
+    }
+    function appendTrackPoint(location2) {
+      const normalized = normalizeLocation(location2);
+      if (!normalized) {
+        return;
+      }
+      const lastPoint = trackPoints.value[trackPoints.value.length - 1];
+      if (lastPoint && Math.abs(lastPoint.latitude - normalized.latitude) < 1e-6 && Math.abs(lastPoint.longitude - normalized.longitude) < 1e-6 && Math.abs((lastPoint.timestamp || 0) - (normalized.timestamp || 0)) < 1500) {
+        currentLocation.value = normalized;
+        persistSession();
+        return;
+      }
+      trackPoints.value = [...trackPoints.value, normalized].slice(-MAX_TRACK_POINTS);
+      currentLocation.value = normalized;
+      persistSession();
+    }
+    function persistSession() {
+      saveHikingSession({
+        isTracking: isTracking.value,
+        lastLocation: currentLocation.value,
+        points: trackPoints.value,
+        updatedAt: Date.now()
+      });
+    }
+    return {
+      isTracking,
+      currentLocation,
+      trackPoints,
+      locationError,
+      hasMapLocation,
+      mapCenter,
+      mapPolyline,
+      mapMarkers,
+      hydrate,
+      refreshLocation,
+      startTracking,
+      stopTracking
+    };
+  });
+  const _sfc_main$b = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -5664,13 +7845,20 @@ if (uni.restoreGlobal) {
       const locationOptionsLoading = vue.ref(false);
       const locationOptions = vue.ref([]);
       const publishForm = vue.reactive(createDefaultPublishForm());
+      const hikingStore = useHikingStore();
+      const { trackPoints, isTracking } = storeToRefs(hikingStore);
       const systemInfo = typeof uni.getSystemInfoSync === "function" ? uni.getSystemInfoSync() : {};
       const statusBarHeight = systemInfo.statusBarHeight || 20;
       const statusBarStyle = vue.computed(() => ({ height: `${statusBarHeight}px` }));
       const currentUser = vue.computed(() => getStoredAuthUser() || null);
-      const authorAvatar = vue.computed(() => {
+      const authorAvatarUrl = vue.computed(() => {
         var _a, _b;
-        return ((_a = currentUser.value) == null ? void 0 : _a.avatar_url) || ((_b = currentUser.value) == null ? void 0 : _b.avatar) || defaultCoverOptions[1];
+        return ((_a = currentUser.value) == null ? void 0 : _a.avatar_url) || ((_b = currentUser.value) == null ? void 0 : _b.avatar) || "";
+      });
+      const authorInitial = vue.computed(() => {
+        var _a;
+        const nickname = String(((_a = currentUser.value) == null ? void 0 : _a.nickname) || "新疆旅行者").trim();
+        return nickname ? nickname.slice(0, 1) : "新";
       });
       const derivedContentType = vue.computed(() => {
         if (publishForm.video) {
@@ -5710,6 +7898,28 @@ if (uni.restoreGlobal) {
         active: !locating.value && !locationFailed.value,
         warn: locationFailed.value
       }));
+      const normalizedTrackPoints = vue.computed(() => Array.isArray(trackPoints.value) ? trackPoints.value.filter(Boolean) : []);
+      const attachableTrack = vue.computed(() => {
+        if (!normalizedTrackPoints.value.length) {
+          return null;
+        }
+        return createGuideTrackPayload(normalizedTrackPoints.value);
+      });
+      const hasAttachableTrack = vue.computed(() => {
+        var _a, _b;
+        return Boolean((_b = (_a = attachableTrack.value) == null ? void 0 : _a.points) == null ? void 0 : _b.length);
+      });
+      const trackSummaryText = vue.computed(() => {
+        const track = attachableTrack.value;
+        if (!track) {
+          return "暂无可附带轨迹";
+        }
+        const distanceKm = Number(track.distanceKm || sumTrackDistanceKm(track.points) || 0);
+        const pointCount = Number(track.pointCount || track.points.length || 0);
+        const durationText = formatTrackDuration(track.durationMs);
+        const trackingState = isTracking.value ? "记录中" : "已保存";
+        return `${trackingState} · ${distanceKm.toFixed(2)} km · ${durationText} · ${pointCount} 个轨迹点`;
+      });
       onLoad(() => {
         if (!currentUser.value) {
           uni.showModal({
@@ -5721,6 +7931,10 @@ if (uni.restoreGlobal) {
             }
           });
           return;
+        }
+        hikingStore.hydrate();
+        if (!hasAttachableTrack.value) {
+          publishForm.attachHikingTrack = false;
         }
         loadCurrentLocation();
         setTimeout(() => {
@@ -5737,14 +7951,24 @@ if (uni.restoreGlobal) {
           locationLongitude: null,
           images: [],
           video: "",
-          videoPoster: ""
+          videoPoster: "",
+          attachHikingTrack: false
         };
+      }
+      function handleTrackSwitchChange(event) {
+        var _a;
+        publishForm.attachHikingTrack = Boolean((_a = event == null ? void 0 : event.detail) == null ? void 0 : _a.value);
       }
       async function loadCurrentLocation() {
         locating.value = true;
         locationFailed.value = false;
         try {
-          const coords = await getCurrentLocation();
+          const coords = await getCurrentLocation({
+            providers: ["plus-geolocation", "gcj02", "system"],
+            coordsType: "gcj02",
+            gpsTimeout: 12e3,
+            networkTimeout: 5e3
+          });
           const regeo = await reverseGeocode(coords.longitude, coords.latitude);
           const address = (regeo == null ? void 0 : regeo.addressComponent) || {};
           const city = normalizeLocationPart2(address.city);
@@ -5760,6 +7984,11 @@ if (uni.restoreGlobal) {
           publishForm.locationLatitude = null;
           locationOptions.value = [];
           locationFailed.value = true;
+          uni.showToast({
+            title: (error == null ? void 0 : error.message) || "定位失败",
+            icon: "none",
+            duration: 2200
+          });
         } finally {
           locating.value = false;
         }
@@ -5800,6 +8029,9 @@ if (uni.restoreGlobal) {
       async function openLocationPicker() {
         if (!publishForm.locationLongitude || !publishForm.locationLatitude) {
           await loadCurrentLocation();
+        }
+        if (!publishForm.locationLongitude || !publishForm.locationLatitude) {
+          return;
         }
         showLocationPicker.value = true;
       }
@@ -5928,6 +8160,7 @@ if (uni.restoreGlobal) {
             contentType
           });
           const summaryText = publishForm.excerpt.trim() || (highlights.length ? `#${highlights.join(" #")}` : "来自新疆旅途中的一条真实笔记。");
+          const attachedTrack = publishForm.attachHikingTrack ? attachableTrack.value : null;
           const guidePayload = {
             title: publishForm.title.trim(),
             excerpt: summaryText,
@@ -5950,7 +8183,8 @@ if (uni.restoreGlobal) {
             sections: summaryText ? [{ title: "笔记内容", paragraphs: [summaryText] }] : [],
             coverAspectRatio: savedVideo ? 1.45 : savedImages.length ? 1.34 : 0.84,
             primaryTab: "发现",
-            cityTab: "同城"
+            cityTab: "同城",
+            hikingTrack: attachedTrack
           };
           const createdGuide = useRemoteApi ? await createGuide(guidePayload, token) : addPublishedGuide(guidePayload, currentUser.value || {});
           uni.showToast({ title: "发布成功", icon: "none" });
@@ -5972,12 +8206,20 @@ if (uni.restoreGlobal) {
         }
         return "";
       }
-      const __returned__ = { publishSubmitting, publishError, autoFocusTitle, locating, locationFailed, showLocationPicker, locationOptionsLoading, locationOptions, publishForm, systemInfo, statusBarHeight, statusBarStyle, currentUser, authorAvatar, derivedContentType, derivedSubCategory, locationTagText, mediaSummary, locationStatusText, locationStatusClass, createDefaultPublishForm, loadCurrentLocation, normalizeLocationPart: normalizeLocationPart2, formatLocationTag, loadNearbyLocationOptions, reloadCurrentLocation, openLocationPicker, closeLocationPicker, selectLocationOption, locationSourceText, inferSubCategory, mapCategoryName, goBack, removePublishImage, removePublishVideo, pickMedia, pickPublishImages, pickPublishVideo, submitPublishedGuide, validatePublishedGuide, computed: vue.computed, reactive: vue.reactive, ref: vue.ref, get onLoad() {
+      const __returned__ = { publishSubmitting, publishError, autoFocusTitle, locating, locationFailed, showLocationPicker, locationOptionsLoading, locationOptions, publishForm, hikingStore, trackPoints, isTracking, systemInfo, statusBarHeight, statusBarStyle, currentUser, authorAvatarUrl, authorInitial, derivedContentType, derivedSubCategory, locationTagText, mediaSummary, locationStatusText, locationStatusClass, normalizedTrackPoints, attachableTrack, hasAttachableTrack, trackSummaryText, createDefaultPublishForm, handleTrackSwitchChange, loadCurrentLocation, normalizeLocationPart: normalizeLocationPart2, formatLocationTag, loadNearbyLocationOptions, reloadCurrentLocation, openLocationPicker, closeLocationPicker, selectLocationOption, locationSourceText, inferSubCategory, mapCategoryName, goBack, removePublishImage, removePublishVideo, pickMedia, pickPublishImages, pickPublishVideo, submitPublishedGuide, validatePublishedGuide, computed: vue.computed, reactive: vue.reactive, ref: vue.ref, get storeToRefs() {
+        return storeToRefs;
+      }, get onLoad() {
         return onLoad;
-      }, get getStoredAuthToken() {
+      }, CachedImage, get getStoredAuthToken() {
         return getStoredAuthToken;
       }, get getStoredAuthUser() {
         return getStoredAuthUser;
+      }, get createGuideTrackPayload() {
+        return createGuideTrackPayload;
+      }, get formatTrackDuration() {
+        return formatTrackDuration;
+      }, get sumTrackDistanceKm() {
+        return sumTrackDistanceKm;
       }, get addPublishedGuide() {
         return addPublishedGuide;
       }, get defaultCoverOptions() {
@@ -5998,12 +8240,14 @@ if (uni.restoreGlobal) {
         return hasGuideApi;
       }, get uploadGuideMedia() {
         return uploadGuideMedia;
+      }, get useHikingStore() {
+        return useHikingStore;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   };
-  function _sfc_render$b(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$a(_ctx, _cache, $props, $setup, $data, $options) {
     var _a;
     return vue.openBlock(), vue.createElementBlock("view", { class: "publish-page" }, [
       vue.createElementVNode(
@@ -6034,11 +8278,21 @@ if (uni.restoreGlobal) {
       }, [
         vue.createElementVNode("view", { class: "composer-card" }, [
           vue.createElementVNode("view", { class: "composer-head" }, [
-            vue.createElementVNode("image", {
-              class: "composer-avatar",
-              src: $setup.authorAvatar,
-              mode: "aspectFill"
-            }, null, 8, ["src"]),
+            $setup.authorAvatarUrl ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+              key: 0,
+              src: $setup.authorAvatarUrl,
+              "container-class": "composer-avatar",
+              "image-class": "composer-avatar"
+            }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 1,
+                class: "composer-avatar composer-avatar-fallback"
+              },
+              vue.toDisplayString($setup.authorInitial),
+              1
+              /* TEXT */
+            )),
             vue.createElementVNode("view", { class: "composer-user-copy" }, [
               vue.createElementVNode(
                 "text",
@@ -6164,10 +8418,11 @@ if (uni.restoreGlobal) {
             key: 0,
             class: "video-card"
           }, [
-            vue.createElementVNode("image", {
-              class: "video-poster",
+            vue.createVNode($setup["CachedImage"], {
               src: $setup.publishForm.videoPoster,
-              mode: "aspectFill"
+              "container-class": "video-poster",
+              "image-class": "video-poster",
+              "fallback-to-remote": false
             }, null, 8, ["src"]),
             vue.createElementVNode("view", { class: "video-overlay" }, "视频"),
             vue.createElementVNode("view", {
@@ -6187,10 +8442,11 @@ if (uni.restoreGlobal) {
                   key: `${item}-${index}`,
                   class: "image-item"
                 }, [
-                  vue.createElementVNode("image", {
-                    class: "image-thumb",
+                  vue.createVNode($setup["CachedImage"], {
                     src: item,
-                    mode: "aspectFill"
+                    "container-class": "image-thumb",
+                    "image-class": "image-thumb",
+                    "fallback-to-remote": false
                   }, null, 8, ["src"]),
                   vue.createElementVNode(
                     "view",
@@ -6243,6 +8499,38 @@ if (uni.restoreGlobal) {
               onClick: $setup.openLocationPicker
             }, "选择附近位置")
           ])
+        ]),
+        vue.createElementVNode("view", { class: "form-card track-card" }, [
+          vue.createElementVNode("view", { class: "section-head" }, [
+            vue.createElementVNode("text", { class: "field-label no-gap" }, "徒步轨迹"),
+            vue.createElementVNode("text", { class: "section-tip" }, "可选，把当前保存的徒步路线一起发出去")
+          ]),
+          $setup.hasAttachableTrack ? (vue.openBlock(), vue.createElementBlock("view", {
+            key: 0,
+            class: "track-body"
+          }, [
+            vue.createElementVNode("view", { class: "track-copy" }, [
+              vue.createElementVNode("text", { class: "track-title" }, "附带最近一次徒步记录"),
+              vue.createElementVNode(
+                "text",
+                { class: "track-desc" },
+                vue.toDisplayString($setup.trackSummaryText),
+                1
+                /* TEXT */
+              )
+            ]),
+            vue.createElementVNode("switch", {
+              checked: $setup.publishForm.attachHikingTrack,
+              color: "#ff7c62",
+              onChange: $setup.handleTrackSwitchChange
+            }, null, 40, ["checked"])
+          ])) : (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "track-empty"
+          }, [
+            vue.createElementVNode("text", { class: "track-empty-title" }, "还没有可附带的轨迹"),
+            vue.createElementVNode("text", { class: "track-empty-desc" }, "先去徒步模式记录一段路线，返回这里就能选择附带。")
+          ]))
         ]),
         $setup.publishError ? (vue.openBlock(), vue.createElementBlock(
           "view",
@@ -6333,7 +8621,7 @@ if (uni.restoreGlobal) {
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesGuidePublishIndex = /* @__PURE__ */ _export_sfc(_sfc_main$c, [["render", _sfc_render$b], ["__scopeId", "data-v-f222cc13"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-publish/index.vue"]]);
+  const PagesGuidePublishIndex = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["render", _sfc_render$a], ["__scopeId", "data-v-f222cc13"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-publish/index.vue"]]);
   const AI_BASE_URL = "https://dashscope.aliyuncs.com/compatible-mode/v1";
   const AI_MODEL = "qwen3.6-plus";
   const AI_API_KEY = "";
@@ -6382,7 +8670,6 @@ if (uni.restoreGlobal) {
     { label: "气候", value: "大陆性气候明显，夏季较热、昼夜温差较大" }
   ];
   const MAX_DESTINATION_CONTEXT_ITEMS = 24;
-  const MAX_GUIDE_CONTEXT_ITEMS = 8;
   function request(url, data) {
     return new Promise((resolve, reject) => {
       uni.request({
@@ -6419,11 +8706,9 @@ if (uni.restoreGlobal) {
 其他可参考景区：${remainingNames}` : featuredItems;
   }
   function buildGuideSummary() {
-    const guideText = getGuideList().slice(0, MAX_GUIDE_CONTEXT_ITEMS).map((item) => `${item.title}（${item.category}）：${item.excerpt}`).join("\n");
     const tipText = quickTips.map((item) => `${item.title}：${item.description}`).join("\n");
     const infoText = essentialInfo.map((item) => `${item.label}：${item.value}`).join("\n");
-    return `${guideText}
-${tipText}
+    return `${tipText}
 ${infoText}`;
   }
   function buildTravelContext(extraContext = "") {
@@ -6543,7 +8828,7 @@ ${infoText}`;
       throw new Error(formatErrorMessage(error));
     }
   }
-  const _sfc_main$b = {
+  const _sfc_main$a = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -6875,7 +9160,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$a(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$9(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell assistant-page" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient assistant-banner" }, [
@@ -7373,8 +9658,8 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/ai-assistant/index" })
     ]);
   }
-  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$b, [["render", _sfc_render$a], ["__scopeId", "data-v-a1b142b0"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/ai-assistant/index.vue"]]);
-  const _sfc_main$a = {
+  const PagesAiAssistantIndex = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$9], ["__scopeId", "data-v-a1b142b0"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/ai-assistant/index.vue"]]);
+  const _sfc_main$9 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -7560,7 +9845,7 @@ ${infoText}`;
       }
       const __returned__ = { currentUser, authToken, myGuides, myGuidesLoading, favoriteGuides, favoriteGuidesLoading, accountStats, editModalVisible, editNickname, isLoggedIn, profileName, profileEmail, avatarUrl, profileInitial, profileStats, loadAuthState, loadMyStats, loadMyGuides, loadFavoriteGuides, chooseAvatar, openEditModal, saveProfile, goGuide, goAuth, goSettings, computed: vue.computed, ref: vue.ref, get onShow() {
         return onShow;
-      }, AppTabBar, get clearAuthSession() {
+      }, AppTabBar, CachedImage, get clearAuthSession() {
         return clearAuthSession;
       }, get getStoredAuthToken() {
         return getStoredAuthToken;
@@ -7585,7 +9870,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$9(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient profile-banner section" }, [
@@ -7601,11 +9886,11 @@ ${infoText}`;
               class: "avatar-wrap",
               onClick: _cache[0] || (_cache[0] = ($event) => $setup.isLoggedIn && $setup.chooseAvatar())
             }, [
-              $setup.avatarUrl ? (vue.openBlock(), vue.createElementBlock("image", {
+              $setup.avatarUrl ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
                 key: 0,
                 src: $setup.avatarUrl,
-                class: "avatar-img",
-                mode: "aspectFill"
+                "container-class": "avatar-img",
+                "image-class": "avatar-img"
               }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock(
                 "view",
                 {
@@ -7720,11 +10005,11 @@ ${infoText}`;
                   class: "card guide-item",
                   onClick: ($event) => $setup.goGuide(g.id)
                 }, [
-                  g.image ? (vue.openBlock(), vue.createElementBlock("image", {
+                  g.image ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
                     key: 0,
                     src: g.image,
-                    class: "guide-thumb",
-                    mode: "aspectFill"
+                    "container-class": "guide-thumb",
+                    "image-class": "guide-thumb"
                   }, null, 8, ["src"])) : vue.createCommentVNode("v-if", true),
                   vue.createElementVNode("view", { class: "guide-info" }, [
                     vue.createElementVNode(
@@ -7778,11 +10063,11 @@ ${infoText}`;
                   class: "card guide-item",
                   onClick: ($event) => $setup.goGuide(g.id)
                 }, [
-                  g.image ? (vue.openBlock(), vue.createElementBlock("image", {
+                  g.image ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
                     key: 0,
                     src: g.image,
-                    class: "guide-thumb",
-                    mode: "aspectFill"
+                    "container-class": "guide-thumb",
+                    "image-class": "guide-thumb"
                   }, null, 8, ["src"])) : vue.createCommentVNode("v-if", true),
                   vue.createElementVNode("view", { class: "guide-info" }, [
                     vue.createElementVNode(
@@ -7872,8 +10157,8 @@ ${infoText}`;
       vue.createVNode($setup["AppTabBar"], { current: "/pages/account/index" })
     ]);
   }
-  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$a, [["render", _sfc_render$9], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
-  const _sfc_main$9 = {
+  const PagesAccountIndex = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-3c1b446f"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/account/index.vue"]]);
+  const _sfc_main$8 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -7968,7 +10253,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$8(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$7(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell auth-page" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient auth-banner section" }, [
@@ -8139,7 +10424,7 @@ ${infoText}`;
       ])
     ]);
   }
-  const PagesAuthIndex = /* @__PURE__ */ _export_sfc(_sfc_main$9, [["render", _sfc_render$8], ["__scopeId", "data-v-3f748249"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/auth/index.vue"]]);
+  const PagesAuthIndex = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-3f748249"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/auth/index.vue"]]);
   const OFFLINE_MAP_STORAGE_KEY = "meet-xinjiang-offline-maps";
   function getOfflineMapStore() {
     const raw = uni.getStorageSync(OFFLINE_MAP_STORAGE_KEY);
@@ -8210,7 +10495,7 @@ ${infoText}`;
     }
     removeOfflineMapRecord(destinationId);
   }
-  const _sfc_main$8 = {
+  const _sfc_main$7 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -8449,9 +10734,9 @@ ${infoText}`;
           weatherError.value = "实时天气获取失败，当前显示预设天气。";
         }
         try {
-          const location = await getCurrentLocation();
-          const route = await loadRoute(location, scenicCoords, routeMode.value);
-          if (location) {
+          const location2 = await getCurrentLocation();
+          const route = await loadRoute(location2, scenicCoords, routeMode.value);
+          if (location2) {
             locationReady.value = true;
             locationStatusText.value = "已定位";
           }
@@ -8748,7 +11033,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$7(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       $setup.destination ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -9320,8 +11605,8 @@ ${infoText}`;
       ]))
     ]);
   }
-  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$8, [["render", _sfc_render$7], ["__scopeId", "data-v-b4993f48"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destination-detail/index.vue"]]);
-  const _sfc_main$7 = {
+  const PagesDestinationDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-b4993f48"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destination-detail/index.vue"]]);
+  const _sfc_main$6 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -9392,7 +11677,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$6(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell safety-page" }, [
       $setup.destination ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -9575,8 +11860,8 @@ ${infoText}`;
       ]))
     ]);
   }
-  const PagesSafetyMapIndex = /* @__PURE__ */ _export_sfc(_sfc_main$7, [["render", _sfc_render$6], ["__scopeId", "data-v-26a8a6b6"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/safety-map/index.vue"]]);
-  const _sfc_main$6 = {
+  const PagesSafetyMapIndex = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-26a8a6b6"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/safety-map/index.vue"]]);
+  const _sfc_main$5 = {
     __name: "HikingHeaderPanel",
     props: {
       gpsStatusText: {
@@ -9619,7 +11904,7 @@ ${infoText}`;
       return __returned__;
     }
   };
-  function _sfc_render$5(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "header-panel" }, [
       vue.createElementVNode("view", { class: "info-row" }, [
         vue.createElementVNode("view", { class: "gps-status" }, [
@@ -9710,369 +11995,13 @@ ${infoText}`;
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const HikingHeaderPanel = /* @__PURE__ */ _export_sfc(_sfc_main$6, [["render", _sfc_render$5], ["__scopeId", "data-v-4c485381"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingHeaderPanel.vue"]]);
-  const TIANDITU_PROVIDER = "tianditu";
-  const TIANDITU_KEY = "4344d443d2d5974ce960da012322cbab";
-  function hasTiandituKey() {
-    return Boolean(TIANDITU_KEY) && !TIANDITU_KEY.includes("请在这里填入");
-  }
-  const TIANDITU_LAYERS = {
-    vector: {
-      layer: "vec_w",
-      annotation: "cva_w",
-      label: "天地图矢量"
-    },
-    imagery: {
-      layer: "img_w",
-      annotation: "cia_w",
-      label: "天地图影像"
-    },
-    terrain: {
-      layer: "ter_w",
-      annotation: "cta_w",
-      label: "天地图地形"
-    }
-  };
-  function buildTileUrl(layer) {
-    if (!hasTiandituKey() || !layer) {
-      return "";
-    }
-    return `https://t0.tianditu.gov.cn/DataServer?T=${encodeURIComponent(layer)}&x={x}&y={y}&l={z}&tk=${encodeURIComponent(TIANDITU_KEY)}`;
-  }
-  function getTiandituLayerConfig(mode = "terrain") {
-    const config = TIANDITU_LAYERS[mode] || TIANDITU_LAYERS.terrain;
-    return {
-      provider: TIANDITU_PROVIDER,
-      mode,
-      label: config.label,
-      tileUrl: buildTileUrl(config.layer),
-      annotationUrl: buildTileUrl(config.annotation),
-      ready: hasTiandituKey()
-    };
-  }
-  const AMAP_JS_URL = "https://webapi.amap.com/maps";
-  let amapSdkPromise = null;
-  function buildAmapScriptUrl() {
-    const params = new URLSearchParams({
-      v: "2.0",
-      key: AMAP_WEB_KEY
-    });
-    return `${AMAP_JS_URL}?${params.toString()}`;
-  }
-  function replaceTileTemplate(urlTemplate, x, y, z) {
-    return String(urlTemplate || "").replace("{x}", String(x)).replace("{y}", String(y)).replace("{z}", String(z));
-  }
-  async function loadAmapWebSdk() {
-    if (typeof window === "undefined" || typeof document === "undefined") {
-      return null;
-    }
-    if (!hasAmapKey()) {
-      throw new Error("缺少高德 Web Key，无法加载 AMap JS API");
-    }
-    if (window.AMap) {
-      return window.AMap;
-    }
-    if (!amapSdkPromise) {
-      amapSdkPromise = new Promise((resolve, reject) => {
-        const existing = document.querySelector('script[data-amap-web-sdk="1"]');
-        if (existing) {
-          existing.addEventListener("load", () => resolve(window.AMap));
-          existing.addEventListener("error", () => reject(new Error("AMap JS API 加载失败")));
-          return;
-        }
-        const script = document.createElement("script");
-        script.src = buildAmapScriptUrl();
-        script.async = true;
-        script.defer = true;
-        script.dataset.amapWebSdk = "1";
-        script.onload = () => resolve(window.AMap);
-        script.onerror = () => reject(new Error("AMap JS API 加载失败"));
-        document.head.appendChild(script);
-      });
-    }
-    return amapSdkPromise;
-  }
-  function createAmapTiandituLayers(AMap, mode = "terrain") {
-    const config = getTiandituLayerConfig(mode);
-    if (!AMap || !config.ready || !config.tileUrl) {
-      return [];
-    }
-    const layers = [
-      new AMap.TileLayer({
-        zIndex: 120,
-        opacity: mode === "terrain" ? 0.92 : 1,
-        getTileUrl(x, y, z) {
-          return replaceTileTemplate(config.tileUrl, x, y, z);
-        }
-      })
-    ];
-    if (config.annotationUrl) {
-      layers.push(new AMap.TileLayer({
-        zIndex: 121,
-        opacity: 1,
-        getTileUrl(x, y, z) {
-          return replaceTileTemplate(config.annotationUrl, x, y, z);
-        }
-      }));
-    }
-    return layers;
-  }
-  function createAmapPoint(longitude, latitude, AMap) {
-    if (!AMap) {
-      return null;
-    }
-    const lng = Number(longitude);
-    const lat = Number(latitude);
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
-      return null;
-    }
-    return new AMap.LngLat(lng, lat);
-  }
-  const _sfc_main$5 = {
-    __name: "H5AmapTiandituMap",
-    props: {
-      mapCenter: {
-        type: Object,
-        default: null
-      },
-      mapScale: {
-        type: Number,
-        default: 15
-      },
-      mapPolyline: {
-        type: Array,
-        default: () => []
-      },
-      mapMarkers: {
-        type: Array,
-        default: () => []
-      },
-      mapModeKey: {
-        type: String,
-        default: "terrain"
-      }
-    },
-    setup(__props, { expose: __expose }) {
-      __expose();
-      const props = __props;
-      const containerRef = vue.ref(null);
-      let AMapRef = null;
-      let map = null;
-      let tiandituLayers = [];
-      let markerOverlays = [];
-      let polylineOverlays = [];
-      function clearOverlays(list = []) {
-        list.forEach((item) => {
-          if (item && typeof item.setMap === "function") {
-            item.setMap(null);
-          }
-        });
-        list.length = 0;
-      }
-      function syncCenter() {
-        if (!map || !props.mapCenter || !AMapRef) {
-          return;
-        }
-        const point = createAmapPoint(props.mapCenter.longitude, props.mapCenter.latitude, AMapRef);
-        if (point) {
-          map.setCenter(point);
-        }
-      }
-      function syncZoom() {
-        if (map && Number.isFinite(Number(props.mapScale))) {
-          map.setZoom(Number(props.mapScale));
-        }
-      }
-      function syncMarkers() {
-        if (!map || !AMapRef) {
-          return;
-        }
-        clearOverlays(markerOverlays);
-        props.mapMarkers.forEach((item) => {
-          var _a;
-          const point = createAmapPoint(item.longitude, item.latitude, AMapRef);
-          if (!point) {
-            return;
-          }
-          const marker = new AMapRef.Marker({
-            position: point,
-            anchor: "center",
-            label: ((_a = item.callout) == null ? void 0 : _a.content) ? {
-              content: item.callout.content,
-              direction: "top"
-            } : void 0
-          });
-          marker.setMap(map);
-          markerOverlays.push(marker);
-        });
-      }
-      function syncPolyline() {
-        if (!map || !AMapRef) {
-          return;
-        }
-        clearOverlays(polylineOverlays);
-        props.mapPolyline.forEach((line) => {
-          const path = Array.isArray(line.points) ? line.points.map((item) => createAmapPoint(item.longitude, item.latitude, AMapRef)).filter(Boolean) : [];
-          if (!path.length) {
-            return;
-          }
-          const polyline = new AMapRef.Polyline({
-            path,
-            strokeColor: line.color || "#FF7A00",
-            strokeWeight: Number(line.width || 5),
-            borderWeight: Number(line.borderWidth || 1),
-            outlineColor: line.borderColor || "#C14F00",
-            lineJoin: "round",
-            lineCap: "round"
-          });
-          polyline.setMap(map);
-          polylineOverlays.push(polyline);
-        });
-      }
-      function syncTiandituLayers() {
-        if (!map || !AMapRef) {
-          return;
-        }
-        if (tiandituLayers.length) {
-          tiandituLayers.forEach((layer) => {
-            if (layer && typeof layer.setMap === "function") {
-              layer.setMap(null);
-            }
-          });
-          tiandituLayers = [];
-        }
-        tiandituLayers = createAmapTiandituLayers(AMapRef, props.mapModeKey);
-        tiandituLayers.forEach((layer) => layer.setMap(map));
-      }
-      async function initMap() {
-        if (typeof window === "undefined" || typeof document === "undefined") {
-          return;
-        }
-        await vue.nextTick();
-        if (!containerRef.value || map) {
-          return;
-        }
-        AMapRef = await loadAmapWebSdk();
-        if (!AMapRef) {
-          return;
-        }
-        const point = props.mapCenter ? createAmapPoint(props.mapCenter.longitude, props.mapCenter.latitude, AMapRef) : null;
-        map = new AMapRef.Map(containerRef.value, {
-          zoom: Number(props.mapScale || 15),
-          center: point || void 0,
-          viewMode: "2D",
-          mapStyle: "amap://styles/normal",
-          resizeEnable: true
-        });
-        syncTiandituLayers();
-        syncMarkers();
-        syncPolyline();
-      }
-      vue.onMounted(() => {
-        initMap().catch(() => {
-        });
-      });
-      vue.watch(() => props.mapCenter, () => {
-        syncCenter();
-      }, { deep: true });
-      vue.watch(() => props.mapScale, () => {
-        syncZoom();
-      });
-      vue.watch(() => props.mapModeKey, () => {
-        syncTiandituLayers();
-      });
-      vue.watch(() => props.mapMarkers, () => {
-        syncMarkers();
-      }, { deep: true });
-      vue.watch(() => props.mapPolyline, () => {
-        syncPolyline();
-      }, { deep: true });
-      vue.onBeforeUnmount(() => {
-        clearOverlays(markerOverlays);
-        clearOverlays(polylineOverlays);
-        if (map) {
-          if (tiandituLayers.length) {
-            tiandituLayers.forEach((layer) => {
-              if (layer && typeof layer.setMap === "function") {
-                layer.setMap(null);
-              }
-            });
-            tiandituLayers = [];
-          }
-          map.destroy();
-          map = null;
-        }
-      });
-      const __returned__ = { props, containerRef, get AMapRef() {
-        return AMapRef;
-      }, set AMapRef(v) {
-        AMapRef = v;
-      }, get map() {
-        return map;
-      }, set map(v) {
-        map = v;
-      }, get tiandituLayers() {
-        return tiandituLayers;
-      }, set tiandituLayers(v) {
-        tiandituLayers = v;
-      }, get markerOverlays() {
-        return markerOverlays;
-      }, set markerOverlays(v) {
-        markerOverlays = v;
-      }, get polylineOverlays() {
-        return polylineOverlays;
-      }, set polylineOverlays(v) {
-        polylineOverlays = v;
-      }, clearOverlays, syncCenter, syncZoom, syncMarkers, syncPolyline, syncTiandituLayers, initMap, nextTick: vue.nextTick, onBeforeUnmount: vue.onBeforeUnmount, onMounted: vue.onMounted, ref: vue.ref, watch: vue.watch, get createAmapPoint() {
-        return createAmapPoint;
-      }, get createAmapTiandituLayers() {
-        return createAmapTiandituLayers;
-      }, get loadAmapWebSdk() {
-        return loadAmapWebSdk;
-      } };
-      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
-      return __returned__;
-    }
-  };
-  function _sfc_render$4(_ctx, _cache, $props, $setup, $data, $options) {
-    return vue.openBlock(), vue.createElementBlock(
-      "view",
-      {
-        ref: "containerRef",
-        class: "h5-map-host"
-      },
-      null,
-      512
-      /* NEED_PATCH */
-    );
-  }
-  const H5AmapTiandituMap = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-7e5713d2"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/H5AmapTiandituMap.vue"]]);
+  const HikingHeaderPanel = /* @__PURE__ */ _export_sfc(_sfc_main$5, [["render", _sfc_render$4], ["__scopeId", "data-v-4c485381"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingHeaderPanel.vue"]]);
   const _sfc_main$4 = {
     __name: "HikingMapStage",
     props: {
-      hasMapLocation: {
-        type: Boolean,
-        default: false
-      },
-      mapCenter: {
-        type: Object,
-        default: null
-      },
       mapScale: {
         type: Number,
         default: 15
-      },
-      mapPolyline: {
-        type: Array,
-        default: () => []
-      },
-      mapMarkers: {
-        type: Array,
-        default: () => []
-      },
-      isTracking: {
-        type: Boolean,
-        default: false
       },
       mapModeLabel: {
         type: String,
@@ -10094,9 +12023,23 @@ ${infoText}`;
     emits: ["refresh", "recenter", "toggle-track", "cycle-map-mode"],
     setup(__props, { expose: __expose }) {
       __expose();
-      const isWebMapRuntime = typeof window !== "undefined" && typeof document !== "undefined" && hasAmapKey();
-      const __returned__ = { isWebMapRuntime, H5AmapTiandituMap, get hasAmapKey() {
+      const hikingStore = useHikingStore();
+      const {
+        isTracking: storeIsTracking,
+        hasMapLocation: storeHasMapLocation,
+        mapCenter: storeMapCenter,
+        mapPolyline: storeMapPolyline,
+        mapMarkers: storeMapMarkers
+      } = storeToRefs(hikingStore);
+      function hasMapSupport() {
+        return true;
+      }
+      const __returned__ = { hikingStore, storeIsTracking, storeHasMapLocation, storeMapCenter, storeMapPolyline, storeMapMarkers, hasMapSupport, HikingTileMapCompat, get storeToRefs() {
+        return storeToRefs;
+      }, get hasAmapKey() {
         return hasAmapKey;
+      }, get useHikingStore() {
+        return useHikingStore;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -10104,27 +12047,16 @@ ${infoText}`;
   };
   function _sfc_render$3(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "map-container" }, [
-      $setup.isWebMapRuntime && $props.hasMapLocation ? (vue.openBlock(), vue.createBlock($setup["H5AmapTiandituMap"], {
+      $setup.storeHasMapLocation && $setup.hasMapSupport() ? (vue.openBlock(), vue.createBlock($setup["HikingTileMapCompat"], {
         key: 0,
         class: "live-map",
-        "map-center": $props.mapCenter,
+        "map-center": $setup.storeMapCenter,
         "map-scale": $props.mapScale,
-        "map-polyline": $props.mapPolyline,
-        "map-markers": $props.mapMarkers,
+        "map-polyline": $setup.storeMapPolyline,
+        "map-markers": $setup.storeMapMarkers,
         "map-mode-key": $props.mapModeKey
-      }, null, 8, ["map-center", "map-scale", "map-polyline", "map-markers", "map-mode-key"])) : $props.hasMapLocation ? (vue.openBlock(), vue.createElementBlock("map", {
+      }, null, 8, ["map-center", "map-scale", "map-polyline", "map-markers", "map-mode-key"])) : (vue.openBlock(), vue.createElementBlock("view", {
         key: 1,
-        class: "live-map",
-        latitude: $props.mapCenter.latitude,
-        longitude: $props.mapCenter.longitude,
-        scale: $props.mapScale,
-        "show-location": true,
-        "enable-rotate": true,
-        "enable-traffic": false,
-        polyline: $props.mapPolyline,
-        markers: $props.mapMarkers
-      }, null, 8, ["latitude", "longitude", "scale", "polyline", "markers"])) : (vue.openBlock(), vue.createElementBlock("view", {
-        key: 2,
         class: "map-placeholder"
       }, [
         vue.createElementVNode("view", { class: "map-fallback-copy" }, [
@@ -10132,7 +12064,6 @@ ${infoText}`;
           vue.createElementVNode("text", { class: "fallback-desc" }, "已接入原生 GPS 定位与徒步地图桥接，获取到位置后会显示真实地图与轨迹。")
         ])
       ])),
-      vue.createElementVNode("view", { class: "map-overlay" }),
       vue.createElementVNode("view", {
         class: "map-mode-switch",
         onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("cycle-map-mode"))
@@ -10151,57 +12082,38 @@ ${infoText}`;
           class: "tool-btn",
           onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("refresh"))
         }, [
-          vue.createElementVNode("text", { class: "icon" }, ""),
+          vue.createElementVNode("text", { class: "icon" }, "刷"),
           vue.createElementVNode("text", { class: "text" }, "定位刷新")
         ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
           onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("recenter"))
         }, [
-          vue.createElementVNode("text", { class: "icon" }, ""),
+          vue.createElementVNode("text", { class: "icon" }, "回"),
           vue.createElementVNode("text", { class: "text" }, "回到当前")
         ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
           onClick: _cache[3] || (_cache[3] = ($event) => _ctx.$emit("toggle-track"))
         }, [
-          vue.createElementVNode("text", { class: "icon" }, ""),
+          vue.createElementVNode("text", { class: "icon" }, "记"),
           vue.createElementVNode(
             "text",
             { class: "text" },
-            vue.toDisplayString($props.isTracking ? "停止记录" : "开始记录"),
+            vue.toDisplayString($setup.storeIsTracking ? "停止记录" : "开始记录"),
             1
             /* TEXT */
           )
         ])
-      ]),
-      vue.createElementVNode(
-        "view",
-        {
-          class: vue.normalizeClass(["offline-banner", { visible: $props.isOffline }])
-        },
-        [
-          vue.createElementVNode(
-            "text",
-            { class: "offline-title" },
-            vue.toDisplayString($props.isOffline ? "离线 GPS 模式" : "在线地图模式"),
-            1
-            /* TEXT */
-          ),
-          vue.createElementVNode(
-            "text",
-            { class: "offline-desc" },
-            vue.toDisplayString($props.offlineHint),
-            1
-            /* TEXT */
-          )
-        ],
-        2
-        /* CLASS */
-      )
+      ])
     ]);
   }
   const HikingMapStage = /* @__PURE__ */ _export_sfc(_sfc_main$4, [["render", _sfc_render$3], ["__scopeId", "data-v-bc42e741"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingMapStage.vue"]]);
+  const SHORT_ON_MS = 250;
+  const LONG_ON_MS = 750;
+  const OFF_MS = 250;
+  const LETTER_GAP_MS = 750;
+  const CYCLE_GAP_MS = 2e3;
   const _sfc_main$3 = {
     __name: "HikingBottomControls",
     props: {
@@ -10212,33 +12124,267 @@ ${infoText}`;
       isGuardMode: {
         type: Boolean,
         default: false
+      },
+      emergencyContactName: {
+        type: String,
+        default: "紧急联系人"
+      },
+      emergencyContactPhones: {
+        type: Array,
+        default: () => []
       }
     },
-    emits: ["sos", "toggle-track", "toggle-guard"],
-    setup(__props, { expose: __expose }) {
+    emits: ["toggle-track", "toggle-guard", "sos-message"],
+    setup(__props, { expose: __expose, emit: __emit }) {
       __expose();
-      const __returned__ = {};
+      const props = __props;
+      const emit = __emit;
+      const isSosFlashing = vue.ref(false);
+      const isSosMenuOpen = vue.ref(false);
+      const emergencySubtitle = vue.computed(() => {
+        const phones = props.emergencyContactPhones.join(" / ");
+        return phones ? `${props.emergencyContactName} · ${phones}` : props.emergencyContactName;
+      });
+      let sosLoopToken = 0;
+      function toggleSosMenu() {
+        isSosMenuOpen.value = !isSosMenuOpen.value;
+      }
+      function closeSosMenu() {
+        isSosMenuOpen.value = false;
+      }
+      async function handleFlashlightAction() {
+        await toggleSosFlash();
+        closeSosMenu();
+      }
+      function handleSmsAction() {
+        emit("sos-message");
+        closeSosMenu();
+      }
+      async function toggleSosFlash() {
+        if (isSosFlashing.value) {
+          await stopSosFlash();
+          return;
+        }
+        const ready = await prepareTorch();
+        if (!ready) {
+          return;
+        }
+        isSosFlashing.value = true;
+        const token = ++sosLoopToken;
+        runSosLoop(token);
+      }
+      async function runSosLoop(token) {
+        try {
+          while (isSosFlashing.value && token === sosLoopToken) {
+            await playLetter([SHORT_ON_MS, SHORT_ON_MS, SHORT_ON_MS], token);
+            await sleepIfActive(LETTER_GAP_MS, token);
+            await playLetter([LONG_ON_MS, LONG_ON_MS, LONG_ON_MS], token);
+            await sleepIfActive(LETTER_GAP_MS, token);
+            await playLetter([SHORT_ON_MS, SHORT_ON_MS, SHORT_ON_MS], token);
+            await sleepIfActive(CYCLE_GAP_MS, token);
+          }
+        } catch (error) {
+          if ((error == null ? void 0 : error.message) !== "SOS stopped") {
+            formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:141", "[hiking-sos]", (error == null ? void 0 : error.message) || error);
+          }
+        } finally {
+          if (token === sosLoopToken) {
+            isSosFlashing.value = false;
+          }
+          setTorchEnabled(false);
+        }
+      }
+      async function playLetter(pattern, token) {
+        for (let index = 0; index < pattern.length; index += 1) {
+          await flashPulse(pattern[index], token);
+        }
+      }
+      async function flashPulse(onDuration, token) {
+        ensureActive(token);
+        setTorchEnabled(true);
+        await sleepIfActive(onDuration, token);
+        setTorchEnabled(false);
+        await sleepIfActive(OFF_MS, token);
+      }
+      async function stopSosFlash() {
+        sosLoopToken += 1;
+        isSosFlashing.value = false;
+        setTorchEnabled(false);
+      }
+      async function prepareTorch() {
+        var _a;
+        if (typeof plus === "undefined" || !plus.android) {
+          return false;
+        }
+        if (((_a = plus.os) == null ? void 0 : _a.name) !== "Android") {
+          uni.showToast({
+            title: "当前仅支持 Android 手电筒 SOS",
+            icon: "none"
+          });
+          return false;
+        }
+        try {
+          const cameraManager = getCameraManager();
+          const cameraId = getPrimaryCameraId(cameraManager);
+          if (!cameraManager || !cameraId) {
+            uni.showToast({
+              title: "未找到可用闪光灯",
+              icon: "none"
+            });
+            return false;
+          }
+          return true;
+        } catch (error) {
+          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:196", "[hiking-sos] prepare torch failed", (error == null ? void 0 : error.message) || error);
+          uni.showToast({
+            title: "手电筒不可用，请检查权限或摄像头占用",
+            icon: "none",
+            duration: 2500
+          });
+          return false;
+        }
+        return false;
+      }
+      function ensureActive(token) {
+        if (!isSosFlashing.value || token !== sosLoopToken) {
+          throw new Error("SOS stopped");
+        }
+      }
+      async function sleepIfActive(duration, token) {
+        ensureActive(token);
+        await sleep(duration);
+        ensureActive(token);
+      }
+      function sleep(duration) {
+        return new Promise((resolve) => {
+          setTimeout(resolve, duration);
+        });
+      }
+      function setTorchEnabled(enabled) {
+        var _a;
+        if (typeof plus === "undefined" || !plus.android || ((_a = plus.os) == null ? void 0 : _a.name) !== "Android") {
+          return;
+        }
+        try {
+          const cameraManager = getCameraManager();
+          const cameraId = getPrimaryCameraId(cameraManager);
+          if (!cameraManager || !cameraId) {
+            return;
+          }
+          cameraManager.setTorchMode(cameraId, Boolean(enabled));
+        } catch (error) {
+          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:241", "[hiking-sos] set torch failed", (error == null ? void 0 : error.message) || error);
+        }
+      }
+      function getCameraManager() {
+        const main = plus.android.runtimeMainActivity();
+        const Context = plus.android.importClass("android.content.Context");
+        const cameraManager = main.getSystemService(Context.CAMERA_SERVICE);
+        if (cameraManager) {
+          plus.android.importClass(cameraManager);
+        }
+        return cameraManager || null;
+      }
+      function getPrimaryCameraId(cameraManager) {
+        if (!cameraManager) {
+          return "";
+        }
+        const cameraIds = cameraManager.getCameraIdList();
+        const primaryId = cameraIds && cameraIds.length ? cameraIds[0] : "";
+        return primaryId ? String(primaryId) : "";
+      }
+      vue.onBeforeUnmount(() => {
+        closeSosMenu();
+        stopSosFlash();
+      });
+      const __returned__ = { props, emit, SHORT_ON_MS, LONG_ON_MS, OFF_MS, LETTER_GAP_MS, CYCLE_GAP_MS, isSosFlashing, isSosMenuOpen, emergencySubtitle, get sosLoopToken() {
+        return sosLoopToken;
+      }, set sosLoopToken(v) {
+        sosLoopToken = v;
+      }, toggleSosMenu, closeSosMenu, handleFlashlightAction, handleSmsAction, toggleSosFlash, runSosLoop, playLetter, flashPulse, stopSosFlash, prepareTorch, ensureActive, sleepIfActive, sleep, setTorchEnabled, getCameraManager, getPrimaryCameraId, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   };
   function _sfc_render$2(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "bottom-controls" }, [
+      $setup.isSosMenuOpen ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "sos-popover-mask",
+        onClick: $setup.closeSosMenu
+      })) : vue.createCommentVNode("v-if", true),
+      $setup.isSosMenuOpen ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "sos-popover"
+      }, [
+        vue.createElementVNode("view", { class: "sos-popover-header" }, [
+          vue.createElementVNode("text", { class: "sos-popover-title" }, "紧急呼救"),
+          vue.createElementVNode(
+            "text",
+            { class: "sos-popover-subtitle" },
+            vue.toDisplayString($setup.emergencySubtitle),
+            1
+            /* TEXT */
+          )
+        ]),
+        vue.createElementVNode("view", { class: "sos-action-row" }, [
+          vue.createElementVNode("view", {
+            class: "sos-action-card",
+            onClick: $setup.handleFlashlightAction
+          }, [
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["sos-action-icon flashlight", { active: $setup.isSosFlashing }])
+              },
+              [
+                vue.createElementVNode("text", { class: "icon-text" }, "灯")
+              ],
+              2
+              /* CLASS */
+            ),
+            vue.createElementVNode("text", { class: "sos-action-title" }, "手电筒求救"),
+            vue.createElementVNode(
+              "text",
+              { class: "sos-action-desc" },
+              vue.toDisplayString($setup.isSosFlashing ? "点击停止 SOS 闪烁" : "按 SOS 摩斯密码循环闪烁"),
+              1
+              /* TEXT */
+            )
+          ]),
+          vue.createElementVNode("view", {
+            class: "sos-action-card",
+            onClick: $setup.handleSmsAction
+          }, [
+            vue.createElementVNode("view", { class: "sos-action-icon message" }, [
+              vue.createElementVNode("text", { class: "icon-text" }, "信")
+            ]),
+            vue.createElementVNode("text", { class: "sos-action-title" }, "紧急短信"),
+            vue.createElementVNode("text", { class: "sos-action-desc" }, "发送坐标、海拔与定位信息")
+          ])
+        ])
+      ])) : vue.createCommentVNode("v-if", true),
       vue.createElementVNode("view", { class: "handle-bar" }),
       vue.createElementVNode("view", { class: "button-group" }, [
         vue.createElementVNode("view", { class: "side-action" }, [
-          vue.createElementVNode("view", {
-            class: "btn-circle sos",
-            onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("sos"))
-          }, [
-            vue.createElementVNode("text", { class: "btn-text" }, "SOS")
-          ]),
+          vue.createElementVNode(
+            "view",
+            {
+              class: vue.normalizeClass(["btn-circle sos", { "is-flashing": $setup.isSosFlashing, active: $setup.isSosMenuOpen }]),
+              onClick: $setup.toggleSosMenu
+            },
+            [
+              vue.createElementVNode("text", { class: "btn-text" }, "SOS")
+            ],
+            2
+            /* CLASS */
+          ),
           vue.createElementVNode("text", { class: "label" }, "SOS")
         ]),
         vue.createElementVNode("view", { class: "main-action" }, [
           vue.createElementVNode("view", {
             class: "btn-circle start",
-            onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("toggle-track"))
+            onClick: _cache[0] || (_cache[0] = ($event) => $setup.emit("toggle-track"))
           }, [
             vue.createElementVNode(
               "text",
@@ -10254,10 +12400,10 @@ ${infoText}`;
             "view",
             {
               class: vue.normalizeClass(["btn-circle shield", { active: $props.isGuardMode }]),
-              onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("toggle-guard"))
+              onClick: _cache[1] || (_cache[1] = ($event) => $setup.emit("toggle-guard"))
             },
             [
-              vue.createElementVNode("text", { class: "icon" }, "")
+              vue.createElementVNode("text", { class: "icon" }, "护")
             ],
             2
             /* CLASS */
@@ -10268,321 +12414,113 @@ ${infoText}`;
     ]);
   }
   const HikingBottomControls = /* @__PURE__ */ _export_sfc(_sfc_main$3, [["render", _sfc_render$2], ["__scopeId", "data-v-b1d0f949"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingBottomControls.vue"]]);
-  const HIKING_SESSION_KEY = "meet-xinjiang-hiking-session";
-  function readSession() {
-    const raw = uni.getStorageSync(HIKING_SESSION_KEY);
-    if (!raw) {
-      return null;
-    }
-    try {
-      const parsed = JSON.parse(raw);
-      return parsed && typeof parsed === "object" ? parsed : null;
-    } catch (error) {
-      return null;
-    }
-  }
-  function writeSession(session) {
-    uni.setStorageSync(HIKING_SESSION_KEY, JSON.stringify(session || {}));
-  }
-  function getHikingSession() {
-    return readSession();
-  }
-  function updateHikingSessionLocation(location) {
-    const session = readSession() || { points: [] };
-    const points = Array.isArray(session.points) ? session.points.slice(-119) : [];
-    points.push({
-      latitude: Number(location.latitude),
-      longitude: Number(location.longitude),
-      altitude: Number(location.altitude || 0),
-      speed: Number(location.speed || 0),
-      accuracy: Number(location.accuracy || 0),
-      timestamp: Date.now()
-    });
-    const nextSession = {
-      ...session,
-      lastLocation: {
-        latitude: Number(location.latitude),
-        longitude: Number(location.longitude),
-        altitude: Number(location.altitude || 0),
-        speed: Number(location.speed || 0),
-        accuracy: Number(location.accuracy || 0),
-        timestamp: Date.now()
+  const hikingModeMock = {
+    route: {
+      title: "乌孙古道轻装徒步",
+      status: "进行中",
+      offlineReady: true,
+      gpsReady: true,
+      locationName: "冰川观景垭口南侧 400m",
+      duration: "05:18:42",
+      distance: "12.8",
+      pace: "24′52″",
+      ascent: "986",
+      calories: "742",
+      steps: "18,420",
+      heartRate: "118",
+      batteryMode: "省电追踪",
+      compass: "东北 48°",
+      altitude: "3248",
+      accuracy: "±4m",
+      speed: "1.9 km/h",
+      coords: {
+        latitude: 43.825419,
+        longitude: 86.947216
       },
-      points,
-      updatedAt: Date.now()
-    };
-    writeSession(nextSession);
-    return nextSession;
-  }
-  function normalizeLocation(location) {
-    if (!location) {
-      return null;
-    }
-    const latitude = Number(location.latitude);
-    const longitude = Number(location.longitude);
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      return null;
-    }
-    return {
-      latitude,
-      longitude,
-      altitude: Number(location.altitude || 0),
-      accuracy: Number(location.accuracy || 0),
-      speed: Number(location.speed || 0),
-      bearing: Number(location.bearing || location.heading || 0),
-      timestamp: Number(location.timestamp || Date.now())
-    };
-  }
-  function formatCoordinate(value, type) {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric)) {
-      return "--";
-    }
-    const suffix = type === "lat" ? numeric >= 0 ? "N" : "S" : numeric >= 0 ? "E" : "W";
-    return `${Math.abs(numeric).toFixed(5)}deg${suffix}`;
-  }
-  function getDistanceKm(from, to) {
-    const start = normalizeLocation(from);
-    const end = normalizeLocation(to);
-    if (!start || !end) {
-      return 0;
-    }
-    const rad = Math.PI / 180;
-    const lat1 = start.latitude * rad;
-    const lat2 = end.latitude * rad;
-    const deltaLat = lat2 - lat1;
-    const deltaLng = (end.longitude - start.longitude) * rad;
-    const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(deltaLng / 2) ** 2;
-    return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  }
-  function sumTrackDistanceKm(points = []) {
-    if (!Array.isArray(points) || points.length < 2) {
-      return 0;
-    }
-    let total = 0;
-    for (let index = 1; index < points.length; index += 1) {
-      total += getDistanceKm(points[index - 1], points[index]);
-    }
-    return total;
-  }
-  function buildTrackPolyline(points = []) {
-    if (!Array.isArray(points) || !points.length) {
-      return [];
-    }
-    return [
-      {
-        points: points.map(normalizeLocation).filter(Boolean).map((item) => ({ latitude: item.latitude, longitude: item.longitude })),
-        color: "#FF7A00",
-        width: 5,
-        borderColor: "#C14F00",
-        borderWidth: 1
-      }
-    ];
-  }
-  function buildCurrentMarker(location, isTracking = false) {
-    const normalized = normalizeLocation(location);
-    if (!normalized) {
-      return [];
-    }
-    return [
-      {
-        id: 1,
-        latitude: normalized.latitude,
-        longitude: normalized.longitude,
-        width: 30,
-        height: 30,
-        callout: {
-          content: isTracking ? "记录中" : "当前位置",
-          display: "ALWAYS",
-          fontSize: 11,
-          borderRadius: 12,
-          bgColor: "#1C1C1E",
+      mapBounds: {
+        north: 43.8272,
+        south: 43.8172,
+        east: 86.9495,
+        west: 86.9318
+      },
+      offlineMapId: "hiking-demo-route",
+      polyline: [
+        {
+          points: [
+            { latitude: 43.8178, longitude: 86.9326 },
+            { latitude: 43.8191, longitude: 86.9358 },
+            { latitude: 43.8215, longitude: 86.9397 },
+            { latitude: 43.8228, longitude: 86.9424 },
+            { latitude: 43.8243, longitude: 86.9456 },
+            { latitude: 43.825419, longitude: 86.947216 }
+          ],
           color: "#FFFFFF",
-          padding: 6
+          width: 6,
+          dottedLine: false,
+          arrowLine: true,
+          borderColor: "#444444",
+          borderWidth: 2
+        },
+        {
+          points: [
+            { latitude: 43.825419, longitude: 86.947216 },
+            { latitude: 43.8237, longitude: 86.9447 },
+            { latitude: 43.8216, longitude: 86.9408 }
+          ],
+          color: "#555555",
+          width: 5,
+          dottedLine: true,
+          arrowLine: true
         }
+      ]
+    },
+    emergency: {
+      primaryName: "李晨",
+      primaryPhone: "13800002468",
+      backupPhone: "09917654321",
+      smsText: "我正在徒步中，可能遇到危险，请根据我发送的坐标、海拔和最近轨迹点尽快联系我。"
+    },
+    offlinePack: {
+      title: "乌孙古道离线路线包 v3",
+      status: "已下载",
+      size: "128MB",
+      updatedAt: "今天 06:40",
+      coverage: "起点营地 - 垭口 - 河谷备选营地",
+      gpsNote: "无网络时继续使用手机 GPS 定位，并在离线底图上显示当前位置与返程轨迹。"
+    },
+    aiAssessment: {
+      camp: {
+        title: "推荐露营",
+        name: "云杉背风台地",
+        desc: "地势平整、背风、远离碎石带，距补水点约 180 米，适合短暂停留。"
+      },
+      risk: {
+        title: "危险停留区",
+        name: "碎石坡南侧沟槽",
+        desc: "午后滚石和积水汇流风险高，不建议扎营或长时间停留。"
       }
-    ];
-  }
-  function formatMetric(value, digits = 0) {
-    const numeric = Number(value);
-    if (!Number.isFinite(numeric) || numeric <= 0) {
-      return "--";
     }
-    return numeric.toFixed(digits);
-  }
-  const DEFAULT_PLUGIN_NAME = "MeetXinjiangHikingMap";
-  const DEFAULT_MAP_PROVIDER = "tianditu";
-  const STANDARD_EVENTS = ["onLocationChange", "onTrackUpdate", "onGpsWeak", "onDeviationAlert", "onNativeError", "onOfflineMapReady"];
-  function normalizeMapPayload(payload = {}) {
-    return {
-      provider: payload.provider || DEFAULT_MAP_PROVIDER,
-      ...payload
-    };
-  }
-  function resolvePlugin(pluginName = DEFAULT_PLUGIN_NAME) {
-    {
-      return null;
-    }
-  }
-  async function invoke(plugin, method, payload) {
-    if (!plugin || typeof plugin[method] !== "function") {
-      return null;
-    }
-    const result = plugin[method](payload || {});
-    if (result && typeof result.then === "function") {
-      return result;
-    }
-    return result;
-  }
-  function unwrapResult(result) {
-    if (!result) {
-      return null;
-    }
-    if (typeof result.success === "boolean") {
-      if (!result.success) {
-        throw new Error(result.message || result.code || "原生插件调用失败");
-      }
-      return result.data ?? null;
-    }
-    return result;
-  }
-  function bindPluginEvent(plugin, eventName, handler) {
-    if (!plugin || typeof handler !== "function") {
-      return () => {
-      };
-    }
-    if (typeof plugin.on === "function") {
-      plugin.on(eventName, handler);
-      return () => {
-        if (typeof plugin.off === "function") {
-          plugin.off(eventName, handler);
-        }
-      };
-    }
-    const addMethod = `add${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}Listener`;
-    const removeMethod = `remove${eventName.charAt(0).toUpperCase()}${eventName.slice(1)}Listener`;
-    if (typeof plugin[addMethod] === "function") {
-      plugin[addMethod](handler);
-      return () => {
-        if (typeof plugin[removeMethod] === "function") {
-          plugin[removeMethod](handler);
-        }
-      };
-    }
-    return () => {
-    };
-  }
-  function createHikingNativeBridge(options = {}) {
-    const pluginName = options.pluginName || DEFAULT_PLUGIN_NAME;
-    const plugin = resolvePlugin(pluginName);
-    const unsubs = [];
-    return {
-      pluginName,
-      isNativeAvailable() {
-        return Boolean(plugin);
-      },
-      async initMap(payload = {}) {
-        return unwrapResult(await invoke(plugin, "initMap", normalizeMapPayload(payload)));
-      },
-      async destroyMap() {
-        while (unsubs.length) {
-          const off = unsubs.pop();
-          if (typeof off === "function") {
-            off();
-          }
-        }
-        return unwrapResult(await invoke(plugin, "destroyMap"));
-      },
-      async refreshLocation(payload = {}) {
-        const nativeLocation = unwrapResult(await invoke(plugin, "getCurrentLocation", payload));
-        if (nativeLocation) {
-          return nativeLocation;
-        }
-        return getCurrentLocation();
-      },
-      async moveToCurrentLocation() {
-        return unwrapResult(await invoke(plugin, "moveToCurrentLocation"));
-      },
-      async setMapMode(mode, payload = {}) {
-        return unwrapResult(await invoke(plugin, "setMapMode", normalizeMapPayload({ ...payload, mode })));
-      },
-      async startTrack(payload = {}) {
-        return unwrapResult(await invoke(plugin, "startTrack", normalizeMapPayload(payload)));
-      },
-      async stopTrack() {
-        return unwrapResult(await invoke(plugin, "stopTrack"));
-      },
-      async clearTrack() {
-        return unwrapResult(await invoke(plugin, "clearTrack"));
-      },
-      async getTrackSummary() {
-        return unwrapResult(await invoke(plugin, "getTrackSummary"));
-      },
-      async getTrackPoints(payload = {}) {
-        return unwrapResult(await invoke(plugin, "getTrackPoints", payload));
-      },
-      async getOfflineMapStatus() {
-        return unwrapResult(await invoke(plugin, "getOfflineMapStatus"));
-      },
-      async preloadOfflineTerrain(payload = {}) {
-        return unwrapResult(await invoke(plugin, "preloadOfflineTerrain", normalizeMapPayload(payload)));
-      },
-      on(eventName, handler) {
-        const off = bindPluginEvent(plugin, eventName, handler);
-        unsubs.push(off);
-        return off;
-      },
-      subscribeStandardEvents(handlers = {}) {
-        const localUnsubs = STANDARD_EVENTS.filter((eventName) => typeof handlers[eventName] === "function").map((eventName) => {
-          const off = bindPluginEvent(plugin, eventName, handlers[eventName]);
-          unsubs.push(off);
-          return off;
-        });
-        return () => {
-          localUnsubs.forEach((off) => {
-            if (typeof off === "function") {
-              off();
-            }
-          });
-        };
-      }
-    };
-  }
-  const TRACKING_INTERVAL = 8e3;
+  };
   const _sfc_main$2 = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
       const MAP_MODES = [
-        { key: "normal", label: "标准地图" },
-        { key: "satellite", label: "卫星视图" },
-        { key: "terrain", label: "等高线地形" }
+        { key: "satellite", label: "高德卫星图" }
       ];
-      const bridge = createHikingNativeBridge();
-      const isTracking = vue.ref(false);
+      const hikingStore = useHikingStore();
+      const {
+        isTracking,
+        currentLocation,
+        trackPoints,
+        locationError
+      } = storeToRefs(hikingStore);
       const isGuardMode = vue.ref(false);
       const mapScale = vue.ref(15);
-      const currentLocation = vue.ref(null);
-      const trackPoints = vue.ref([]);
-      const locationError = vue.ref("");
       const currentMapMode = vue.ref(MAP_MODES[0].key);
       const networkOnline = vue.ref(true);
-      const nativeTrackSummary = vue.ref(null);
-      const offlineMapStatus = vue.ref(null);
       const debugLogs = vue.ref([]);
-      let pollTimer = null;
-      let stopStandardEvents = null;
       let hasPromptedLocationSettings = false;
-      const mapCenter = vue.computed(() => {
-        if (!currentLocation.value) {
-          return null;
-        }
-        return {
-          latitude: currentLocation.value.latitude,
-          longitude: currentLocation.value.longitude
-        };
-      });
-      const hasMapLocation = vue.computed(() => Boolean(mapCenter.value));
       const coordinateText = vue.computed(() => {
         if (!currentLocation.value) {
           return locationError.value || "等待定位";
@@ -10593,11 +12531,15 @@ ${infoText}`;
         if (isOffline.value && currentLocation.value) {
           return isTracking.value ? "离线 GPS 记录中" : "离线 GPS 可用";
         }
-        if (bridge.isNativeAvailable()) {
-          return isTracking.value ? "原生徒步地图记录中" : "原生徒步地图已就绪";
-        }
         if (currentLocation.value) {
-          return isTracking.value ? "GPS 记录中" : "GPS 已连接";
+          const provider = String(currentLocation.value.provider || "").toLowerCase();
+          if (provider === "gps") {
+            return isTracking.value ? "GPS 记录中" : "GPS 已连接";
+          }
+          if (provider === "network") {
+            return isTracking.value ? "网络定位记录中" : "网络定位已连接";
+          }
+          return isTracking.value ? "定位记录中" : "定位已连接";
         }
         return locationError.value || "GPS 连接中";
       });
@@ -10610,53 +12552,38 @@ ${infoText}`;
         return formatMetric((_a = currentLocation.value) == null ? void 0 : _a.accuracy, 0);
       });
       const isOffline = vue.computed(() => !networkOnline.value);
-      const distanceText = vue.computed(() => {
-        var _a;
-        const nativeDistance = Number((_a = nativeTrackSummary.value) == null ? void 0 : _a.distanceKm);
-        if (Number.isFinite(nativeDistance) && nativeDistance >= 0) {
-          return nativeDistance.toFixed(2);
-        }
-        return sumTrackDistanceKm(trackPoints.value).toFixed(2);
-      });
-      const mapPolyline = vue.computed(() => buildTrackPolyline(trackPoints.value));
-      const mapMarkers = vue.computed(() => buildCurrentMarker(currentLocation.value, isTracking.value));
+      const distanceText = vue.computed(() => sumTrackDistanceKm(trackPoints.value).toFixed(2));
       const mapModeLabel = vue.computed(() => {
         var _a;
         return ((_a = MAP_MODES.find((item) => item.key === currentMapMode.value)) == null ? void 0 : _a.label) || "标准地图";
       });
       const headerModeText = vue.computed(() => `${isOffline.value ? "离线" : "在线"} · ${mapModeLabel.value}`);
       const debugText = vue.computed(() => debugLogs.value.join(" | "));
-      const offlineHint = vue.computed(() => {
+      const emergencyContactName = vue.computed(() => {
         var _a;
-        const terrainReady = Boolean((_a = offlineMapStatus.value) == null ? void 0 : _a.terrainPackReady);
+        return ((_a = hikingModeMock.emergency) == null ? void 0 : _a.primaryName) || "紧急联系人";
+      });
+      const emergencyContactPhones = vue.computed(() => {
+        const emergency = hikingModeMock.emergency || {};
+        return [emergency.primaryPhone, emergency.backupPhone].filter(Boolean);
+      });
+      const offlineHint = vue.computed(() => {
         if (isOffline.value) {
-          return currentMapMode.value === "terrain" ? terrainReady ? "无网络时继续使用 GPS 定位与离线等高线地形包，轨迹会保存在本地。" : "当前为离线 GPS 模式，但还没有离线等高线包，需尽快预下载。" : "无网络时继续使用 GPS 定位，建议切换到等高线地形模式并提前下载离线包。";
+          return "离线时仍可继续使用 GPS 定位，但高德卫星图需要联网加载。";
         }
-        return currentMapMode.value === "terrain" ? terrainReady ? "当前为徒步增强模式，优先显示等高线/地形信息与风险叠加层。" : "当前为徒步增强模式，建议先下载离线等高线地形包。" : "当前在线地图可正常加载，弱网前建议提前缓存离线地形包。";
+        return "当前使用高德卫星图显示徒步位置与轨迹。";
       });
       onLoad(async () => {
-        hydrateSession();
+        hikingStore.hydrate();
         bindNetworkState();
-        bindNativeEvents();
-        await bridge.initMap({ mode: currentMapMode.value, provider: DEFAULT_MAP_PROVIDER });
-        await refreshLocation();
-        await refreshTrackSummary();
-        await refreshOfflineMapStatus();
+        if (!currentLocation.value) {
+          await refreshLocation();
+        }
       });
       onUnload(() => {
-        cleanup();
       });
       vue.onBeforeUnmount(() => {
-        cleanup();
       });
-      function hydrateSession() {
-        const session = getHikingSession();
-        if (!session) {
-          return;
-        }
-        currentLocation.value = normalizeLocation(session.lastLocation);
-        trackPoints.value = Array.isArray(session.points) ? session.points.map(normalizeLocation).filter(Boolean) : [];
-      }
       function bindNetworkState() {
         if (typeof uni.getNetworkType === "function") {
           uni.getNetworkType({
@@ -10671,96 +12598,46 @@ ${infoText}`;
           });
         }
       }
-      function bindNativeEvents() {
-        stopStandardEvents = bridge.subscribeStandardEvents({
-          onLocationChange(payload) {
-            appendDebugLog(`原生事件定位: ${formatLocationDebug(payload)}`);
-            const location = normalizeLocation(payload);
-            if (location) {
-              currentLocation.value = location;
-              locationError.value = "";
-              if (isTracking.value) {
-                persistTrackPoint(location);
-              }
-            }
-          },
-          onTrackUpdate(payload) {
-            nativeTrackSummary.value = payload || null;
-          },
-          onNativeError(payload) {
-            if (payload == null ? void 0 : payload.message) {
-              locationError.value = payload.message;
-              appendDebugLog(`原生异常: ${payload.message}`);
-            }
-          }
-        });
-      }
       async function refreshLocation() {
         try {
-          appendDebugLog(`开始定位: offline=${isOffline.value ? "1" : "0"}, native=${bridge.isNativeAvailable() ? "1" : "0"}`);
-          const rawLocation = await bridge.refreshLocation({
-            highAccuracy: true,
-            allowGpsOffline: true,
-            preferGpsWhenOffline: isOffline.value
+          appendDebugLog(`开始定位: offline=${isOffline.value ? "1" : "0"}, tracking=${isTracking.value ? "1" : "0"}`);
+          const location2 = await hikingStore.refreshLocation({
+            preferGpsWhenOffline: isOffline.value,
+            appendWhenTracking: isTracking.value
           });
-          appendDebugLog(`定位返回: ${formatLocationDebug(rawLocation)}`);
-          const location = normalizeLocation(rawLocation);
-          if (!location) {
-            throw new Error("定位结果无效");
-          }
-          currentLocation.value = location;
-          locationError.value = "";
-          if (isTracking.value) {
-            persistTrackPoint(location);
-          }
-          await refreshTrackSummary();
+          appendDebugLog(`定位返回: ${formatLocationDebug(location2)}`);
         } catch (error) {
           locationError.value = (error == null ? void 0 : error.message) || "定位失败";
           appendDebugLog(`定位失败: ${locationError.value}`);
           maybePromptLocationSettings(locationError.value);
         }
       }
-      function persistTrackPoint(location) {
-        const session = updateHikingSessionLocation(location);
-        trackPoints.value = Array.isArray(session == null ? void 0 : session.points) ? session.points.map(normalizeLocation).filter(Boolean) : trackPoints.value;
-      }
-      function startTrackingPoll() {
-        stopTrackingPoll();
-        pollTimer = setInterval(() => {
-          refreshLocation();
-        }, TRACKING_INTERVAL);
-      }
-      function stopTrackingPoll() {
-        if (pollTimer) {
-          clearInterval(pollTimer);
-          pollTimer = null;
-        }
-      }
       async function handleStart() {
-        isTracking.value = !isTracking.value;
-        if (isTracking.value) {
-          await bridge.startTrack({
-            intervalMs: TRACKING_INTERVAL,
-            distanceFilterMeters: 3,
-            highAccuracy: true,
-            allowGpsOffline: true,
-            persistOffline: true,
-            provider: DEFAULT_MAP_PROVIDER
+        try {
+          if (isTracking.value) {
+            await hikingStore.stopTracking();
+            uni.showToast({
+              title: "暂停追踪",
+              icon: "none"
+            });
+          } else {
+            await hikingStore.startTracking();
+            await refreshLocation();
+            uni.showToast({
+              title: "开始追踪",
+              icon: "none"
+            });
+          }
+        } catch (error) {
+          uni.showToast({
+            title: (error == null ? void 0 : error.message) || "追踪切换失败",
+            icon: "none",
+            duration: 2500
           });
-          await refreshLocation();
-          startTrackingPoll();
-        } else {
-          stopTrackingPoll();
-          await bridge.stopTrack();
         }
-        uni.showToast({
-          title: isTracking.value ? "开始追踪" : "暂停追踪",
-          icon: "none"
-        });
       }
       async function recenterMap() {
         mapScale.value = 16;
-        await bridge.moveToCurrentLocation();
         if (!currentLocation.value) {
           await refreshLocation();
           return;
@@ -10771,34 +12648,59 @@ ${infoText}`;
         });
       }
       async function cycleMapMode() {
-        const currentIndex = MAP_MODES.findIndex((item) => item.key === currentMapMode.value);
-        const nextMode = MAP_MODES[(currentIndex + 1) % MAP_MODES.length];
-        currentMapMode.value = nextMode.key;
-        await bridge.setMapMode(nextMode.key, { provider: DEFAULT_MAP_PROVIDER });
         uni.showToast({
-          title: nextMode.label,
+          title: "当前固定为高德卫星图",
           icon: "none"
         });
       }
-      async function refreshTrackSummary() {
-        try {
-          nativeTrackSummary.value = await bridge.getTrackSummary();
-        } catch (error) {
-          nativeTrackSummary.value = null;
+      function handleEmergencySms() {
+        var _a;
+        const phones = emergencyContactPhones.value;
+        if (!phones.length) {
+          uni.showToast({
+            title: "未配置紧急联系人",
+            icon: "none"
+          });
+          return;
         }
-      }
-      async function refreshOfflineMapStatus() {
-        try {
-          offlineMapStatus.value = await bridge.getOfflineMapStatus();
-        } catch (error) {
-          offlineMapStatus.value = null;
+        if (!currentLocation.value) {
+          uni.showToast({
+            title: "请先等待定位成功",
+            icon: "none"
+          });
+          return;
         }
-      }
-      function handleSOS() {
+        const body = buildEmergencySmsBody(currentLocation.value);
+        try {
+          if (typeof plus === "undefined" || !plus.android || ((_a = plus.os) == null ? void 0 : _a.name) !== "Android") {
+            throw new Error("仅支持 Android 紧急短信");
+          }
+          const main = plus.android.runtimeMainActivity();
+          const Intent = plus.android.importClass("android.content.Intent");
+          const Uri = plus.android.importClass("android.net.Uri");
+          const intent = new Intent(Intent.ACTION_SENDTO);
+          intent.setData(Uri.parse(`smsto:${phones.join(";")}`));
+          intent.putExtra("sms_body", body);
+          main.startActivity(intent);
+          uni.showToast({
+            title: "已打开短信发送界面",
+            icon: "none"
+          });
+          return;
+        } catch (error) {
+          uni.showModal({
+            title: "无法直接打开短信",
+            content: body,
+            confirmText: "知道了",
+            showCancel: false
+          });
+          return;
+        }
         uni.showModal({
-          title: "紧急呼救",
-          content: "确认要发送 SOS 信号并通知紧急联系人吗？",
-          confirmColor: "#FF3B30"
+          title: "紧急短信内容",
+          content: body,
+          confirmText: "知道了",
+          showCancel: false
         });
       }
       function toggleGuard() {
@@ -10809,12 +12711,6 @@ ${infoText}`;
         });
       }
       function cleanup() {
-        stopTrackingPoll();
-        if (typeof stopStandardEvents === "function") {
-          stopStandardEvents();
-          stopStandardEvents = null;
-        }
-        bridge.destroyMap();
       }
       function appendDebugLog(message) {
         const stamp = (/* @__PURE__ */ new Date()).toTimeString().slice(0, 8);
@@ -10841,56 +12737,74 @@ ${infoText}`;
           }
         });
       }
-      function formatLocationDebug(location) {
-        if (!location) {
+      function formatLocationDebug(location2) {
+        if (!location2) {
           return "empty";
         }
-        const latitude = Number(location.latitude);
-        const longitude = Number(location.longitude);
-        const provider = location.provider || "unknown";
+        const latitude = Number(location2.latitude);
+        const longitude = Number(location2.longitude);
+        const provider = location2.provider || "unknown";
         if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
           return `${provider} invalid`;
         }
-        return `${provider} ${latitude.toFixed(5)},${longitude.toFixed(5)} acc=${Number(location.accuracy || 0).toFixed(0)}`;
+        const accuracy = Number(location2.accuracy || 0);
+        const altitude = Number(location2.altitude || 0);
+        const parts = [
+          provider,
+          `${latitude.toFixed(5)},${longitude.toFixed(5)}`,
+          `acc=${Number.isFinite(accuracy) ? accuracy.toFixed(0) : "--"}`
+        ];
+        if (Number.isFinite(altitude) && altitude > 0) {
+          parts.push(`alt=${altitude.toFixed(0)}`);
+        }
+        if (location2.coordinateSystem) {
+          parts.push(String(location2.coordinateSystem));
+        }
+        return parts.join(" ");
       }
-      const __returned__ = { TRACKING_INTERVAL, MAP_MODES, bridge, isTracking, isGuardMode, mapScale, currentLocation, trackPoints, locationError, currentMapMode, networkOnline, nativeTrackSummary, offlineMapStatus, debugLogs, get pollTimer() {
-        return pollTimer;
-      }, set pollTimer(v) {
-        pollTimer = v;
-      }, get stopStandardEvents() {
-        return stopStandardEvents;
-      }, set stopStandardEvents(v) {
-        stopStandardEvents = v;
-      }, get hasPromptedLocationSettings() {
+      function buildEmergencySmsBody(location2) {
+        var _a;
+        const latitude = Number(location2 == null ? void 0 : location2.latitude);
+        const longitude = Number(location2 == null ? void 0 : location2.longitude);
+        const altitude = Number(location2 == null ? void 0 : location2.altitude);
+        const accuracy = Number(location2 == null ? void 0 : location2.accuracy);
+        const provider = (location2 == null ? void 0 : location2.provider) || "unknown";
+        const coordText = `${formatCoordinate(latitude, "lat")}, ${formatCoordinate(longitude, "lng")}`;
+        const altitudeValue = Number.isFinite(altitude) && altitude > 0 ? `${Math.round(altitude)}m` : "未知";
+        const accuracyValue = Number.isFinite(accuracy) && accuracy > 0 ? `${Math.round(accuracy)}m` : "未知";
+        const emergencyText = ((_a = hikingModeMock.emergency) == null ? void 0 : _a.smsText) || "我正在徒步中，可能遇到危险，请尽快联系我。";
+        return [
+          "【云起天山 徒步 SOS】",
+          emergencyText,
+          `坐标：${coordText}`,
+          `海拔：${altitudeValue}`,
+          `精度：${accuracyValue}`,
+          `定位来源：${provider}`,
+          `高德链接：https://uri.amap.com/marker?position=${longitude},${latitude}&name=SOS位置`
+        ].join("\n");
+      }
+      const __returned__ = { MAP_MODES, hikingStore, isTracking, currentLocation, trackPoints, locationError, isGuardMode, mapScale, currentMapMode, networkOnline, debugLogs, get hasPromptedLocationSettings() {
         return hasPromptedLocationSettings;
       }, set hasPromptedLocationSettings(v) {
         hasPromptedLocationSettings = v;
-      }, mapCenter, hasMapLocation, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapPolyline, mapMarkers, mapModeLabel, headerModeText, debugText, offlineHint, hydrateSession, bindNetworkState, bindNativeEvents, refreshLocation, persistTrackPoint, startTrackingPoll, stopTrackingPoll, handleStart, recenterMap, cycleMapMode, refreshTrackSummary, refreshOfflineMapStatus, handleSOS, toggleGuard, cleanup, appendDebugLog, maybePromptLocationSettings, formatLocationDebug, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, get onLoad() {
+      }, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapModeLabel, headerModeText, debugText, emergencyContactName, emergencyContactPhones, offlineHint, bindNetworkState, refreshLocation, handleStart, recenterMap, cycleMapMode, handleEmergencySms, toggleGuard, cleanup, appendDebugLog, maybePromptLocationSettings, formatLocationDebug, buildEmergencySmsBody, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, get onLoad() {
         return onLoad;
       }, get onUnload() {
         return onUnload;
-      }, HikingHeaderPanel, HikingMapStage, HikingBottomControls, get getHikingSession() {
-        return getHikingSession;
-      }, get updateHikingSessionLocation() {
-        return updateHikingSessionLocation;
-      }, get buildCurrentMarker() {
-        return buildCurrentMarker;
-      }, get buildTrackPolyline() {
-        return buildTrackPolyline;
+      }, get storeToRefs() {
+        return storeToRefs;
+      }, HikingHeaderPanel, HikingMapStage, HikingBottomControls, get hikingModeMock() {
+        return hikingModeMock;
       }, get formatCoordinate() {
         return formatCoordinate;
       }, get formatMetric() {
         return formatMetric;
-      }, get normalizeLocation() {
-        return normalizeLocation;
       }, get sumTrackDistanceKm() {
         return sumTrackDistanceKm;
       }, get openAppPermissionSettings() {
         return openAppPermissionSettings;
-      }, get createHikingNativeBridge() {
-        return createHikingNativeBridge;
-      }, get DEFAULT_MAP_PROVIDER() {
-        return DEFAULT_MAP_PROVIDER;
+      }, get useHikingStore() {
+        return useHikingStore;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -10910,12 +12824,7 @@ ${infoText}`;
         "debug-text": $setup.debugText
       }, null, 8, ["gps-status-text", "coordinate-text", "altitude-text", "distance-text", "accuracy-text", "is-offline", "mode-text", "debug-text"]),
       vue.createVNode($setup["HikingMapStage"], {
-        "has-map-location": $setup.hasMapLocation,
-        "map-center": $setup.mapCenter,
         "map-scale": $setup.mapScale,
-        "map-polyline": $setup.mapPolyline,
-        "map-markers": $setup.mapMarkers,
-        "is-tracking": $setup.isTracking,
         "map-mode-label": $setup.mapModeLabel,
         "map-mode-key": $setup.currentMapMode,
         "is-offline": $setup.isOffline,
@@ -10924,14 +12833,16 @@ ${infoText}`;
         onRecenter: $setup.recenterMap,
         onToggleTrack: $setup.handleStart,
         onCycleMapMode: $setup.cycleMapMode
-      }, null, 8, ["has-map-location", "map-center", "map-scale", "map-polyline", "map-markers", "is-tracking", "map-mode-label", "map-mode-key", "is-offline", "offline-hint"]),
+      }, null, 8, ["map-scale", "map-mode-label", "map-mode-key", "is-offline", "offline-hint"]),
       vue.createVNode($setup["HikingBottomControls"], {
         "is-tracking": $setup.isTracking,
         "is-guard-mode": $setup.isGuardMode,
-        onSos: $setup.handleSOS,
+        "emergency-contact-name": $setup.emergencyContactName,
+        "emergency-contact-phones": $setup.emergencyContactPhones,
+        onSosMessage: $setup.handleEmergencySms,
         onToggleTrack: $setup.handleStart,
         onToggleGuard: $setup.toggleGuard
-      }, null, 8, ["is-tracking", "is-guard-mode"])
+      }, null, 8, ["is-tracking", "is-guard-mode", "emergency-contact-name", "emergency-contact-phones"])
     ]);
   }
   const PagesHikingIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-1a159d43"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/index.vue"]]);
@@ -10977,7 +12888,7 @@ ${infoText}`;
           const res = await updateUserProfile(authToken.value, { nickname });
           const merged = { ...currentUser.value, ...res.user, avatar_url: ((_b = currentUser.value) == null ? void 0 : _b.avatar_url) || ((_c = res.user) == null ? void 0 : _c.avatar_url) };
           saveAuthSession({ token: authToken.value, user: merged });
-          currentUser.value = res.user;
+          currentUser.value = merged;
           editModalVisible.value = false;
           uni.showToast({ title: "昵称已更新", icon: "success" });
         } catch (e) {
@@ -11187,8 +13098,11 @@ ${infoText}`;
   const App = /* @__PURE__ */ _export_sfc(_sfc_main, [["__file", "F:/AI编程/遇见新疆_uniapp/App.vue"]]);
   function createApp() {
     const app = vue.createVueApp(App);
+    const pinia = createPinia();
+    app.use(pinia);
     return {
-      app
+      app,
+      pinia
     };
   }
   const { app: __app__, Vuex: __Vuex__, Pinia: __Pinia__ } = createApp();
