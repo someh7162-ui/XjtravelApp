@@ -9,7 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0.4375rem 0.5rem;
+  padding: 0.4375rem 0.375rem;
   border-radius: 1rem;
 }
 .tab-item[data-v-8715b27c] {
@@ -25,7 +25,7 @@
   color: #c44536;
 }
 .tab-label[data-v-8715b27c] {
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   font-weight: 600;
   white-space: nowrap;
 }
@@ -379,6 +379,19 @@
   height: 1.1875rem;
   border-radius: 50%;
   flex-shrink: 0;
+}
+.author-avatar-fallback[data-v-4aabec35] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, rgba(212, 165, 116, 0.28), rgba(195, 120, 78, 0.72));
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+.author-avatar-fallback-text[data-v-4aabec35] {
+  font-size: 0.625rem;
+  font-weight: 700;
+  color: #fffdf8;
+  line-height: 1;
 }
 .author-name[data-v-4aabec35],
 .author-meta[data-v-4aabec35],

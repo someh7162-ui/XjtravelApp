@@ -74,6 +74,30 @@
   font-size: 0.75rem;
   line-height: 1;
 }
+.scenic-picker-row[data-v-f222cc13] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.625rem;
+  padding: 0.75rem 0 0.1875rem;
+}
+.scenic-picker-value[data-v-f222cc13] {
+  display: block;
+  font-size: 0.875rem;
+  color: #2d1810;
+  font-weight: 600;
+}
+.scenic-picker-hint[data-v-f222cc13] {
+  display: block;
+  margin-top: 0.3125rem;
+  font-size: 0.6875rem;
+  line-height: 1.7;
+}
+.scenic-picker-arrow[data-v-f222cc13] {
+  flex-shrink: 0;
+  font-size: 1.25rem;
+  color: #8b6f47;
+}
 .submit-btn[data-v-f222cc13],
 .bottom-submit-btn[data-v-f222cc13] {
   background: linear-gradient(135deg, #ff5f5f, #ff7c62);

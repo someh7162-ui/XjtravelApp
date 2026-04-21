@@ -72,7 +72,7 @@ if (uni.restoreGlobal) {
     }
     return target;
   };
-  const _sfc_main$j = {
+  const _sfc_main$k = {
     __name: "AppTabBar",
     props: {
       current: {
@@ -100,7 +100,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$i(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$j(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "tabbar-wrap" }, [
       vue.createElementVNode("view", { class: "tabbar card" }, [
         (vue.openBlock(), vue.createElementBlock(
@@ -127,7 +127,7 @@ if (uni.restoreGlobal) {
       ])
     ]);
   }
-  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$j, [["render", _sfc_render$i], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
+  const AppTabBar = /* @__PURE__ */ _export_sfc(_sfc_main$k, [["render", _sfc_render$j], ["__scopeId", "data-v-8715b27c"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/AppTabBar.vue"]]);
   const API_ORIGIN = "https://yd.frp-arm.com:44637";
   const API_BASE_URL = `${API_ORIGIN}/api`;
   const LEGACY_API_ORIGINS = [
@@ -226,15 +226,22 @@ if (uni.restoreGlobal) {
         if (xhr.readyState !== 4) {
           return;
         }
+        formatAppLog("log", "at common/app-http.js:83", "[app-http] plus response", {
+          url,
+          method,
+          statusCode: Number(xhr.status || 0)
+        });
         resolve({
           statusCode: Number(xhr.status || 0),
           data: parseResponseData(xhr.responseText)
         });
       };
       xhr.onerror = () => {
+        formatAppLog("error", "at common/app-http.js:96", "[app-http] plus fail", { url, method, readyState: xhr.readyState, status: xhr.status });
         reject(new Error("网络请求失败"));
       };
       xhr.ontimeout = () => {
+        formatAppLog("error", "at common/app-http.js:101", "[app-http] plus timeout", { url, method, timeout });
         reject(new Error("请求超时"));
       };
       xhr.send(buildRequestBody(data, headers));
@@ -248,12 +255,27 @@ if (uni.restoreGlobal) {
           ...res,
           data: normalizePayloadUrls(res.data)
         }),
-        fail: (error) => reject(error)
+        fail: (error) => {
+          formatAppLog("error", "at common/app-http.js:118", "[app-http] uni fail", {
+            url: options == null ? void 0 : options.url,
+            method: options == null ? void 0 : options.method,
+            error,
+            errMsg: error == null ? void 0 : error.errMsg
+          });
+          reject(error);
+        }
       });
     });
   }
   function requestJson(options) {
-    if (canUsePlusRequest(options == null ? void 0 : options.url)) {
+    const method = String((options == null ? void 0 : options.method) || "GET").toUpperCase();
+    const shouldUsePlusRequest = canUsePlusRequest(options == null ? void 0 : options.url) && ["GET", "POST", "PUT", "DELETE"].includes(method);
+    formatAppLog("log", "at common/app-http.js:133", "[app-http] request", {
+      url: options == null ? void 0 : options.url,
+      method,
+      transport: shouldUsePlusRequest ? "plus.net.XMLHttpRequest" : "uni.request"
+    });
+    if (shouldUsePlusRequest) {
       return plusRequest(options);
     }
     return uniRequest(options);
@@ -280,7 +302,7 @@ if (uni.restoreGlobal) {
       });
     });
   }
-  const _sfc_main$i = {
+  const _sfc_main$j = {
     __name: "CachedImage",
     props: {
       src: {
@@ -308,8 +330,10 @@ if (uni.restoreGlobal) {
         default: true
       }
     },
-    setup(__props, { expose: __expose }) {
+    emits: ["load", "error"],
+    setup(__props, { expose: __expose, emit: __emit }) {
       __expose();
+      const emit = __emit;
       const props = __props;
       const loading = vue.ref(true);
       const currentSrc = vue.ref("");
@@ -395,14 +419,17 @@ if (uni.restoreGlobal) {
       }
       function handleLoad() {
         loading.value = false;
+        emit("load", currentSrc.value || props.src);
       }
       function handleError() {
         loading.value = false;
         if (canUseDirectRemote(props.src)) {
           currentSrc.value = props.src;
+          emit("error", props.src);
           return;
         }
         currentSrc.value = "";
+        emit("error", props.src);
       }
       vue.watch(
         () => props.src,
@@ -411,7 +438,7 @@ if (uni.restoreGlobal) {
         },
         { immediate: true }
       );
-      const __returned__ = { props, loading, currentSrc, canUseRemoteFallback, canUseDirectRemote, toDisplayPath, storageKey, resolveImage, handleLoad, handleError, ref: vue.ref, watch: vue.watch, get downloadRemoteFile() {
+      const __returned__ = { emit, props, loading, currentSrc, canUseRemoteFallback, canUseDirectRemote, toDisplayPath, storageKey, resolveImage, handleLoad, handleError, ref: vue.ref, watch: vue.watch, get downloadRemoteFile() {
         return downloadRemoteFile;
       }, get API_ORIGIN() {
         return API_ORIGIN;
@@ -420,7 +447,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$h(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$i(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock(
       "view",
       {
@@ -448,7 +475,7 @@ if (uni.restoreGlobal) {
       /* CLASS */
     );
   }
-  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["render", _sfc_render$h], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
+  const CachedImage = /* @__PURE__ */ _export_sfc(_sfc_main$j, [["render", _sfc_render$i], ["__scopeId", "data-v-7d2a8804"], ["__file", "F:/AI编程/遇见新疆_uniapp/components/CachedImage.vue"]]);
   function normalizeDestinationImage(value) {
     const raw = String(value || "").trim();
     if (!raw) {
@@ -462,6 +489,8 @@ if (uni.restoreGlobal) {
   function createScenicSpot({
     id,
     name,
+    navigationName,
+    navigationAddress,
     location: location2,
     region,
     category,
@@ -480,6 +509,8 @@ if (uni.restoreGlobal) {
     return {
       id,
       name,
+      navigationName: navigationName || name,
+      navigationAddress: navigationAddress || location2,
       location: location2,
       region: normalizeRegion(region),
       category,
@@ -520,12 +551,14 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 1,
       name: "天山天池",
+      navigationName: "天山天池风景区游客中心",
+      navigationAddress: "新疆昌吉回族自治州阜康市天山天池风景名胜区游客中心",
       location: "新疆阜康",
       region: "乌鲁木齐周边",
       category: "湖泊雪山",
       rating: "4.8",
-      longitude: 88.1548,
-      latitude: 43.8803,
+      longitude: 88.1506,
+      latitude: 43.8789,
       description: "高山湖泊与雪岭森林相映成景，是新疆最经典的入门景区之一。",
       image: "/static/destinations/01.jpg",
       weather: { condition: "晴转多云", temperature: "18°C", humidity: "46%", wind: "3级山风" },
@@ -592,6 +625,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 5,
       name: "那拉提草原",
+      navigationName: "那拉提旅游风景区",
       location: "新疆伊犁新源",
       region: "伊犁",
       category: "草原森林",
@@ -610,6 +644,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 6,
       name: "喀拉峻草原",
+      navigationName: "喀拉峻大草原",
       location: "新疆伊犁特克斯",
       region: "伊犁",
       category: "草原森林",
@@ -646,6 +681,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 8,
       name: "禾木景区",
+      navigationName: "禾木风景区",
       location: "新疆阿勒泰布尔津",
       region: "阿勒泰",
       category: "草原森林",
@@ -718,6 +754,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 12,
       name: "库车王府",
+      navigationName: "库车王府景区",
       location: "新疆阿克苏库车",
       region: "阿克苏",
       category: "古城人文",
@@ -916,6 +953,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 23,
       name: "国际大巴扎",
+      navigationName: "新疆国际大巴扎",
       location: "新疆乌鲁木齐",
       region: "乌鲁木齐",
       category: "城市夜游",
@@ -1060,6 +1098,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 31,
       name: "火焰山景区",
+      navigationName: "吐鲁番火焰山景区",
       location: "新疆吐鲁番",
       region: "吐鲁番",
       category: "沙漠峡谷",
@@ -1186,12 +1225,14 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 38,
       name: "新疆博物馆",
+      navigationName: "新疆维吾尔自治区博物馆",
+      navigationAddress: "新疆维吾尔自治区乌鲁木齐市沙依巴克区西北路581号",
       location: "新疆乌鲁木齐",
       region: "乌鲁木齐",
       category: "古城人文",
       rating: "4.8",
-      longitude: 87.5923,
-      latitude: 43.8262,
+      longitude: 87.58,
+      latitude: 43.8221,
       description: "系统展示新疆历史、民族与丝路文明，是入疆后很适合第一站了解背景的地方。",
       image: "/static/destinations/38.jpg",
       weather: { condition: "晴", temperature: "25°C", humidity: "27%", wind: "2级微风" },
@@ -1204,6 +1245,7 @@ if (uni.restoreGlobal) {
     createScenicSpot({
       id: 39,
       name: "红山公园",
+      navigationName: "乌鲁木齐红山公园",
       location: "新疆乌鲁木齐",
       region: "乌鲁木齐",
       category: "城市夜游",
@@ -2181,27 +2223,188 @@ if (uni.restoreGlobal) {
       coverage: "天池主入口、游客中心、湖滨步道、观景平台一线",
       emergencyLevel: "中高",
       emergencyContacts: ["景区游客中心", "景区医务点", "阜康当地急救 120"],
-      highlights: ["建议把车停在官方停车区后乘摆渡进入", "环湖步道是最适合家庭游客的安全主线"]
+      highlights: ["建议把车停在官方停车区后乘摆渡进入", "环湖步道是最适合家庭游客的安全主线"],
+      poiKeywords: ["游客中心", "景区入口", "停车场", "观景台", "医务室"],
+      guideMapSourceName: "项目整理版导览图",
+      guideMapImage: "/static/guide-maps/01-tianchi.jpg",
+      keyPoints: [
+        { id: "tianchi-center", name: "天池湖滨核心区", keyword: "核心区", longitude: 88.1548, latitude: 43.8803, address: "天池湖滨步道一带" },
+        { id: "tianchi-visitor", name: "游客中心", keyword: "游客中心", longitude: 88.1506, latitude: 43.8789, address: "天山天池游客服务区" },
+        { id: "tianchi-view", name: "主观景台", keyword: "观景台", longitude: 88.1592, latitude: 43.8821, address: "天池主观景方向" },
+        { id: "tianchi-parking", name: "官方停车区", keyword: "停车场", longitude: 88.1478, latitude: 43.8774, address: "主入口停车换乘区域" }
+      ],
+      routePoints: [
+        { longitude: 88.1478, latitude: 43.8774 },
+        { longitude: 88.1506, latitude: 43.8789 },
+        { longitude: 88.1548, latitude: 43.8803 },
+        { longitude: 88.1592, latitude: 43.8821 }
+      ]
     },
     2: {
       coverage: "喀纳斯换乘中心、湖滨观景段、返程车站一线",
       emergencyLevel: "高",
       emergencyContacts: ["景区换乘中心服务台", "景区医疗救助点", "布尔津当地急救 120"],
-      highlights: ["景区纵深大，先确认返程车时间", "山区天气变化快，优先保存核心观景路线"]
+      highlights: ["景区纵深大，先确认返程车时间", "山区天气变化快，优先保存核心观景路线"],
+      poiKeywords: ["换乘中心", "游客中心", "停车场", "观景台", "医务室"],
+      guideMapSourceName: "项目整理版导览图",
+      guideMapImage: "/static/guide-maps/02-kanas.jpg",
+      keyPoints: [
+        { id: "kanas-hub", name: "换乘中心", keyword: "换乘中心", longitude: 87.0278, latitude: 48.7084, address: "景区换乘与游客集散区" },
+        { id: "kanas-lake", name: "喀纳斯湖核心观景区", keyword: "核心区", longitude: 87.0347, latitude: 48.713, address: "湖滨主观景区域" },
+        { id: "kanas-view", name: "湖滨观景台", keyword: "观景台", longitude: 87.0386, latitude: 48.7161, address: "临湖观景带" },
+        { id: "kanas-medical", name: "医疗救助点", keyword: "医务室", longitude: 87.0304, latitude: 48.7099, address: "换乘中心附近" }
+      ],
+      routePoints: [
+        { longitude: 87.0278, latitude: 48.7084 },
+        { longitude: 87.0304, latitude: 48.7099 },
+        { longitude: 87.0347, latitude: 48.713 },
+        { longitude: 87.0386, latitude: 48.7161 }
+      ]
+    },
+    3: {
+      coverage: "东门入口、游客服务区、环湖主观景段、返程道路一线",
+      emergencyLevel: "中高",
+      emergencyContacts: ["景区游客中心", "景区医务服务点", "博乐当地急救 120"],
+      highlights: ["环湖线很长，先确认返程方向和补给点", "湖边风力变化快，拍照时不要离主路过远"],
+      poiKeywords: ["游客中心", "东门", "停车场", "观景台", "医务室"],
+      guideMapSourceName: "项目整理版导览图",
+      guideMapImage: "/static/guide-maps/03-sayram.jpg",
+      keyPoints: [
+        { id: "sailimu-east-gate", name: "东门入口", keyword: "景区入口", longitude: 81.2014, latitude: 44.6002, address: "赛里木湖东门一带" },
+        { id: "sailimu-visitor", name: "游客服务区", keyword: "游客中心", longitude: 81.2087, latitude: 44.5986, address: "景区主服务区" },
+        { id: "sailimu-view", name: "湖岸观景带", keyword: "观景台", longitude: 81.2185, latitude: 44.6027, address: "湖滨观景段" },
+        { id: "sailimu-parking", name: "停车补给点", keyword: "停车场", longitude: 81.2126, latitude: 44.5965, address: "游客服务区附近" }
+      ],
+      routePoints: [
+        { longitude: 81.2014, latitude: 44.6002 },
+        { longitude: 81.2087, latitude: 44.5986 },
+        { longitude: 81.2126, latitude: 44.5965 },
+        { longitude: 81.2185, latitude: 44.6027 }
+      ]
+    },
+    5: {
+      coverage: "主服务区、空中草原线、观景平台、返程停车点一线",
+      emergencyLevel: "中高",
+      emergencyContacts: ["那拉提游客中心", "景区医务服务点", "新源当地急救 120"],
+      highlights: ["草原景区尺度大，建议优先走官方观景车与主栈道", "天气变坏时先回主服务区再决定是否继续深入"],
+      poiKeywords: ["游客中心", "景区入口", "观景台", "停车场", "医务室"],
+      guideMapSourceName: "项目整理版导览图",
+      guideMapImage: "/static/guide-maps/05-nalati.jpg",
+      keyPoints: [
+        { id: "nalati-visitor", name: "游客中心", keyword: "游客中心", longitude: 83.0489, latitude: 43.4638, address: "那拉提主服务区" },
+        { id: "nalati-sky-grassland", name: "空中草原核心区", keyword: "核心区", longitude: 83.0565, latitude: 43.4711, address: "空中草原主观景方向" },
+        { id: "nalati-view", name: "主观景台", keyword: "观景台", longitude: 83.0619, latitude: 43.4744, address: "草原主观景带" },
+        { id: "nalati-parking", name: "停车换乘区", keyword: "停车场", longitude: 83.0456, latitude: 43.4624, address: "游客中心旁" }
+      ],
+      routePoints: [
+        { longitude: 83.0456, latitude: 43.4624 },
+        { longitude: 83.0489, latitude: 43.4638 },
+        { longitude: 83.0565, latitude: 43.4711 },
+        { longitude: 83.0619, latitude: 43.4744 }
+      ]
     },
     9: {
       coverage: "古城东门、主街区、游客中心、夜游出口一线",
       emergencyLevel: "中",
       emergencyContacts: ["古城游客中心", "古城警务站", "喀什当地急救 120"],
-      highlights: ["先记住东门或西门这类大地标", "夜游时建议把集合点设在主街宽阔区域"]
+      highlights: ["先记住东门或西门这类大地标", "夜游时建议把集合点设在主街宽阔区域"],
+      poiKeywords: ["游客中心", "东门", "西门", "警务站", "停车场"],
+      guideMapSourceName: "项目整理版导览图",
+      guideMapImage: "/static/guide-maps/09-kashgar-old-city.jpg",
+      keyPoints: [
+        { id: "kashgar-east-gate", name: "古城东门", keyword: "东门", longitude: 75.9897, latitude: 39.4704, address: "喀什古城东门" },
+        { id: "kashgar-center", name: "主街核心区", keyword: "核心区", longitude: 75.9879, latitude: 39.4689, address: "主街区漫游核心段" },
+        { id: "kashgar-west-gate", name: "古城西门", keyword: "西门", longitude: 75.9847, latitude: 39.4681, address: "喀什古城西侧出口" },
+        { id: "kashgar-police", name: "警务站", keyword: "警务站", longitude: 75.9888, latitude: 39.4697, address: "东门附近安保点" }
+      ],
+      routePoints: [
+        { longitude: 75.9897, latitude: 39.4704 },
+        { longitude: 75.9888, latitude: 39.4697 },
+        { longitude: 75.9879, latitude: 39.4689 },
+        { longitude: 75.9847, latitude: 39.4681 }
+      ]
     },
     22: {
       coverage: "帕米尔主观景点、公路停靠区、游客补给点一线",
       emergencyLevel: "高",
       emergencyContacts: ["沿线游客服务站", "塔县县城医院", "塔县急救 120"],
-      highlights: ["高原地区务必控制节奏", "离开县城前先备好离线图和补给"]
+      highlights: ["高原地区务必控制节奏", "离开县城前先备好离线图和补给"],
+      poiKeywords: ["服务站", "观景台", "停车点", "补给点", "卫生室"]
     }
   };
+  const guideMapFilenameMap = {
+    1: "01-tianchi.jpg",
+    2: "02-kanas.jpg",
+    3: "03-sayram.jpg",
+    4: "04-baisha-lake.jpg",
+    5: "05-nalati.jpg",
+    6: "06-kalajun.jpg",
+    7: "07-bayinbuluke.jpg",
+    8: "08-hemu.jpg",
+    9: "09-kashgar-old-city.jpg",
+    10: "10-jiaohe.jpg",
+    11: "11-karez.jpg",
+    12: "12-kuqa-palace.jpg",
+    13: "13-kumtag-desert.jpg",
+    14: "14-mysterious-canyon.jpg",
+    15: "15-wuerhe-yardang.jpg",
+    16: "16-taklamakan.jpg",
+    17: "17-zepu-populus.jpg",
+    18: "18-luntai-populus.jpg",
+    19: "19-bosten-lake.jpg",
+    20: "20-keketuohai.jpg",
+    21: "21-jiangbulake.jpg",
+    22: "22-pamir.jpg",
+    23: "23-grand-bazaar.jpg",
+    24: "24-grape-valley.jpg",
+    25: "25-karakul-lake.jpg",
+    26: "26-muztag-glacier.jpg",
+    27: "27-zhaosu-wetland.jpg",
+    28: "28-xiata.jpg",
+    29: "29-tekes.jpg",
+    30: "30-gaochang.jpg",
+    31: "31-flaming-mountain.jpg",
+    32: "32-wensu-canyon.jpg",
+    33: "33-lopnur-village.jpg",
+    34: "34-swan-river.jpg",
+    35: "35-dukou-north.jpg",
+    36: "36-anjihai-canyon.jpg",
+    37: "37-wusun-trail.jpg",
+    38: "38-xinjiang-museum.jpg",
+    39: "39-hongshan-park.jpg",
+    40: "40-dabancheng.jpg",
+    41: "41-guozigou-bridge.jpg",
+    42: "42-huocheng-lavender.jpg",
+    43: "43-qiongkushitai.jpg",
+    44: "44-tangbula.jpg",
+    45: "45-ulungur-lake.jpg",
+    46: "46-wucaitan.jpg",
+    47: "47-baihaba.jpg",
+    48: "48-mulei-populus.jpg",
+    49: "49-tianshan-canyon.jpg",
+    50: "50-nanshan-pasture.jpg",
+    51: "51-bogda-view.jpg",
+    52: "52-mutetaar-desert.jpg",
+    53: "53-niya-ruins.jpg",
+    54: "54-hotan-old-town.jpg",
+    55: "55-bole-wetland.jpg",
+    56: "56-jinghe-populus.jpg",
+    57: "57-kizil-grottoes.jpg",
+    58: "58-tomur-canyon.jpg",
+    59: "59-tarim-populus.jpg",
+    60: "60-tahe-source.jpg",
+    61: "61-baiyanggou.jpg",
+    62: "62-manas-wetland.jpg",
+    63: "63-junggar-stele.jpg",
+    64: "64-tuyugou.jpg",
+    65: "65-huiyuan-old-city.jpg",
+    66: "66-jingyuan-temple.jpg",
+    67: "67-aksu-confucius-temple.jpg"
+  };
+  function getDefaultGuideMapImage(id) {
+    const fileName = guideMapFilenameMap[Number(id)];
+    return fileName ? `/static/guide-maps/${fileName}` : "";
+  }
   function getDestinationById(id) {
     return destinationList.find((item) => String(item.id) === String(id));
   }
@@ -2342,6 +2545,12 @@ if (uni.restoreGlobal) {
       safeRoute: customConfig.safeRoute || categoryConfig.safeRoute,
       servicePoints: customConfig.servicePoints || categoryConfig.servicePoints,
       emergencyContacts: customConfig.emergencyContacts || ["景区游客中心", "当地急救 120", "公安报警 110"],
+      poiKeywords: customConfig.poiKeywords || ["游客中心", "景区入口", "停车场", "观景台", "服务点"],
+      keyPoints: customConfig.keyPoints || [],
+      routePoints: customConfig.routePoints || [],
+      guideMapSourceName: customConfig.guideMapSourceName || "",
+      guideMapSourceUrl: customConfig.guideMapSourceUrl || "",
+      guideMapImage: customConfig.guideMapImage || getDefaultGuideMapImage(destination.id),
       highlights: customConfig.highlights || [
         "建议在景区入口处先确认返程路线。",
         "弱网区域优先依赖离线安全图和景区指示牌。"
@@ -2352,11 +2561,26 @@ if (uni.restoreGlobal) {
   function getDouyinSearchUrl(keyword) {
     return `https://www.douyin.com/search/${encodeURIComponent(keyword)}?type=live`;
   }
+  function getDouyinAppSearchUrls(keyword) {
+    const encodedKeyword = encodeURIComponent(String(keyword || "").trim());
+    if (!encodedKeyword) {
+      return [];
+    }
+    return [
+      `snssdk1128://search?keyword=${encodedKeyword}&from=app`,
+      `snssdk2329://search?keyword=${encodedKeyword}&from=app`,
+      `douyin://search?keyword=${encodedKeyword}`
+    ];
+  }
   const AMAP_WEB_KEY = "b16ee0a6a8f641e974a51521ca00b6f0";
+  const AMAP_SECURITY_JS_CODE = "27cce8a4c1772a6589c3ee78cf2f31e7";
   function hasAmapKey() {
     return Boolean(AMAP_WEB_KEY) && !AMAP_WEB_KEY.includes("请在这里填入");
   }
-  function request$4(url, data = {}) {
+  function hasAmapSecurityCode() {
+    return Boolean(AMAP_SECURITY_JS_CODE) && !AMAP_SECURITY_JS_CODE.includes("请在这里填入");
+  }
+  function request$5(url, data = {}) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
@@ -2373,18 +2597,234 @@ if (uni.restoreGlobal) {
       });
     });
   }
-  function getStaticMapUrl({ longitude, latitude, markers = [], zoom = 11, size = "750*360" }) {
+  function getStaticMapUrl({ longitude, latitude, markers = [], paths = [], zoom = 11, size = "750*360" }) {
     if (!hasAmapKey() || longitude === void 0 || latitude === void 0) {
       return "";
     }
     const markerText = markers.map((item) => `${item.size || "mid"},0xC44536,${item.label || ""}:${item.longitude},${item.latitude}`).join("|");
-    return `https://restapi.amap.com/v3/staticmap?key=${encodeURIComponent(AMAP_WEB_KEY)}&size=${encodeURIComponent(size)}&scale=2&zoom=${zoom}&center=${longitude},${latitude}&markers=${encodeURIComponent(markerText)}`;
+    const pathText = paths.filter((item) => Array.isArray(item == null ? void 0 : item.points) && item.points.length >= 2).map((item) => {
+      const style = [item.weight || 6, item.color || "0xC44536", item.fillColor || "0x00000000"];
+      const points = item.points.map((point) => `${point.longitude},${point.latitude}`).join(";");
+      return `${style.join(",")}:${points}`;
+    }).join("|");
+    const params = [
+      `key=${encodeURIComponent(AMAP_WEB_KEY)}`,
+      `size=${encodeURIComponent(size)}`,
+      "scale=2",
+      `zoom=${zoom}`,
+      `center=${longitude},${latitude}`
+    ];
+    if (markerText) {
+      params.push(`markers=${encodeURIComponent(markerText)}`);
+    }
+    if (pathText) {
+      params.push(`paths=${encodeURIComponent(pathText)}`);
+    }
+    return `https://restapi.amap.com/v3/staticmap?${params.join("&")}`;
+  }
+  async function searchPlaceText(keywords, location2, city) {
+    if (!hasAmapKey() || !keywords) {
+      return [];
+    }
+    const cityValue = String(city || "").trim();
+    const data = await request$5("https://restapi.amap.com/v3/place/text", {
+      key: AMAP_WEB_KEY,
+      keywords,
+      offset: 5,
+      page: 1,
+      extensions: "base",
+      location: location2 ? `${location2.longitude},${location2.latitude}` : void 0,
+      city: cityValue || void 0,
+      citylimit: cityValue ? true : void 0
+    });
+    if (data.status !== "1" || !Array.isArray(data.pois)) {
+      return [];
+    }
+    return data.pois;
+  }
+  function normalizeText(value) {
+    return String(value || "").trim().toLowerCase();
+  }
+  function extractNavigationAreas(regionText) {
+    const raw = String(regionText || "").trim().replace(/^新疆维吾尔自治区/, "").replace(/^新疆/, "").trim();
+    if (!raw) {
+      return [];
+    }
+    const knownAreas = [
+      "乌鲁木齐",
+      "伊犁",
+      "阿勒泰",
+      "喀什",
+      "阿克苏",
+      "吐鲁番",
+      "昌吉",
+      "博州",
+      "巴州",
+      "克拉玛依",
+      "塔城",
+      "哈密",
+      "和田",
+      "克州",
+      "阿拉尔",
+      "图木舒克",
+      "五家渠",
+      "石河子",
+      "北屯",
+      "铁门关",
+      "双河",
+      "可克达拉",
+      "昆玉",
+      "胡杨河",
+      "阜康",
+      "布尔津",
+      "博乐",
+      "塔县",
+      "新源",
+      "特克斯",
+      "和静",
+      "库车",
+      "鄯善",
+      "富蕴",
+      "奇台",
+      "昭苏",
+      "温宿",
+      "尉犁",
+      "库尔勒",
+      "沙湾",
+      "霍城",
+      "博湖",
+      "轮台",
+      "泽普",
+      "吐鲁番",
+      "乌鲁木齐",
+      "达坂城"
+    ];
+    const result = [];
+    knownAreas.forEach((item) => {
+      if (raw.includes(item) && !result.includes(item)) {
+        result.push(item);
+      }
+    });
+    if (result.length) {
+      return result;
+    }
+    return raw.split(/[\s/、,-]+/).map((item) => item.trim()).filter(Boolean);
+  }
+  function buildNavigationSearchKeywords(name, address, region) {
+    const values = [
+      String(name || "").trim(),
+      [name, address].filter(Boolean).join(" "),
+      [region, name].filter(Boolean).join(" "),
+      [region, address].filter(Boolean).join(" "),
+      [region, name, address].filter(Boolean).join(" "),
+      String(address || "").trim()
+    ];
+    return [...new Set(values.filter(Boolean))];
+  }
+  function scoreNavigationPoi(poi, name, address, locationHint) {
+    const poiName = normalizeText(poi == null ? void 0 : poi.name);
+    const poiAddress = normalizeText(poi == null ? void 0 : poi.address);
+    const targetName = normalizeText(name);
+    const targetAddress = normalizeText(address);
+    const targetText = `${targetName} ${targetAddress}`;
+    const poiText = `${poiName} ${poiAddress}`;
+    let score = 0;
+    const adminKeywords = ["管理委员会", "管委会", "委员会", "管理处", "政务", "政府", "机关", "旅游局", "办公区"];
+    const scenicKeywords = ["景区", "风景区", "风景名胜区", "游客中心", "游客服务中心", "游客服务区", "停车场", "入口", "售票处", "检票口"];
+    if (targetName && poiName === targetName) {
+      score += 140;
+    } else if (targetName && (poiName.includes(targetName) || targetName.includes(poiName))) {
+      score += 90;
+    }
+    if (targetAddress && poiAddress.includes(targetAddress)) {
+      score += 110;
+    } else if (targetAddress && targetAddress.includes(poiAddress) && poiAddress) {
+      score += 60;
+    }
+    if (scenicKeywords.some((item) => targetText.includes(item)) && scenicKeywords.some((item) => poiText.includes(item))) {
+      score += 40;
+    }
+    if (adminKeywords.some((item) => poiText.includes(item)) && !adminKeywords.some((item) => targetText.includes(item))) {
+      score -= 260;
+    }
+    if (locationHint && Number.isFinite(Number(locationHint.longitude)) && Number.isFinite(Number(locationHint.latitude))) {
+      const distance = getCoordinateDistanceMeters(locationHint, poi);
+      if (distance <= 100) {
+        score += 80;
+      } else if (distance <= 500) {
+        score += 50;
+      } else if (distance <= 1500) {
+        score += 20;
+      }
+    }
+    return score;
+  }
+  function getCoordinateDistanceMeters(from, to) {
+    const rad = Math.PI / 180;
+    const lat1 = Number(from.latitude) * rad;
+    const lat2 = Number(to.latitude) * rad;
+    const deltaLat = lat2 - lat1;
+    const deltaLng = (Number(to.longitude) - Number(from.longitude)) * rad;
+    const sinLat = Math.sin(deltaLat / 2);
+    const sinLng = Math.sin(deltaLng / 2);
+    const a = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng;
+    return 6371e3 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  async function resolveNavigationPoint({ name, address = "", region = "", longitude, latitude }) {
+    if (!hasAmapKey() || !name) {
+      return null;
+    }
+    const locationHint = Number.isFinite(Number(longitude)) && Number.isFinite(Number(latitude)) ? { longitude: Number(longitude), latitude: Number(latitude) } : null;
+    const keywordsList = buildNavigationSearchKeywords(name, address, region);
+    const cityCandidates = extractNavigationAreas(region || address);
+    const candidates = [];
+    const used = /* @__PURE__ */ new Set();
+    for (const keywords of keywordsList) {
+      const citySearches = cityCandidates.length ? [...cityCandidates, ""] : [""];
+      for (const city of citySearches) {
+        const pois = await searchPlaceText(keywords, locationHint, city);
+        pois.forEach((item) => {
+          const normalized = normalizePoi(item, keywords);
+          if (!normalized) {
+            return;
+          }
+          const uniqueKey = `${normalized.name}-${normalized.longitude.toFixed(6)}-${normalized.latitude.toFixed(6)}`;
+          if (used.has(uniqueKey)) {
+            return;
+          }
+          used.add(uniqueKey);
+          candidates.push(normalized);
+        });
+      }
+    }
+    if (!candidates.length) {
+      return null;
+    }
+    return candidates.map((item) => ({
+      ...item,
+      score: scoreNavigationPoi(item, name, address, locationHint)
+    })).sort((left, right) => right.score - left.score)[0];
+  }
+  function normalizePoi(item, keyword = "") {
+    const [longitude, latitude] = String((item == null ? void 0 : item.location) || "").split(",").map((value) => Number(value));
+    if (!Number.isFinite(longitude) || !Number.isFinite(latitude)) {
+      return null;
+    }
+    return {
+      id: item.id || `${keyword}-${item.name || ""}-${longitude}-${latitude}`,
+      keyword,
+      name: item.name || keyword || "景区点位",
+      longitude,
+      latitude,
+      address: item.address || item.pname || item.cityname || "",
+      type: item.type || ""
+    };
   }
   async function reverseGeocode(longitude, latitude, extensions = "base") {
     if (!hasAmapKey()) {
       return null;
     }
-    const data = await request$4("https://restapi.amap.com/v3/geocode/regeo", {
+    const data = await request$5("https://restapi.amap.com/v3/geocode/regeo", {
       key: AMAP_WEB_KEY,
       location: `${longitude},${latitude}`,
       extensions
@@ -2447,7 +2887,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey() || !adcode) {
       return null;
     }
-    const data = await request$4("https://restapi.amap.com/v3/weather/weatherInfo", {
+    const data = await request$5("https://restapi.amap.com/v3/weather/weatherInfo", {
       key: AMAP_WEB_KEY,
       city: adcode,
       extensions: "base"
@@ -2462,7 +2902,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey() || !origin || !destination) {
       return null;
     }
-    const data = await request$4("https://restapi.amap.com/v3/direction/driving", {
+    const data = await request$5("https://restapi.amap.com/v3/direction/driving", {
       key: AMAP_WEB_KEY,
       origin: `${origin.longitude},${origin.latitude}`,
       destination: `${destination.longitude},${destination.latitude}`,
@@ -2482,7 +2922,7 @@ if (uni.restoreGlobal) {
     if (!hasAmapKey() || !origin || !destination) {
       return null;
     }
-    const data = await request$4("https://restapi.amap.com/v3/direction/walking", {
+    const data = await request$5("https://restapi.amap.com/v3/direction/walking", {
       key: AMAP_WEB_KEY,
       origin: `${origin.longitude},${origin.latitude}`,
       destination: `${destination.longitude},${destination.latitude}`
@@ -2493,52 +2933,73 @@ if (uni.restoreGlobal) {
     return data.route.paths[0];
   }
   async function getCurrentLocation(options = {}) {
+    const preferredProviders = Array.isArray(options.providers) ? options.providers.map((item) => String(item || "").toLowerCase()).filter(Boolean) : [];
+    formatAppLog("log", "at services/amap.js:464", "[hiking-location] getCurrentLocation start", {
+      highAccuracy: Boolean(options.highAccuracy),
+      allowGpsOffline: Boolean(options.allowGpsOffline),
+      coordsType: String(options.coordsType || ""),
+      providers: preferredProviders,
+      gpsTimeout: Number(options.gpsTimeout || 18e3),
+      gpsMaximumAgeMs: Number(options.gpsMaximumAgeMs || 12e4),
+      networkTimeout: Number(options.networkTimeout || 6e3),
+      networkMaximumAgeMs: Number(options.networkMaximumAgeMs || 3e4),
+      isAndroidRuntime: isAndroidRuntime()
+    });
     await ensureLocationPermission();
     const attempts = [];
     const gpsTimeout = Number(options.gpsTimeout || 18e3);
     const networkTimeout = Number(options.networkTimeout || 6e3);
-    const preferredProviders = Array.isArray(options.providers) ? options.providers.map((item) => String(item || "").toLowerCase()).filter(Boolean) : null;
-    const allowsProvider = (name) => !preferredProviders || preferredProviders.includes(String(name || "").toLowerCase());
-    if (isAndroidRuntime()) {
-      if (allowsProvider("gps")) {
-        attempts.push({
-          label: "android-gps",
-          run: () => requestAndroidProviderLocation("gps", { ...options, timeout: gpsTimeout, maximumAgeMs: Number(options.gpsMaximumAgeMs || 12e4) })
-        });
+    const providerFactories = {
+      gps: () => isAndroidRuntime() ? {
+        label: "android-gps",
+        run: () => requestAndroidProviderLocation("gps", { ...options, timeout: gpsTimeout, maximumAgeMs: Number(options.gpsMaximumAgeMs || 12e4) })
+      } : null,
+      network: () => isAndroidRuntime() ? {
+        label: "android-network",
+        run: () => requestAndroidProviderLocation("network", { ...options, timeout: networkTimeout, maximumAgeMs: Number(options.networkMaximumAgeMs || 3e4) })
+      } : null,
+      system: () => ({ label: "plus-geolocation", run: () => requestPlusLocation(options) }),
+      "plus-geolocation": () => ({ label: "plus-geolocation", run: () => requestPlusLocation(options) }),
+      gcj02: () => ({ label: "uni-gcj02", run: () => requestUniLocation("gcj02") }),
+      "uni-gcj02": () => ({ label: "uni-gcj02", run: () => requestUniLocation("gcj02") }),
+      wgs84: () => ({ label: "uni-wgs84", run: () => requestUniLocation("wgs84") }),
+      "uni-wgs84": () => ({ label: "uni-wgs84", run: () => requestUniLocation("wgs84") })
+    };
+    const fallbackProviderOrder = isAndroidRuntime() ? ["gps", "network", "system", "gcj02", "wgs84"] : ["system", "gcj02", "wgs84"];
+    const providerOrder = preferredProviders.length ? preferredProviders : fallbackProviderOrder;
+    const seenLabels = /* @__PURE__ */ new Set();
+    providerOrder.forEach((providerName) => {
+      const factory = providerFactories[providerName];
+      if (!factory) {
+        return;
       }
-      if (allowsProvider("network")) {
-        attempts.push({
-          label: "android-network",
-          run: () => requestAndroidProviderLocation("network", { ...options, timeout: networkTimeout, maximumAgeMs: Number(options.networkMaximumAgeMs || 3e4) })
-        });
+      const attempt = factory();
+      if (!attempt || seenLabels.has(attempt.label)) {
+        return;
       }
-    }
-    if (allowsProvider("system") || allowsProvider("plus-geolocation")) {
-      attempts.push({ label: "plus-geolocation", run: () => requestPlusLocation(options) });
-    }
-    if (allowsProvider("gcj02") || allowsProvider("uni-gcj02")) {
-      attempts.push({ label: "uni-gcj02", run: () => requestUniLocation("gcj02") });
-    }
-    if (allowsProvider("wgs84") || allowsProvider("uni-wgs84")) {
-      attempts.push({ label: "uni-wgs84", run: () => requestUniLocation("wgs84") });
-    }
+      seenLabels.add(attempt.label);
+      attempts.push(attempt);
+    });
+    formatAppLog("log", "at services/amap.js:521", "[hiking-location] attempts prepared", attempts.map((item) => item.label));
     let lastError = null;
     const errors = [];
     for (const attempt of attempts) {
       try {
+        formatAppLog("log", "at services/amap.js:527", `[hiking-location] trying ${attempt.label}`);
         const location2 = await attempt.run();
         if (location2) {
-          formatAppLog("log", "at services/amap.js:219", `[hiking-location] success via ${attempt.label}`, location2);
+          formatAppLog("log", "at services/amap.js:530", `[hiking-location] success via ${attempt.label}`, location2);
           return location2;
         }
       } catch (error) {
         lastError = error;
         const message = normalizeLocationError(error);
         errors.push(`${attempt.label}: ${message}`);
-        formatAppLog("warn", "at services/amap.js:226", `[hiking-location] failed via ${attempt.label}`, error);
+        formatAppLog("warn", "at services/amap.js:537", `[hiking-location] failed via ${attempt.label}`, error);
       }
     }
     const detail = errors.length ? `；${errors.join(" | ")}` : "";
+    formatAppLog("error", "at services/amap.js:542", "[hiking-location] all attempts failed", errors);
     throw new Error(`${normalizeLocationError(lastError) || "定位失败，请检查系统定位服务是否开启"}${detail}`);
   }
   function normalizeLocationError(error) {
@@ -2634,12 +3095,13 @@ if (uni.restoreGlobal) {
       main.startActivity(intent);
       return true;
     } catch (error) {
-      formatAppLog("warn", "at services/amap.js:350", "[hiking-location] open settings failed", error);
+      formatAppLog("warn", "at services/amap.js:662", "[hiking-location] open settings failed", error);
       return false;
     }
   }
   function requestUniLocation(type = "gcj02") {
     return new Promise((resolve, reject) => {
+      formatAppLog("log", "at services/amap.js:669", `[hiking-location] uni.getLocation start (${type})`);
       uni.getLocation({
         type,
         isHighAccuracy: true,
@@ -2663,6 +3125,12 @@ if (uni.restoreGlobal) {
         reject(new Error("当前环境不支持 plus 定位"));
         return;
       }
+      const requestedCoordsType = String(options.coordsType || "gcj02").toLowerCase();
+      const plusCoordsType = requestedCoordsType === "wgs84" ? "gcj02" : requestedCoordsType;
+      formatAppLog("log", "at services/amap.js:698", "[hiking-location] plus.geolocation start", {
+        timeout: Number(options.timeout || 12e3),
+        coordsType: plusCoordsType
+      });
       plus.geolocation.getCurrentPosition(
         (position) => {
           const coords = (position == null ? void 0 : position.coords) || {};
@@ -2675,7 +3143,7 @@ if (uni.restoreGlobal) {
             bearing: Number(coords.heading || 0),
             timestamp: Number(position.timestamp || Date.now()),
             provider: String(coords.provider || position.provider || "plus-geolocation"),
-            coordinateSystem: String(position.coordsType || options.coordsType || "gcj02"),
+            coordinateSystem: String(position.coordsType || plusCoordsType || "gcj02"),
             source: "plus.geolocation"
           });
         },
@@ -2687,7 +3155,7 @@ if (uni.restoreGlobal) {
           timeout: Number(options.timeout || 12e3),
           maximumAge: 0,
           provider: "system",
-          coordsType: options.coordsType || "gcj02"
+          coordsType: plusCoordsType
         }
       );
     });
@@ -2733,6 +3201,11 @@ if (uni.restoreGlobal) {
         reject(error);
       };
       try {
+        formatAppLog("log", "at services/amap.js:782", "[hiking-location] android provider start", {
+          providerName,
+          timeout: Number(options.timeout || (providerName === "gps" ? 8e3 : 5e3)),
+          maximumAgeMs: Number(options.maximumAgeMs || 15e3)
+        });
         const main = plus.android.runtimeMainActivity();
         const Context = plus.android.importClass("android.content.Context");
         plus.android.importClass("android.location.LocationManager");
@@ -2746,6 +3219,12 @@ if (uni.restoreGlobal) {
         const cached = normalizeAndroidLocation(locationManager.getLastKnownLocation(providerName), providerName, "android-last-known");
         const maximumAgeMs = Number(options.maximumAgeMs || 15e3);
         if (cached && Date.now() - cached.timestamp <= maximumAgeMs) {
+          formatAppLog("log", "at services/amap.js:803", "[hiking-location] android provider cached hit", {
+            providerName,
+            ageMs: Date.now() - cached.timestamp,
+            accuracy: cached.accuracy,
+            source: cached.source
+          });
           finishResolve(cached);
           return;
         }
@@ -2768,6 +3247,12 @@ if (uni.restoreGlobal) {
         timer = setTimeout(() => {
           const lastKnown = normalizeAndroidLocation(locationManager.getLastKnownLocation(providerName), providerName, "android-timeout-last-known");
           if (lastKnown) {
+            formatAppLog("warn", "at services/amap.js:831", "[hiking-location] android provider timeout fallback", {
+              providerName,
+              ageMs: Date.now() - lastKnown.timestamp,
+              accuracy: lastKnown.accuracy,
+              source: lastKnown.source
+            });
             finishResolve(lastKnown);
             return;
           }
@@ -2816,7 +3301,7 @@ if (uni.restoreGlobal) {
       source
     };
   }
-  const _sfc_main$h = {
+  const _sfc_main$i = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -2992,7 +3477,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$g(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$h(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode(
         "view",
@@ -3400,8 +3885,8 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/home/index" })
     ]);
   }
-  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$h, [["render", _sfc_render$g], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
-  function request$3(url, data = {}) {
+  const PagesHomeIndex = /* @__PURE__ */ _export_sfc(_sfc_main$i, [["render", _sfc_render$h], ["__scopeId", "data-v-4978fed5"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/home/index.vue"]]);
+  function request$4(url, data = {}) {
     return new Promise((resolve, reject) => {
       uni.request({
         url,
@@ -3467,13 +3952,13 @@ if (uni.restoreGlobal) {
       return destinationList;
     }
     try {
-      const data = await request$3(`${API_BASE_URL}/destinations`, params);
+      const data = await request$4(`${API_BASE_URL}/destinations`, params);
       return Array.isArray(data == null ? void 0 : data.list) ? data.list.map(mergeDestinationWithLocal) : destinationList;
     } catch (error) {
       return destinationList;
     }
   }
-  const _sfc_main$g = {
+  const _sfc_main$h = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -3567,7 +4052,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$f(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$g(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell" }, [
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient top-banner section atlas-hero" }, [
@@ -3936,7 +4421,7 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/destinations/index" })
     ]);
   }
-  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$g, [["render", _sfc_render$f], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
+  const PagesDestinationsIndex = /* @__PURE__ */ _export_sfc(_sfc_main$h, [["render", _sfc_render$g], ["__scopeId", "data-v-9dd01296"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/destinations/index.vue"]]);
   const AUTH_API_BASE_URL = API_BASE_URL;
   const AUTH_TOKEN_STORAGE = "meet-xinjiang-auth-token";
   const AUTH_USER_STORAGE = "meet-xinjiang-auth-user";
@@ -3991,6 +4476,7 @@ if (uni.restoreGlobal) {
       speed: Number(location2.speed || 0),
       bearing: Number(location2.bearing || location2.heading || 0),
       timestamp: Number(location2.timestamp || Date.now()),
+      segmentIndex: Number.isFinite(Number(location2.segmentIndex)) ? Number(location2.segmentIndex) : 0,
       provider: String(location2.provider || location2.sourceProvider || ""),
       source: String(location2.source || ""),
       coordinateSystem: String(location2.coordinateSystem || location2.coordsType || "")
@@ -4024,7 +4510,15 @@ if (uni.restoreGlobal) {
     }
     let total = 0;
     for (let index = 1; index < points.length; index += 1) {
-      total += getDistanceKm(points[index - 1], points[index]);
+      const previous = normalizeLocation(points[index - 1]);
+      const current = normalizeLocation(points[index]);
+      if (!previous || !current) {
+        continue;
+      }
+      if (Number(previous.segmentIndex || 0) !== Number(current.segmentIndex || 0)) {
+        continue;
+      }
+      total += getDistanceKm(previous, current);
     }
     return total;
   }
@@ -4032,30 +4526,52 @@ if (uni.restoreGlobal) {
     if (!Array.isArray(points) || !points.length) {
       return [];
     }
-    return [
-      {
-        points: points.map(normalizeLocation).filter(Boolean).map((item) => ({ latitude: item.latitude, longitude: item.longitude })),
-        color: "#FF7A00",
-        width: 5,
-        borderColor: "#C14F00",
-        borderWidth: 1
+    const normalizedPoints = points.map(normalizeLocation).filter(Boolean);
+    const segments = [];
+    let currentSegmentKey = null;
+    let currentSegmentPoints = [];
+    normalizedPoints.forEach((item) => {
+      const nextKey = Number(item.segmentIndex || 0);
+      if (currentSegmentKey === null || currentSegmentKey !== nextKey) {
+        if (currentSegmentPoints.length) {
+          segments.push(currentSegmentPoints);
+        }
+        currentSegmentKey = nextKey;
+        currentSegmentPoints = [];
       }
-    ];
+      currentSegmentPoints.push({ latitude: item.latitude, longitude: item.longitude });
+    });
+    if (currentSegmentPoints.length) {
+      segments.push(currentSegmentPoints);
+    }
+    return segments.filter((segment) => segment.length).map((segment) => ({
+      points: segment,
+      color: "#FF7A00",
+      width: 5,
+      borderColor: "#C14F00",
+      borderWidth: 1
+    }));
   }
-  function buildCurrentMarker(location2, isTracking = false) {
+  function buildCurrentMarker(location2, isTracking = false, profile = {}) {
     const normalized = normalizeLocation(location2);
     if (!normalized) {
       return [];
     }
+    const avatarUrl = String(profile.avatarUrl || "").trim();
+    const avatarInitial = String(profile.avatarInitial || "游").trim().slice(0, 1) || "游";
+    const statusText = isTracking ? "记录中" : "当前位置";
     return [
       {
         id: 1,
         latitude: normalized.latitude,
         longitude: normalized.longitude,
-        width: 30,
-        height: 30,
+        width: 44,
+        height: 44,
+        avatarUrl,
+        avatarInitial,
+        statusText,
         callout: {
-          content: isTracking ? "记录中" : "当前位置",
+          content: statusText,
           display: "ALWAYS",
           fontSize: 11,
           borderRadius: 12,
@@ -4087,9 +4603,11 @@ if (uni.restoreGlobal) {
     const durationMs = resolveTrackDuration(source.durationMs, startPoint, endPoint);
     const distanceKm = resolveTrackDistance(source.distanceKm, points);
     const altitudeGain = resolveAltitudeGain(source.altitudeGain, points);
+    const segmentCount = resolveSegmentCount(points);
     return {
       points,
       pointCount: Number(source.pointCount) || points.length,
+      segmentCount,
       startPoint,
       endPoint,
       distanceKm,
@@ -4106,6 +4624,7 @@ if (uni.restoreGlobal) {
     return {
       points: normalized.points,
       pointCount: normalized.pointCount,
+      segmentCount: normalized.segmentCount,
       distanceKm: normalized.distanceKm,
       durationMs: normalized.durationMs,
       altitudeGain: normalized.altitudeGain,
@@ -4163,6 +4682,15 @@ if (uni.restoreGlobal) {
     }
     return totalGain;
   }
+  function resolveSegmentCount(points = []) {
+    if (!Array.isArray(points) || !points.length) {
+      return 0;
+    }
+    const segmentKeys = new Set(
+      points.map((item) => Number((item == null ? void 0 : item.segmentIndex) || 0)).filter((item) => Number.isFinite(item))
+    );
+    return segmentKeys.size || 1;
+  }
   const PUBLISHED_GUIDES_STORAGE = "meet-xinjiang-published-guides";
   const defaultCoverOptions = [
     "https://upload.wikimedia.org/wikipedia/commons/d/d1/Nalati_Grassland_2.jpg",
@@ -4194,6 +4722,7 @@ if (uni.restoreGlobal) {
     const hikingTrack = normalizeGuideTrack(item.hikingTrack);
     return {
       id: item.id,
+      destinationId: item.destinationId ? Number(item.destinationId) : null,
       title: item.title,
       category: item.category || "旅行分享",
       readTime: item.readTime || "3 分钟阅读",
@@ -4309,18 +4838,18 @@ if (uni.restoreGlobal) {
   function hasGuideApi() {
     return hasApiBaseUrl() && Boolean(GUIDE_API_BASE);
   }
-  function buildUrl(path, params = {}) {
+  function buildUrl$1(path, params = {}) {
     const query = Object.entries(params).filter(([, value]) => value !== void 0 && value !== null && value !== "").map(([key, value]) => `${encodeURIComponent(key)}=${encodeURIComponent(value)}`).join("&");
     return query ? `${GUIDE_API_BASE}${path}?${query}` : `${GUIDE_API_BASE}${path}`;
   }
-  function request$2(method, path, data, token = getStoredAuthToken()) {
+  function request$3(method, path, data, token = getStoredAuthToken()) {
     return new Promise((resolve, reject) => {
       const headers = {
         "Content-Type": "application/json",
         ...token ? { Authorization: `Bearer ${token}` } : {}
       };
       requestJson({
-        url: buildUrl(path, method === "GET" ? data : void 0),
+        url: buildUrl$1(path, method === "GET" ? data : void 0),
         method,
         timeout: 2e4,
         headers,
@@ -4346,6 +4875,7 @@ if (uni.restoreGlobal) {
     }
     return {
       ...item,
+      destinationId: item.destinationId ? Number(item.destinationId) : null,
       image: normalizeApiAssetUrl(item.image),
       images: Array.isArray(item.images) ? item.images.map(normalizeApiAssetUrl).filter(Boolean) : [],
       authorAvatar: normalizeApiAssetUrl(item.authorAvatar),
@@ -4391,7 +4921,7 @@ if (uni.restoreGlobal) {
   }
   async function createGuide(payload, token = getStoredAuthToken()) {
     if (hasGuideApi()) {
-      const data = await request$2("POST", "/guides", payload, token);
+      const data = await request$3("POST", "/guides", payload, token);
       return normalizeGuideEntity((data == null ? void 0 : data.data) || null);
     }
     const savedImages = await persistGuideImages(payload.images);
@@ -4413,20 +4943,67 @@ if (uni.restoreGlobal) {
     if (!hasGuideApi()) {
       return publishedGuides;
     }
-    const data = await request$2("GET", "/guides", params);
+    const data = await request$3("GET", "/guides", params);
     return Array.isArray(data == null ? void 0 : data.list) ? data.list.map(normalizeGuideEntity) : [];
+  }
+  function normalizeSearchToken(value = "") {
+    return String(value || "").trim().toLowerCase().replace(/[\s\-_/()（）【】\[\]、,，.。:：·]+/g, "");
+  }
+  function scoreGuideAgainstDestination(guide = {}, destination = {}) {
+    const destinationName = normalizeSearchToken(destination.name);
+    const haystacks = {
+      title: normalizeSearchToken(guide.title),
+      location: normalizeSearchToken([guide.location, guide.locationTag].filter(Boolean).join(" ")),
+      excerpt: normalizeSearchToken([guide.excerpt, guide.summaryText].filter(Boolean).join(" ")),
+      highlights: normalizeSearchToken(Array.isArray(guide.highlights) ? guide.highlights.join(" ") : "")
+    };
+    let score = 0;
+    if (destinationName && haystacks.title.includes(destinationName)) {
+      score += 10;
+    }
+    if (destinationName && haystacks.location.includes(destinationName)) {
+      score += 8;
+    }
+    if (destinationName && haystacks.excerpt.includes(destinationName)) {
+      score += 6;
+    }
+    if (destinationName && haystacks.highlights.includes(destinationName)) {
+      score += 5;
+    }
+    return score;
+  }
+  async function getRelatedGuidesForDestination(destination, limit = 3) {
+    if (!(destination == null ? void 0 : destination.name)) {
+      return [];
+    }
+    if (destination.id) {
+      const exactMatches = await getGuideFeed({ destinationId: destination.id });
+      if (exactMatches.length) {
+        return exactMatches.slice(0, Math.max(1, Number(limit) || 3));
+      }
+    }
+    const guides = await getGuideFeed();
+    return guides.map((guide) => ({
+      ...guide,
+      _relatedScore: scoreGuideAgainstDestination(guide, destination)
+    })).filter((guide) => guide._relatedScore >= 6).sort((a, b) => {
+      if (b._relatedScore !== a._relatedScore) {
+        return b._relatedScore - a._relatedScore;
+      }
+      return String(b.publishDate || "").localeCompare(String(a.publishDate || ""));
+    }).slice(0, Math.max(1, Number(limit) || 3)).map(({ _relatedScore, ...guide }) => guide);
   }
   async function getGuideDetail(id) {
     if (!hasGuideApi()) {
       return getPublishedGuideById(id);
     }
-    const data = await request$2("GET", `/guides/${encodeURIComponent(id)}`);
+    const data = await request$3("GET", `/guides/${encodeURIComponent(id)}`);
     return normalizeGuideEntity((data == null ? void 0 : data.data) || null);
   }
   async function getGuideComments(slug) {
     if (!hasGuideApi())
       return [];
-    const data = await request$2("GET", `/guides/${encodeURIComponent(slug)}/comments`);
+    const data = await request$3("GET", `/guides/${encodeURIComponent(slug)}/comments`);
     return Array.isArray(data == null ? void 0 : data.list) ? data.list.map((item) => ({
       ...item,
       avatarUrl: normalizeApiAssetUrl(item.avatarUrl),
@@ -4434,7 +5011,7 @@ if (uni.restoreGlobal) {
     })) : [];
   }
   async function postGuideComment(slug, content, token) {
-    const data = await request$2("POST", `/guides/${encodeURIComponent(slug)}/comments`, { content }, token);
+    const data = await request$3("POST", `/guides/${encodeURIComponent(slug)}/comments`, { content }, token);
     return (data == null ? void 0 : data.comment) ? {
       ...data.comment,
       avatarUrl: normalizeApiAssetUrl(data.comment.avatarUrl),
@@ -4442,26 +5019,26 @@ if (uni.restoreGlobal) {
     } : null;
   }
   async function deleteGuideComment(slug, commentId, token) {
-    const data = await request$2("DELETE", `/guides/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`, void 0, token);
+    const data = await request$3("DELETE", `/guides/${encodeURIComponent(slug)}/comments/${encodeURIComponent(commentId)}`, void 0, token);
     return Boolean(data == null ? void 0 : data.ok);
   }
   async function likeGuide(slug, token) {
-    const data = await request$2("POST", `/guides/${encodeURIComponent(slug)}/like`, void 0, token);
+    const data = await request$3("POST", `/guides/${encodeURIComponent(slug)}/like`, void 0, token);
     return data || null;
   }
   async function unlikeGuide(slug, token) {
-    const data = await request$2("DELETE", `/guides/${encodeURIComponent(slug)}/like`, void 0, token);
+    const data = await request$3("DELETE", `/guides/${encodeURIComponent(slug)}/like`, void 0, token);
     return data || null;
   }
   async function saveGuide(slug, token) {
-    const data = await request$2("POST", `/guides/${encodeURIComponent(slug)}/save`, void 0, token);
+    const data = await request$3("POST", `/guides/${encodeURIComponent(slug)}/save`, void 0, token);
     return data || null;
   }
   async function unsaveGuide(slug, token) {
-    const data = await request$2("DELETE", `/guides/${encodeURIComponent(slug)}/save`, void 0, token);
+    const data = await request$3("DELETE", `/guides/${encodeURIComponent(slug)}/save`, void 0, token);
     return data || null;
   }
-  const _sfc_main$f = {
+  const _sfc_main$g = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -4628,6 +5205,13 @@ if (uni.restoreGlobal) {
         }
         return (item == null ? void 0 : item.authorAvatar) || "";
       }
+      function hasAuthorAvatar(item) {
+        return Boolean(String(displayAuthorAvatar(item) || "").trim());
+      }
+      function authorAvatarFallbackText(item) {
+        const source = String((item == null ? void 0 : item.nickname) || (item == null ? void 0 : item.author) || "游").trim();
+        return source.slice(0, 1).toUpperCase();
+      }
       function matchesGuideSearch(item, keyword) {
         if (!keyword) {
           return true;
@@ -4751,7 +5335,7 @@ if (uni.restoreGlobal) {
         const candidates = [item == null ? void 0 : item.locationTag, item == null ? void 0 : item.location, item == null ? void 0 : item.title, item == null ? void 0 : item.summaryText].filter(Boolean).map(normalizeCityName);
         return candidates.some((text) => text.includes(detectedCity.value) || detectedCity.value.includes(text));
       }
-      const __returned__ = { primaryTabs, allSubTabs, visibleSubTabs, sortOptions, activePrimaryTab, activeSubTab, guides, showCategoryPanel, showSearchBar, showSortPanel, loading, errorMessage, detectedCity, cityLoading, searchQuery, sortMode, systemInfo, statusBarHeight, statusBarStyle, currentUser, isLoggedIn, filteredGuides, feedBadgeCount, emptyTitle, emptyDescription, waterfallColumns, leftColumn, rightColumn, setPrimaryTab, setSubTab, toggleCategoryPanel, toggleSearchBar, clearSearch, toggleSortPanel, selectSort, selectCategory, coverStyle, estimateFeedCardHeight, hasVisualCover, noteSummary, displayAuthorAvatar, matchesGuideSearch, normalizeSearchText, sortGuides, getGuideTime, getGuideHotScore, formatCount, openGuide, openAiAssistant, publishGuide, loadGuides, ensureDetectedCity, normalizeCityName, isSameCityGuide, computed: vue.computed, ref: vue.ref, watch: vue.watch, get onShow() {
+      const __returned__ = { primaryTabs, allSubTabs, visibleSubTabs, sortOptions, activePrimaryTab, activeSubTab, guides, showCategoryPanel, showSearchBar, showSortPanel, loading, errorMessage, detectedCity, cityLoading, searchQuery, sortMode, systemInfo, statusBarHeight, statusBarStyle, currentUser, isLoggedIn, filteredGuides, feedBadgeCount, emptyTitle, emptyDescription, waterfallColumns, leftColumn, rightColumn, setPrimaryTab, setSubTab, toggleCategoryPanel, toggleSearchBar, clearSearch, toggleSortPanel, selectSort, selectCategory, coverStyle, estimateFeedCardHeight, hasVisualCover, noteSummary, displayAuthorAvatar, hasAuthorAvatar, authorAvatarFallbackText, matchesGuideSearch, normalizeSearchText, sortGuides, getGuideTime, getGuideHotScore, formatCount, openGuide, openAiAssistant, publishGuide, loadGuides, ensureDetectedCity, normalizeCityName, isSameCityGuide, computed: vue.computed, ref: vue.ref, watch: vue.watch, get onShow() {
         return onShow;
       }, AppTabBar, CachedImage, get getStoredAuthToken() {
         return getStoredAuthToken;
@@ -4768,7 +5352,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$e(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$f(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "page-shell guides-page" }, [
       vue.createElementVNode("view", { class: "page-scroll guides-scroll" }, [
         vue.createElementVNode("view", { class: "hero-shell hero-gradient" }, [
@@ -5027,11 +5611,23 @@ if (uni.restoreGlobal) {
                         /* TEXT */
                       ),
                       vue.createElementVNode("view", { class: "author-row" }, [
-                        vue.createVNode($setup["CachedImage"], {
+                        $setup.hasAuthorAvatar(item) ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+                          key: 0,
                           src: $setup.displayAuthorAvatar(item),
                           "container-class": "author-avatar-shell",
                           "image-class": "author-avatar"
-                        }, null, 8, ["src"]),
+                        }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock("view", {
+                          key: 1,
+                          class: "author-avatar-shell author-avatar-fallback"
+                        }, [
+                          vue.createElementVNode(
+                            "text",
+                            { class: "author-avatar-fallback-text" },
+                            vue.toDisplayString($setup.authorAvatarFallbackText(item)),
+                            1
+                            /* TEXT */
+                          )
+                        ])),
                         vue.createElementVNode(
                           "text",
                           { class: "author-name" },
@@ -5170,11 +5766,23 @@ if (uni.restoreGlobal) {
                         /* TEXT */
                       ),
                       vue.createElementVNode("view", { class: "author-row" }, [
-                        vue.createVNode($setup["CachedImage"], {
+                        $setup.hasAuthorAvatar(item) ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+                          key: 0,
                           src: $setup.displayAuthorAvatar(item),
                           "container-class": "author-avatar-shell",
                           "image-class": "author-avatar"
-                        }, null, 8, ["src"]),
+                        }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock("view", {
+                          key: 1,
+                          class: "author-avatar-shell author-avatar-fallback"
+                        }, [
+                          vue.createElementVNode(
+                            "text",
+                            { class: "author-avatar-fallback-text" },
+                            vue.toDisplayString($setup.authorAvatarFallbackText(item)),
+                            1
+                            /* TEXT */
+                          )
+                        ])),
                         vue.createElementVNode(
                           "text",
                           { class: "author-name" },
@@ -5343,7 +5951,78 @@ if (uni.restoreGlobal) {
       vue.createVNode($setup["AppTabBar"], { current: "/pages/guides/index" })
     ]);
   }
-  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$f, [["render", _sfc_render$e], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
+  const PagesGuidesIndex = /* @__PURE__ */ _export_sfc(_sfc_main$g, [["render", _sfc_render$f], ["__scopeId", "data-v-4aabec35"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guides/index.vue"]]);
+  const GUIDE_TRACK_PREVIEW_STORAGE_KEY = "guide-track-preview-payload";
+  let guideTrackPreviewMemory = null;
+  function saveGuideTrackPreview(payload) {
+    guideTrackPreviewMemory = normalizeGuideTrackPreviewPayload(payload);
+    formatAppLog("log", "at common/guide-track-preview.js:6", "[guide-track-preview] save payload", summarizeGuideTrackPreviewPayload(guideTrackPreviewMemory));
+  }
+  function loadGuideTrackPreview() {
+    if (guideTrackPreviewMemory) {
+      formatAppLog("log", "at common/guide-track-preview.js:11", "[guide-track-preview] load from memory", summarizeGuideTrackPreviewPayload(guideTrackPreviewMemory));
+      return guideTrackPreviewMemory;
+    }
+    try {
+      const raw = uni.getStorageSync(GUIDE_TRACK_PREVIEW_STORAGE_KEY);
+      if (!raw) {
+        return null;
+      }
+      const parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+      guideTrackPreviewMemory = normalizeGuideTrackPreviewPayload(parsed);
+      formatAppLog("log", "at common/guide-track-preview.js:23", "[guide-track-preview] load from storage", summarizeGuideTrackPreviewPayload(guideTrackPreviewMemory));
+      return guideTrackPreviewMemory;
+    } catch (error) {
+      formatAppLog("error", "at common/guide-track-preview.js:26", "[guide-track-preview] load failed", error);
+      return null;
+    }
+  }
+  function clearGuideTrackPreview() {
+    formatAppLog("log", "at common/guide-track-preview.js:32", "[guide-track-preview] clear payload");
+    guideTrackPreviewMemory = null;
+    try {
+      uni.removeStorageSync(GUIDE_TRACK_PREVIEW_STORAGE_KEY);
+    } catch (error) {
+    }
+  }
+  function normalizeGuideTrackPreviewPayload(payload) {
+    var _a;
+    if (!payload || typeof payload !== "object") {
+      return null;
+    }
+    const track = payload.track && typeof payload.track === "object" ? {
+      points: Array.isArray(payload.track.points) ? payload.track.points.map((point) => ({
+        latitude: Number(point == null ? void 0 : point.latitude),
+        longitude: Number(point == null ? void 0 : point.longitude),
+        altitude: Number((point == null ? void 0 : point.altitude) || 0),
+        timestamp: Number((point == null ? void 0 : point.timestamp) || 0)
+      })) : [],
+      pointCount: Number(payload.track.pointCount || 0),
+      distanceKm: Number(payload.track.distanceKm || 0),
+      durationMs: Number(payload.track.durationMs || 0),
+      altitudeGain: Number(payload.track.altitudeGain || 0),
+      capturedAt: Number(payload.track.capturedAt || 0)
+    } : null;
+    if (!((_a = track == null ? void 0 : track.points) == null ? void 0 : _a.length)) {
+      return null;
+    }
+    return {
+      title: String(payload.title || ""),
+      track
+    };
+  }
+  function summarizeGuideTrackPreviewPayload(payload) {
+    var _a, _b, _c, _d, _e;
+    if (!payload) {
+      return null;
+    }
+    return {
+      title: payload.title,
+      pointCount: Number(((_a = payload.track) == null ? void 0 : _a.pointCount) || ((_c = (_b = payload.track) == null ? void 0 : _b.points) == null ? void 0 : _c.length) || 0),
+      pointsLength: Array.isArray((_d = payload.track) == null ? void 0 : _d.points) ? payload.track.points.length : 0,
+      distanceKm: Number(((_e = payload.track) == null ? void 0 : _e.distanceKm) || 0)
+    };
+  }
   const TIANDITU_PROVIDER = "tianditu";
   const TIANDITU_KEY = "58f4f23a5a026d8bc9f289c7156b0b1a";
   function hasTiandituKey() {
@@ -5383,9 +6062,499 @@ if (uni.restoreGlobal) {
       ready: hasTiandituKey()
     };
   }
+  const TILE_PACK_STORAGE_KEY = "meet-xinjiang-hiking-tile-packs";
+  const OFFLINE_TILE_ROOT = "_doc/offline-tiles";
+  const DEFAULT_HIKING_TILE_PACK_ID = "hiking-active-area";
+  function getPackStore() {
+    try {
+      const raw = uni.getStorageSync(TILE_PACK_STORAGE_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (error) {
+      return {};
+    }
+  }
+  function savePackStore(store) {
+    uni.setStorageSync(TILE_PACK_STORAGE_KEY, JSON.stringify(store || {}));
+  }
+  function getOfflineTilePack(packId = DEFAULT_HIKING_TILE_PACK_ID) {
+    const store = getPackStore();
+    return store[String(packId)] || null;
+  }
+  function saveOfflineTilePack(packId, record) {
+    const store = getPackStore();
+    store[String(packId)] = record;
+    savePackStore(store);
+    return record;
+  }
+  function removeOfflineTilePack(packId = DEFAULT_HIKING_TILE_PACK_ID) {
+    const store = getPackStore();
+    delete store[String(packId)];
+    savePackStore(store);
+  }
+  function resolveOfflineTileSource({ packId = DEFAULT_HIKING_TILE_PACK_ID, mode = "imagery", layerType = "base", x, y, z, fallbackUrl = "" }) {
+    const pack = getOfflineTilePack(packId);
+    if (!pack || pack.status !== "ready") {
+      return fallbackUrl;
+    }
+    if (!Array.isArray(pack.zooms) || !pack.zooms.includes(Number(z))) {
+      return fallbackUrl;
+    }
+    if (!Array.isArray(pack.layers) || !pack.layers.includes(mode) || layerType === "annotation" && !pack.hasAnnotation) {
+      return fallbackUrl;
+    }
+    const relativePath = buildTileRelativePath(packId, mode, layerType, z, x, y);
+    if (typeof plus !== "undefined" && plus.io && typeof plus.io.convertLocalFileSystemURL === "function") {
+      const absolutePath = plus.io.convertLocalFileSystemURL(relativePath);
+      if (absolutePath) {
+        return absolutePath.startsWith("file://") ? absolutePath : `file://${absolutePath}`;
+      }
+    }
+    return relativePath;
+  }
+  function getOfflineTilePackSummary(packId = DEFAULT_HIKING_TILE_PACK_ID) {
+    const pack = getOfflineTilePack(packId);
+    if (!pack) {
+      return { ready: false, text: "未下载离线底图" };
+    }
+    if (pack.status === "downloading") {
+      return { ready: false, text: `离线底图下载中 ${Math.round(Number(pack.progress || 0))}%` };
+    }
+    if (pack.status === "ready") {
+      return { ready: true, text: "离线底图已就绪" };
+    }
+    return { ready: false, text: "离线底图未完成" };
+  }
+  function buildHikingTilePackPlan({
+    packId = DEFAULT_HIKING_TILE_PACK_ID,
+    name = "徒步区域离线底图",
+    points = [],
+    center = null,
+    minZoom = 12,
+    maxZoom = 16,
+    mode = "imagery",
+    paddingKm = 2
+  } = {}) {
+    const normalizedPoints = [
+      ...(Array.isArray(points) ? points : []).map(normalizeLocation).filter(Boolean),
+      normalizeLocation(center)
+    ].filter(Boolean);
+    if (!normalizedPoints.length) {
+      throw new Error("当前没有可用于下载离线底图的定位范围");
+    }
+    const bounds = expandBounds(computeBounds(normalizedPoints), paddingKm);
+    const zooms = [];
+    for (let zoom = Math.max(3, Number(minZoom || 12)); zoom <= Math.min(18, Number(maxZoom || 16)); zoom += 1) {
+      zooms.push(zoom);
+    }
+    const tileList = buildTileTaskList({ packId, bounds, zooms, mode });
+    return {
+      packId,
+      name,
+      mode,
+      zooms,
+      bounds,
+      tasks: tileList
+    };
+  }
+  async function downloadOfflineTilePack(plan, options = {}) {
+    if (!plan || !Array.isArray(plan.tasks) || !plan.tasks.length) {
+      throw new Error("离线底图任务为空");
+    }
+    const existing = getOfflineTilePack(plan.packId);
+    saveOfflineTilePack(plan.packId, {
+      ...existing,
+      packId: plan.packId,
+      name: plan.name,
+      mode: plan.mode,
+      zooms: plan.zooms,
+      bounds: plan.bounds,
+      layers: [plan.mode],
+      hasAnnotation: plan.tasks.some((task) => task.layerType === "annotation"),
+      totalTiles: plan.tasks.length,
+      downloadedTiles: 0,
+      progress: 0,
+      status: "downloading",
+      updatedAt: Date.now()
+    });
+    let downloadedTiles = 0;
+    let sizeBytes = 0;
+    const concurrency = Math.max(1, Math.min(6, Number(options.concurrency || 4)));
+    let cursor = 0;
+    let aborted = false;
+    async function worker() {
+      while (!aborted && cursor < plan.tasks.length) {
+        const task = plan.tasks[cursor];
+        cursor += 1;
+        const bytes = await downloadTask(task);
+        if (aborted) {
+          return;
+        }
+        sizeBytes += bytes;
+        downloadedTiles += 1;
+        const progress = Math.min(100, downloadedTiles / plan.tasks.length * 100);
+        saveOfflineTilePack(plan.packId, {
+          ...getOfflineTilePack(plan.packId),
+          downloadedTiles,
+          progress,
+          sizeBytes,
+          status: downloadedTiles >= plan.tasks.length ? "ready" : "downloading",
+          updatedAt: Date.now()
+        });
+        if (typeof options.onProgress === "function") {
+          options.onProgress({ downloadedTiles, totalTiles: plan.tasks.length, progress });
+        }
+      }
+    }
+    try {
+      await Promise.all(Array.from({ length: concurrency }, () => worker()));
+    } catch (error) {
+      aborted = true;
+      saveOfflineTilePack(plan.packId, {
+        ...getOfflineTilePack(plan.packId),
+        status: "error",
+        errorMessage: (error == null ? void 0 : error.message) || "离线底图下载失败",
+        updatedAt: Date.now()
+      });
+      throw error;
+    }
+    const record = {
+      ...getOfflineTilePack(plan.packId),
+      status: "ready",
+      progress: 100,
+      sizeBytes,
+      errorMessage: "",
+      updatedAt: Date.now()
+    };
+    saveOfflineTilePack(plan.packId, record);
+    return record;
+  }
+  async function deleteOfflineTilePack(packId = DEFAULT_HIKING_TILE_PACK_ID) {
+    const relativeRoot = `${OFFLINE_TILE_ROOT}/${encodeURIComponent(String(packId))}`;
+    await removeRelativePath(relativeRoot).catch(() => {
+    });
+    removeOfflineTilePack(packId);
+  }
+  function buildTileTaskList({ packId, bounds, zooms, mode }) {
+    const config = getTiandituLayerConfig(mode);
+    if (!config.tileUrl) {
+      throw new Error("离线底图服务未配置");
+    }
+    const tasks = [];
+    zooms.forEach((zoom) => {
+      const { minX, maxX, minY, maxY } = getTileRange(bounds, zoom);
+      for (let x = minX; x <= maxX; x += 1) {
+        for (let y = minY; y <= maxY; y += 1) {
+          tasks.push({
+            url: fillTileUrl(config.tileUrl, x, y, zoom),
+            relativePath: buildTileRelativePath(packId, mode, "base", zoom, x, y),
+            x,
+            y,
+            z: zoom,
+            layerType: "base",
+            mode
+          });
+          if (config.annotationUrl) {
+            tasks.push({
+              url: fillTileUrl(config.annotationUrl, x, y, zoom),
+              relativePath: buildTileRelativePath(packId, mode, "annotation", zoom, x, y),
+              x,
+              y,
+              z: zoom,
+              layerType: "annotation",
+              mode
+            });
+          }
+        }
+      }
+    });
+    return tasks;
+  }
+  async function downloadTask(task) {
+    const fileExists = await checkRelativePathExists(task.relativePath);
+    if (fileExists) {
+      return 0;
+    }
+    if (typeof plus !== "undefined" && plus.downloader && typeof plus.downloader.createDownload === "function") {
+      return new Promise((resolve, reject) => {
+        const downloadTask2 = plus.downloader.createDownload(task.url, { filename: task.relativePath }, (download2, status) => {
+          if (status === 200) {
+            resolve(Number(download2.downloadedSize || 0));
+            return;
+          }
+          reject(new Error(`瓦片下载失败 (${status || 0})`));
+        });
+        downloadTask2.start();
+      });
+    }
+    const response = await downloadByUni(task.url);
+    if (Number(response == null ? void 0 : response.statusCode) !== 200 || !response.tempFilePath) {
+      throw new Error("瓦片下载失败");
+    }
+    const savedFilePath = await saveDownloadedFile(response.tempFilePath, task.relativePath);
+    return Number((response == null ? void 0 : response.totalBytesWritten) || (response == null ? void 0 : response.totalBytesExpectedToWrite) || 0) || (savedFilePath ? 1 : 0);
+  }
+  function downloadByUni(url) {
+    return new Promise((resolve, reject) => {
+      uni.downloadFile({
+        url,
+        success: resolve,
+        fail: reject
+      });
+    });
+  }
+  function saveDownloadedFile(tempFilePath, relativePath) {
+    return new Promise((resolve, reject) => {
+      if (typeof plus === "undefined" || !plus.io || typeof plus.io.resolveLocalFileSystemURL !== "function") {
+        uni.saveFile({
+          tempFilePath,
+          success: ({ savedFilePath }) => resolve(savedFilePath || ""),
+          fail: reject
+        });
+        return;
+      }
+      ensureRelativeDirectory(relativePath).then(() => {
+        plus.io.resolveLocalFileSystemURL(tempFilePath, (entry) => {
+          if (!entry || typeof entry.copyTo !== "function") {
+            reject(new Error("临时瓦片文件不可用"));
+            return;
+          }
+          const targetDirectory = getRelativeDirectory(relativePath);
+          const targetName = getRelativeFilename(relativePath);
+          plus.io.resolveLocalFileSystemURL(targetDirectory, (directoryEntry) => {
+            entry.copyTo(directoryEntry, targetName, (copiedEntry) => {
+              resolve((copiedEntry == null ? void 0 : copiedEntry.fullPath) || relativePath);
+            }, reject);
+          }, reject);
+        }, reject);
+      }).catch(reject);
+    });
+  }
+  function ensureRelativeDirectory(relativePath) {
+    const normalized = getRelativeDirectory(relativePath);
+    const segments = normalized.split("/").filter(Boolean);
+    return new Promise((resolve, reject) => {
+      if (typeof plus === "undefined" || !plus.io || typeof plus.io.requestFileSystem !== "function") {
+        resolve();
+        return;
+      }
+      plus.io.requestFileSystem(plus.io.PRIVATE_DOC, (fileSystem) => {
+        let current = fileSystem.root;
+        const pathSegments = segments.slice(1);
+        function step(index) {
+          if (index >= pathSegments.length) {
+            resolve(current);
+            return;
+          }
+          current.getDirectory(pathSegments[index], { create: true }, (directoryEntry) => {
+            current = directoryEntry;
+            step(index + 1);
+          }, reject);
+        }
+        step(0);
+      }, reject);
+    });
+  }
+  function getRelativeDirectory(relativePath) {
+    const normalized = String(relativePath || "").replace(/\\/g, "/");
+    const lastSlashIndex = normalized.lastIndexOf("/");
+    return lastSlashIndex >= 0 ? normalized.slice(0, lastSlashIndex) : normalized;
+  }
+  function getRelativeFilename(relativePath) {
+    const normalized = String(relativePath || "").replace(/\\/g, "/");
+    const lastSlashIndex = normalized.lastIndexOf("/");
+    return lastSlashIndex >= 0 ? normalized.slice(lastSlashIndex + 1) : normalized;
+  }
+  function checkRelativePathExists(relativePath) {
+    return new Promise((resolve) => {
+      if (typeof plus === "undefined" || !plus.io || typeof plus.io.resolveLocalFileSystemURL !== "function") {
+        resolve(false);
+        return;
+      }
+      plus.io.resolveLocalFileSystemURL(relativePath, () => resolve(true), () => resolve(false));
+    });
+  }
+  function removeRelativePath(relativePath) {
+    return new Promise((resolve, reject) => {
+      if (typeof plus === "undefined" || !plus.io || typeof plus.io.resolveLocalFileSystemURL !== "function") {
+        resolve();
+        return;
+      }
+      plus.io.resolveLocalFileSystemURL(relativePath, (entry) => {
+        if (entry && typeof entry.removeRecursively === "function") {
+          entry.removeRecursively(resolve, reject);
+          return;
+        }
+        if (entry && typeof entry.remove === "function") {
+          entry.remove(resolve, reject);
+          return;
+        }
+        resolve();
+      }, () => resolve());
+    });
+  }
+  function buildTileRelativePath(packId, mode, layerType, z, x, y) {
+    return `${OFFLINE_TILE_ROOT}/${encodeURIComponent(String(packId))}/${mode}/${layerType}/${z}/${x}/${y}.png`;
+  }
+  function fillTileUrl(template, x, y, z) {
+    return String(template || "").replace("{x}", String(x)).replace("{y}", String(y)).replace("{z}", String(z));
+  }
+  function getTileRange(bounds, zoom) {
+    const northWest = lngLatToTile(bounds.west, bounds.north, zoom);
+    const southEast = lngLatToTile(bounds.east, bounds.south, zoom);
+    return {
+      minX: Math.min(northWest.x, southEast.x),
+      maxX: Math.max(northWest.x, southEast.x),
+      minY: Math.min(northWest.y, southEast.y),
+      maxY: Math.max(northWest.y, southEast.y)
+    };
+  }
+  function lngLatToTile(longitude, latitude, zoom) {
+    const boundedLat = Math.max(-85.05112878, Math.min(85.05112878, Number(latitude || 0)));
+    const total = 2 ** zoom;
+    const x = Math.floor((Number(longitude || 0) + 180) / 360 * total);
+    const rad = boundedLat * Math.PI / 180;
+    const y = Math.floor((1 - Math.log(Math.tan(rad) + 1 / Math.cos(rad)) / Math.PI) / 2 * total);
+    return { x, y };
+  }
+  function computeBounds(points) {
+    return points.reduce((bounds, point) => ({
+      north: Math.max(bounds.north, point.latitude),
+      south: Math.min(bounds.south, point.latitude),
+      east: Math.max(bounds.east, point.longitude),
+      west: Math.min(bounds.west, point.longitude)
+    }), {
+      north: points[0].latitude,
+      south: points[0].latitude,
+      east: points[0].longitude,
+      west: points[0].longitude
+    });
+  }
+  function expandBounds(bounds, paddingKm) {
+    const centerLat = (bounds.north + bounds.south) / 2;
+    const latPadding = Number(paddingKm || 0) / 111;
+    const lngPadding = Number(paddingKm || 0) / (111 * Math.max(0.2, Math.cos(centerLat * Math.PI / 180)));
+    return {
+      north: bounds.north + latPadding,
+      south: bounds.south - latPadding,
+      east: bounds.east + lngPadding,
+      west: bounds.west - lngPadding
+    };
+  }
+  const EARTH_RADIUS_METERS = 6378137;
+  function simplifyTrackPoints(points = [], zoom = 16) {
+    const normalized = Array.isArray(points) ? points.map(normalizeLocation).filter(Boolean).map((point) => ({
+      latitude: point.latitude,
+      longitude: point.longitude
+    })) : [];
+    if (normalized.length <= 2) {
+      return normalized;
+    }
+    const filtered = filterNearbyPoints(normalized, resolveMinDistanceMeters(zoom));
+    if (filtered.length <= 2) {
+      return filtered;
+    }
+    return douglasPeucker(filtered, resolveToleranceMeters(zoom));
+  }
+  function filterNearbyPoints(points, minDistanceMeters) {
+    if (points.length <= 2 || minDistanceMeters <= 0) {
+      return points.slice();
+    }
+    const filtered = [points[0]];
+    for (let index = 1; index < points.length - 1; index += 1) {
+      if (getDistanceMeters(filtered[filtered.length - 1], points[index]) >= minDistanceMeters) {
+        filtered.push(points[index]);
+      }
+    }
+    filtered.push(points[points.length - 1]);
+    return filtered;
+  }
+  function douglasPeucker(points, toleranceMeters) {
+    if (points.length <= 2 || toleranceMeters <= 0) {
+      return points.slice();
+    }
+    const firstPoint = points[0];
+    const lastPoint = points[points.length - 1];
+    let maxDistance = 0;
+    let splitIndex = -1;
+    for (let index = 1; index < points.length - 1; index += 1) {
+      const distance = getPerpendicularDistanceMeters(points[index], firstPoint, lastPoint);
+      if (distance > maxDistance) {
+        maxDistance = distance;
+        splitIndex = index;
+      }
+    }
+    if (maxDistance <= toleranceMeters || splitIndex === -1) {
+      return [firstPoint, lastPoint];
+    }
+    const left = douglasPeucker(points.slice(0, splitIndex + 1), toleranceMeters);
+    const right = douglasPeucker(points.slice(splitIndex), toleranceMeters);
+    return [...left.slice(0, -1), ...right];
+  }
+  function getPerpendicularDistanceMeters(point, lineStart, lineEnd) {
+    const start = projectToMeters(lineStart);
+    const end = projectToMeters(lineEnd);
+    const target = projectToMeters(point);
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    if (Math.abs(dx) < 1e-6 && Math.abs(dy) < 1e-6) {
+      return Math.hypot(target.x - start.x, target.y - start.y);
+    }
+    const ratio = ((target.x - start.x) * dx + (target.y - start.y) * dy) / (dx * dx + dy * dy);
+    const projection = ratio <= 0 ? start : ratio >= 1 ? end : {
+      x: start.x + dx * ratio,
+      y: start.y + dy * ratio
+    };
+    return Math.hypot(target.x - projection.x, target.y - projection.y);
+  }
+  function getDistanceMeters(from, to) {
+    const start = projectToMeters(from);
+    const end = projectToMeters(to);
+    return Math.hypot(end.x - start.x, end.y - start.y);
+  }
+  function projectToMeters(point) {
+    const longitude = Number((point == null ? void 0 : point.longitude) || 0);
+    const latitude = clampLatitude(Number((point == null ? void 0 : point.latitude) || 0));
+    const x = longitude * Math.PI * EARTH_RADIUS_METERS / 180;
+    const y = Math.log(Math.tan(Math.PI / 4 + latitude * Math.PI / 360)) * EARTH_RADIUS_METERS;
+    return { x, y };
+  }
+  function resolveToleranceMeters(zoom) {
+    const numericZoom = Math.round(Number(zoom || 16));
+    if (numericZoom >= 17)
+      return 0.8;
+    if (numericZoom >= 16)
+      return 1.5;
+    if (numericZoom >= 15)
+      return 3;
+    if (numericZoom >= 14)
+      return 6;
+    if (numericZoom >= 13)
+      return 12;
+    if (numericZoom >= 12)
+      return 20;
+    return 30;
+  }
+  function resolveMinDistanceMeters(zoom) {
+    const numericZoom = Math.round(Number(zoom || 16));
+    if (numericZoom >= 17)
+      return 0;
+    if (numericZoom >= 16)
+      return 0.5;
+    if (numericZoom >= 15)
+      return 1;
+    if (numericZoom >= 14)
+      return 2;
+    if (numericZoom >= 13)
+      return 4;
+    return 6;
+  }
+  function clampLatitude(value) {
+    return Math.max(-85.05112878, Math.min(85.05112878, value));
+  }
   const TILE_SIZE = 256;
   const TILE_RADIUS = 2;
-  const _sfc_main$e = {
+  const _sfc_main$f = {
     __name: "HikingTileMapCompat",
     props: {
       mapCenter: {
@@ -5407,6 +6576,14 @@ if (uni.restoreGlobal) {
       mapModeKey: {
         type: String,
         default: "normal"
+      },
+      offlinePackId: {
+        type: String,
+        default: ""
+      },
+      showCenterMarker: {
+        type: Boolean,
+        default: true
       }
     },
     setup(__props, { expose: __expose }) {
@@ -5414,6 +6591,8 @@ if (uni.restoreGlobal) {
       const GRID_SIZE = (TILE_RADIUS * 2 + 1) * TILE_SIZE;
       const props = __props;
       const tileErrorCount = vue.ref(0);
+      const instance = vue.getCurrentInstance();
+      const canvasId = `hiking-tile-track-canvas-${(instance == null ? void 0 : instance.uid) || Date.now()}`;
       const mapMode = vue.computed(() => {
         if (props.mapModeKey === "satellite") {
           return "imagery";
@@ -5458,8 +6637,24 @@ if (uni.restoreGlobal) {
             const top = (row + TILE_RADIUS) * TILE_SIZE;
             list.push({
               key: `${zoomLevel.value}-${tileX}-${tileY}`,
-              baseUrl: fillTileUrl(tileConfig.value.tileUrl, tileX, tileY, zoomLevel.value),
-              annotationUrl: tileConfig.value.annotationUrl ? fillTileUrl(tileConfig.value.annotationUrl, tileX, tileY, zoomLevel.value) : "",
+              baseUrl: resolveOfflineTileSource({
+                packId: props.offlinePackId,
+                mode: mapMode.value,
+                layerType: "base",
+                x: tileX,
+                y: tileY,
+                z: zoomLevel.value,
+                fallbackUrl: fillTileUrl2(tileConfig.value.tileUrl, tileX, tileY, zoomLevel.value)
+              }),
+              annotationUrl: tileConfig.value.annotationUrl ? resolveOfflineTileSource({
+                packId: props.offlinePackId,
+                mode: mapMode.value,
+                layerType: "annotation",
+                x: tileX,
+                y: tileY,
+                z: zoomLevel.value,
+                fallbackUrl: fillTileUrl2(tileConfig.value.annotationUrl, tileX, tileY, zoomLevel.value)
+              }) : "",
               style: `left:${left}px;top:${top}px;width:${TILE_SIZE}px;height:${TILE_SIZE}px;`
             });
           }
@@ -5467,45 +6662,89 @@ if (uni.restoreGlobal) {
         return list;
       });
       const markerDots = vue.computed(() => {
-        const list = (Array.isArray(props.mapMarkers) && props.mapMarkers.length ? props.mapMarkers : [props.mapCenter]).map((item, index) => {
+        const source = Array.isArray(props.mapMarkers) && props.mapMarkers.length ? props.mapMarkers : props.showCenterMarker && props.mapCenter ? [props.mapCenter] : [];
+        const list = source.map((item, index) => {
+          var _a;
           const point = projectPoint(item == null ? void 0 : item.longitude, item == null ? void 0 : item.latitude);
           if (!point) {
             return null;
           }
           return {
             key: `marker-${index}`,
-            style: `left:${point.x - 18}px;top:${point.y - 18}px;`
+            style: `left:${point.x - 26}px;top:${point.y - 26}px;`,
+            avatarUrl: String((item == null ? void 0 : item.avatarUrl) || ""),
+            avatarInitial: String((item == null ? void 0 : item.avatarInitial) || "游").slice(0, 1) || "游",
+            statusText: String((item == null ? void 0 : item.statusText) || ((_a = item == null ? void 0 : item.callout) == null ? void 0 : _a.content) || "当前位置")
           };
         }).filter(Boolean);
         return list.slice(0, 3);
       });
-      const trackSegments = vue.computed(() => {
-        var _a, _b, _c, _d;
+      const displayTrackPoints = vue.computed(() => {
         const line = Array.isArray(props.mapPolyline) ? props.mapPolyline[0] : null;
         const points = Array.isArray(line == null ? void 0 : line.points) ? line.points : [];
-        const color = (line == null ? void 0 : line.color) || "#ff7a00";
-        const width = Math.max(4, Number((line == null ? void 0 : line.width) || 5));
-        const segments = [];
-        for (let index = 1; index < points.length; index += 1) {
-          const start = projectPoint((_a = points[index - 1]) == null ? void 0 : _a.longitude, (_b = points[index - 1]) == null ? void 0 : _b.latitude);
-          const end = projectPoint((_c = points[index]) == null ? void 0 : _c.longitude, (_d = points[index]) == null ? void 0 : _d.latitude);
-          if (!start || !end) {
-            continue;
-          }
-          const dx = end.x - start.x;
-          const dy = end.y - start.y;
-          const length = Math.sqrt(dx * dx + dy * dy);
-          if (!Number.isFinite(length) || length < 1) {
-            continue;
-          }
-          const angle = Math.atan2(dy, dx);
-          segments.push({
-            key: `segment-${index}`,
-            style: `left:${start.x}px;top:${start.y - width / 2}px;width:${length}px;height:${width}px;background:${color};transform:rotate(${angle}rad);`
-          });
-        }
-        return segments;
+        return simplifyTrackPoints(points, zoomLevel.value);
       });
+      const canvasStyle = vue.computed(() => `left:0;top:0;width:${GRID_SIZE}px;height:${GRID_SIZE}px;`);
+      vue.onMounted(() => {
+        var _a, _b;
+        formatAppLog("log", "at pages/hiking/components/HikingTileMapCompat.vue:190", "[tile-map] mounted", {
+          canvasId,
+          scale: zoomLevel.value,
+          hasCenter: Boolean(props.mapCenter),
+          markerCount: Array.isArray(props.mapMarkers) ? props.mapMarkers.length : 0,
+          polylinePoints: Array.isArray((_b = (_a = props.mapPolyline) == null ? void 0 : _a[0]) == null ? void 0 : _b.points) ? props.mapPolyline[0].points.length : 0
+        });
+        scheduleCanvasDraw();
+      });
+      vue.watch([projectedCenter, displayTrackPoints, zoomLevel], () => {
+        formatAppLog("log", "at pages/hiking/components/HikingTileMapCompat.vue:201", "[tile-map] watch redraw", {
+          canvasId,
+          scale: zoomLevel.value,
+          displayPoints: displayTrackPoints.value.length,
+          hasProjectedCenter: Boolean(projectedCenter.value)
+        });
+        scheduleCanvasDraw();
+      }, { deep: true });
+      async function scheduleCanvasDraw() {
+        formatAppLog("log", "at pages/hiking/components/HikingTileMapCompat.vue:211", "[tile-map] schedule draw", { canvasId });
+        await vue.nextTick();
+        drawTrackCanvas();
+      }
+      function drawTrackCanvas() {
+        formatAppLog("log", "at pages/hiking/components/HikingTileMapCompat.vue:217", "[tile-map] draw start", { canvasId });
+        const context = uni.createCanvasContext(canvasId, instance == null ? void 0 : instance.proxy);
+        context.clearRect(0, 0, GRID_SIZE, GRID_SIZE);
+        const line = Array.isArray(props.mapPolyline) ? props.mapPolyline[0] : null;
+        const color = (line == null ? void 0 : line.color) || "#ff7a00";
+        const borderColor = (line == null ? void 0 : line.borderColor) || "#c14f00";
+        const width = Math.max(4, Number((line == null ? void 0 : line.width) || 5));
+        const points = displayTrackPoints.value.map((point) => projectPoint(point == null ? void 0 : point.longitude, point == null ? void 0 : point.latitude)).filter(Boolean);
+        if (points.length >= 2) {
+          context.beginPath();
+          context.setLineJoin("round");
+          context.setLineCap("round");
+          context.setStrokeStyle(borderColor);
+          context.setLineWidth(width + 2);
+          context.moveTo(points[0].x, points[0].y);
+          for (let index = 1; index < points.length; index += 1) {
+            context.lineTo(points[index].x, points[index].y);
+          }
+          context.stroke();
+          context.beginPath();
+          context.setLineJoin("round");
+          context.setLineCap("round");
+          context.setStrokeStyle(color);
+          context.setLineWidth(width);
+          context.moveTo(points[0].x, points[0].y);
+          for (let index = 1; index < points.length; index += 1) {
+            context.lineTo(points[index].x, points[index].y);
+          }
+          context.stroke();
+        }
+        context.draw(false, () => {
+          formatAppLog("log", "at pages/hiking/components/HikingTileMapCompat.vue:254", "[tile-map] draw complete", { canvasId, pointCount: points.length });
+        });
+      }
       function projectPoint(longitude, latitude) {
         if (!projectedCenter.value) {
           return null;
@@ -5543,7 +6782,7 @@ if (uni.restoreGlobal) {
           fracY: worldY - tileY
         };
       }
-      function fillTileUrl(template, x, y, z) {
+      function fillTileUrl2(template, x, y, z) {
         return String(template || "").replace("{x}", String(x)).replace("{y}", String(y)).replace("{z}", String(z));
       }
       function clamp(value, min, max) {
@@ -5555,14 +6794,18 @@ if (uni.restoreGlobal) {
       function handleTileError() {
         tileErrorCount.value += 1;
       }
-      const __returned__ = { TILE_SIZE, TILE_RADIUS, GRID_SIZE, props, tileErrorCount, mapMode, tileConfig, zoomLevel, projectedCenter, gridStyle, tiles, markerDots, trackSegments, projectPoint, projectToTile, fillTileUrl, clamp, modulo, handleTileError, computed: vue.computed, ref: vue.ref, get getTiandituLayerConfig() {
+      const __returned__ = { TILE_SIZE, TILE_RADIUS, GRID_SIZE, props, tileErrorCount, instance, canvasId, mapMode, tileConfig, zoomLevel, projectedCenter, gridStyle, tiles, markerDots, displayTrackPoints, canvasStyle, scheduleCanvasDraw, drawTrackCanvas, projectPoint, projectToTile, fillTileUrl: fillTileUrl2, clamp, modulo, handleTileError, computed: vue.computed, getCurrentInstance: vue.getCurrentInstance, nextTick: vue.nextTick, onMounted: vue.onMounted, ref: vue.ref, watch: vue.watch, get resolveOfflineTileSource() {
+        return resolveOfflineTileSource;
+      }, get simplifyTrackPoints() {
+        return simplifyTrackPoints;
+      }, get getTiandituLayerConfig() {
         return getTiandituLayerConfig;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
   };
-  function _sfc_render$d(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$e(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "tile-map" }, [
       vue.createElementVNode(
         "view",
@@ -5604,25 +6847,19 @@ if (uni.restoreGlobal) {
             128
             /* KEYED_FRAGMENT */
           )),
-          (vue.openBlock(true), vue.createElementBlock(
-            vue.Fragment,
+          vue.createElementVNode(
+            "canvas",
+            {
+              "canvas-id": $setup.canvasId,
+              class: "track-canvas",
+              style: vue.normalizeStyle($setup.canvasStyle),
+              width: $setup.GRID_SIZE,
+              height: $setup.GRID_SIZE
+            },
             null,
-            vue.renderList($setup.trackSegments, (segment) => {
-              return vue.openBlock(), vue.createElementBlock(
-                "view",
-                {
-                  key: segment.key,
-                  class: "track-segment",
-                  style: vue.normalizeStyle(segment.style)
-                },
-                null,
-                4
-                /* STYLE */
-              );
-            }),
-            128
-            /* KEYED_FRAGMENT */
-          )),
+            4
+            /* STYLE */
+          ),
           (vue.openBlock(true), vue.createElementBlock(
             vue.Fragment,
             null,
@@ -5635,7 +6872,29 @@ if (uni.restoreGlobal) {
                   style: vue.normalizeStyle(marker.style)
                 },
                 [
-                  vue.createElementVNode("view", { class: "marker-core" })
+                  marker.avatarUrl ? (vue.openBlock(), vue.createElementBlock("image", {
+                    key: 0,
+                    class: "marker-avatar",
+                    src: marker.avatarUrl,
+                    mode: "aspectFill"
+                  }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock(
+                    "text",
+                    {
+                      key: 1,
+                      class: "marker-initial"
+                    },
+                    vue.toDisplayString(marker.avatarInitial),
+                    1
+                    /* TEXT */
+                  )),
+                  vue.createElementVNode("view", { class: "marker-core" }),
+                  vue.createElementVNode(
+                    "view",
+                    { class: "marker-badge" },
+                    vue.toDisplayString(marker.statusText),
+                    1
+                    /* TEXT */
+                  )
                 ],
                 4
                 /* STYLE */
@@ -5650,7 +6909,7 @@ if (uni.restoreGlobal) {
       )
     ]);
   }
-  const HikingTileMapCompat = /* @__PURE__ */ _export_sfc(_sfc_main$e, [["render", _sfc_render$d], ["__scopeId", "data-v-949360fd"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingTileMapCompat.vue"]]);
+  const HikingTileMapCompat = /* @__PURE__ */ _export_sfc(_sfc_main$f, [["render", _sfc_render$e], ["__scopeId", "data-v-949360fd"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/components/HikingTileMapCompat.vue"]]);
   function normalizeUser(user) {
     if (!user || typeof user !== "object") {
       return user;
@@ -5676,7 +6935,7 @@ if (uni.restoreGlobal) {
       } : data.data
     };
   }
-  function request$1(path, data) {
+  function request$2(path, data) {
     return new Promise((resolve, reject) => {
       if (!hasAuthApiBaseUrl()) {
         reject(new Error("认证服务地址未配置，请先在 config/auth.js 中填写 AUTH_API_BASE_URL。"));
@@ -5706,10 +6965,10 @@ if (uni.restoreGlobal) {
     });
   }
   async function loginWithPassword(payload) {
-    return request$1("/auth/login", payload);
+    return request$2("/auth/login", payload);
   }
   async function registerWithPassword(payload) {
-    return request$1("/auth/register", payload);
+    return request$2("/auth/register", payload);
   }
   function authRequest(path, method, token, data) {
     return new Promise((resolve, reject) => {
@@ -5721,6 +6980,12 @@ if (uni.restoreGlobal) {
         "Content-Type": "application/json",
         ...token ? { Authorization: `Bearer ${token}` } : {}
       };
+      formatAppLog("log", "at services/auth.js:86", "[auth-request] start", {
+        path,
+        method,
+        hasToken: Boolean(token),
+        payload: data
+      });
       requestJson({
         url: `${AUTH_API_BASE_URL}${path}`,
         method,
@@ -5730,12 +6995,27 @@ if (uni.restoreGlobal) {
         data: method === "GET" ? void 0 : data
       }).then((res) => {
         var _a;
+        formatAppLog("log", "at services/auth.js:100", "[auth-request] response", {
+          path,
+          method,
+          statusCode: res == null ? void 0 : res.statusCode,
+          data: res == null ? void 0 : res.data
+        });
         if (res.statusCode < 200 || res.statusCode >= 300) {
           reject(new Error(((_a = res.data) == null ? void 0 : _a.message) || `请求失败(${res.statusCode})`));
           return;
         }
         resolve(normalizeResponseData(res.data || {}));
-      }).catch((error) => reject(new Error((error == null ? void 0 : error.message) || "无法连接服务器")));
+      }).catch((error) => {
+        formatAppLog("error", "at services/auth.js:112", "[auth-request] fail", {
+          path,
+          method,
+          error,
+          errMsg: error == null ? void 0 : error.errMsg,
+          message: error == null ? void 0 : error.message
+        });
+        reject(new Error((error == null ? void 0 : error.message) || "无法连接服务器"));
+      });
     });
   }
   function uploadAvatar(token, filePath) {
@@ -5782,7 +7062,7 @@ if (uni.restoreGlobal) {
   function unfollowUser(token, userId) {
     return authRequest(`/users/${encodeURIComponent(userId)}/follow`, "DELETE", token, void 0);
   }
-  const _sfc_main$d = {
+  const _sfc_main$e = {
     __name: "index",
     setup(__props, { expose: __expose }) {
       __expose();
@@ -5803,6 +7083,7 @@ if (uni.restoreGlobal) {
       const commentsLoading = vue.ref(false);
       const commentError = vue.ref("");
       const commentDeletingId = vue.ref("");
+      const trackPreviewOpening = vue.ref(false);
       const systemInfo = typeof uni.getSystemInfoSync === "function" ? uni.getSystemInfoSync() : {};
       const statusBarHeight = systemInfo.statusBarHeight || 20;
       const statusBarStyle = vue.computed(() => ({ height: `${statusBarHeight}px` }));
@@ -5834,6 +7115,10 @@ if (uni.restoreGlobal) {
           return currentUserAvatar.value;
         }
         return ((_a = guide.value) == null ? void 0 : _a.authorAvatar) || "";
+      });
+      const authorInitial = vue.computed(() => {
+        var _a, _b, _c;
+        return getAvatarInitial(((_a = guide.value) == null ? void 0 : _a.nickname) || ((_b = guide.value) == null ? void 0 : _b.author) || ((_c = guide.value) == null ? void 0 : _c.email) || "");
       });
       const showFollowButton = vue.computed(() => {
         var _a;
@@ -5890,6 +7175,11 @@ if (uni.restoreGlobal) {
         }
         return [guide.value.locationTag, ...guide.value.highlights || []].filter(Boolean).map((item) => String(item).replace(/^#/, "").trim()).filter(Boolean).slice(0, 4);
       });
+      const detailSummary = vue.computed(() => {
+        var _a, _b;
+        const summary = ((_a = guide.value) == null ? void 0 : _a.summaryText) || ((_b = guide.value) == null ? void 0 : _b.excerpt) || "";
+        return String(summary || "").trim();
+      });
       const guideTrack = vue.computed(() => {
         var _a;
         return ((_a = guide.value) == null ? void 0 : _a.hikingTrack) || null;
@@ -5902,7 +7192,6 @@ if (uni.restoreGlobal) {
         var _a;
         return buildTrackPolyline(((_a = guideTrack.value) == null ? void 0 : _a.points) || []);
       });
-      const guideTrackMarkers = vue.computed(() => buildCurrentMarker(guideTrackCenter.value, false));
       const guideTrackDistanceText = vue.computed(() => {
         var _a;
         const distanceKm = Number(((_a = guideTrack.value) == null ? void 0 : _a.distanceKm) || 0);
@@ -5948,6 +7237,9 @@ if (uni.restoreGlobal) {
           detailLoading.value = false;
         }
         activeImageIndex.value = 0;
+      });
+      onShow(() => {
+        trackPreviewOpening.value = false;
       });
       async function refreshCurrentUser() {
         const token = getStoredAuthToken();
@@ -6171,6 +7463,41 @@ if (uni.restoreGlobal) {
           urls: guideImages.value
         });
       }
+      function openTrackPreview() {
+        var _a, _b, _c, _d, _e, _f;
+        if (!guideTrack.value) {
+          formatAppLog("warn", "at pages/guide-detail/index.vue:668", "[guide-track-preview] skip open: no track");
+          return;
+        }
+        if (trackPreviewOpening.value) {
+          formatAppLog("warn", "at pages/guide-detail/index.vue:673", "[guide-track-preview] skip open: navigate locked");
+          return;
+        }
+        trackPreviewOpening.value = true;
+        formatAppLog("log", "at pages/guide-detail/index.vue:679", "[guide-track-preview] open from detail", {
+          title: ((_a = guide.value) == null ? void 0 : _a.title) || "",
+          pointCount: Number(((_b = guideTrack.value) == null ? void 0 : _b.pointCount) || ((_d = (_c = guideTrack.value) == null ? void 0 : _c.points) == null ? void 0 : _d.length) || 0),
+          distanceKm: Number(((_e = guideTrack.value) == null ? void 0 : _e.distanceKm) || 0)
+        });
+        saveGuideTrackPreview({
+          title: ((_f = guide.value) == null ? void 0 : _f.title) || "",
+          track: guideTrack.value
+        });
+        formatAppLog("log", "at pages/guide-detail/index.vue:690", "[guide-track-preview] navigateTo start");
+        uni.navigateTo({
+          url: "/pages/track-preview/index",
+          success(res) {
+            formatAppLog("log", "at pages/guide-detail/index.vue:694", "[guide-track-preview] navigateTo success", res);
+          },
+          fail(error) {
+            trackPreviewOpening.value = false;
+            formatAppLog("error", "at pages/guide-detail/index.vue:698", "[guide-track-preview] navigateTo fail", error);
+            if (!String((error == null ? void 0 : error.errMsg) || "").includes("locked")) {
+              uni.showToast({ title: "打开路线预览失败", icon: "none" });
+            }
+          }
+        });
+      }
       async function handleFollowTap() {
         var _a;
         if (!((_a = guide.value) == null ? void 0 : _a.authorId) || isOwnAuthor.value || followLoading.value) {
@@ -6256,8 +7583,10 @@ if (uni.restoreGlobal) {
         }
         return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
       }
-      const __returned__ = { guide, activeImageIndex, followLoading, detailLoading, isLiked, isSaved, likeCount, saveCount, likeSubmitting, saveSubmitting, comments, commentInput, commentSubmitting, commentInputFocused, commentsLoading, commentError, commentDeletingId, systemInfo, statusBarHeight, statusBarStyle, guideImages, hasVideo, currentUser, isOwnAuthor, currentUserAvatar, guideAuthorAvatar, showFollowButton, commentInputAvatar, commentInputInitial, commentSubmitDisabled, commentSummary, commentAvatar, getAvatarInitial, followButtonText, detailTags, guideTrack, guideTrackCenter, guideTrackPolyline, guideTrackMarkers, guideTrackDistanceText, guideTrackDurationText, guideTrackAscentText, guideTrackCoordinateText, searchHint, refreshCurrentUser, toggleLike, toggleSave, focusComment, handleCommentBlur, loadComments, reloadComments, submitComment, promptLoginForComment, removeComment, goBack, handleSwiperChange, previewImage, handleFollowTap, formatCount, formatPublishMeta, formatCommentTime, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { guide, activeImageIndex, followLoading, detailLoading, isLiked, isSaved, likeCount, saveCount, likeSubmitting, saveSubmitting, comments, commentInput, commentSubmitting, commentInputFocused, commentsLoading, commentError, commentDeletingId, trackPreviewOpening, systemInfo, statusBarHeight, statusBarStyle, guideImages, hasVideo, currentUser, isOwnAuthor, currentUserAvatar, guideAuthorAvatar, authorInitial, showFollowButton, commentInputAvatar, commentInputInitial, commentSubmitDisabled, commentSummary, commentAvatar, getAvatarInitial, followButtonText, detailTags, detailSummary, guideTrack, guideTrackCenter, guideTrackPolyline, guideTrackDistanceText, guideTrackDurationText, guideTrackAscentText, guideTrackCoordinateText, searchHint, refreshCurrentUser, toggleLike, toggleSave, focusComment, handleCommentBlur, loadComments, reloadComments, submitComment, promptLoginForComment, removeComment, goBack, handleSwiperChange, previewImage, openTrackPreview, handleFollowTap, formatCount, formatPublishMeta, formatCommentTime, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
+      }, get onShow() {
+        return onShow;
       }, CachedImage, get clearAuthSession() {
         return clearAuthSession;
       }, get getStoredAuthToken() {
@@ -6268,8 +7597,8 @@ if (uni.restoreGlobal) {
         return saveAuthSession;
       }, get formatTrackDuration() {
         return formatTrackDuration;
-      }, get buildCurrentMarker() {
-        return buildCurrentMarker;
+      }, get saveGuideTrackPreview() {
+        return saveGuideTrackPreview;
       }, get buildTrackPolyline() {
         return buildTrackPolyline;
       }, get formatCoordinate() {
@@ -6301,7 +7630,7 @@ if (uni.restoreGlobal) {
       return __returned__;
     }
   };
-  function _sfc_render$c(_ctx, _cache, $props, $setup, $data, $options) {
+  function _sfc_render$d(_ctx, _cache, $props, $setup, $data, $options) {
     return vue.openBlock(), vue.createElementBlock("view", { class: "detail-page page-shell" }, [
       $setup.guide ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 0,
@@ -6323,12 +7652,24 @@ if (uni.restoreGlobal) {
             onClick: $setup.goBack
           }, "‹"),
           vue.createElementVNode("view", { class: "author-strip" }, [
-            vue.createVNode($setup["CachedImage"], {
+            $setup.guideAuthorAvatar ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+              key: 0,
               src: $setup.guideAuthorAvatar,
               "container-class": "author-avatar-shell",
               "image-class": "author-avatar",
               style: { "width": "72rpx", "height": "72rpx", "border-radius": "50%", "flex-shrink": "0" }
-            }, null, 8, ["src"]),
+            }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock("view", {
+              key: 1,
+              class: "author-avatar-shell author-avatar-placeholder"
+            }, [
+              vue.createElementVNode(
+                "text",
+                { class: "author-avatar-placeholder-text" },
+                vue.toDisplayString($setup.authorInitial),
+                1
+                /* TEXT */
+              )
+            ])),
             vue.createElementVNode("view", { class: "author-copy" }, [
               vue.createElementVNode(
                 "text",
@@ -6446,25 +7787,6 @@ if (uni.restoreGlobal) {
               128
               /* KEYED_FRAGMENT */
             ))
-          ])) : vue.createCommentVNode("v-if", true),
-          !$setup.hasVideo && !$setup.guideImages.length ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 4,
-            class: "text-hero-card section"
-          }, [
-            vue.createElementVNode(
-              "text",
-              { class: "text-hero-kicker" },
-              vue.toDisplayString($setup.guide.locationTag || "新疆同城"),
-              1
-              /* TEXT */
-            ),
-            vue.createElementVNode(
-              "text",
-              { class: "text-hero-copy" },
-              vue.toDisplayString($setup.guide.summaryText || $setup.guide.excerpt || "这是一条没有配图的文字笔记，适合直接查看内容和标签。"),
-              1
-              /* TEXT */
-            )
           ])) : vue.createCommentVNode("v-if", true)
         ]),
         vue.createElementVNode("view", { class: "content-shell section" }, [
@@ -6475,8 +7797,18 @@ if (uni.restoreGlobal) {
             1
             /* TEXT */
           ),
+          $setup.detailSummary ? (vue.openBlock(), vue.createElementBlock(
+            "text",
+            {
+              key: 0,
+              class: "note-summary"
+            },
+            vue.toDisplayString($setup.detailSummary),
+            1
+            /* TEXT */
+          )) : vue.createCommentVNode("v-if", true),
           $setup.detailTags.length ? (vue.openBlock(), vue.createElementBlock("view", {
-            key: 0,
+            key: 1,
             class: "tag-row"
           }, [
             (vue.openBlock(true), vue.createElementBlock(
@@ -6557,14 +7889,22 @@ if (uni.restoreGlobal) {
               vue.createElementVNode("text", { class: "track-stat-label" }, "累计爬升")
             ])
           ]),
-          vue.createElementVNode("view", { class: "track-map-shell" }, [
+          vue.createElementVNode("view", {
+            class: "track-map-shell",
+            onClick: $setup.openTrackPreview
+          }, [
             vue.createVNode($setup["HikingTileMapCompat"], {
               "map-center": $setup.guideTrackCenter,
               "map-scale": 14,
               "map-polyline": $setup.guideTrackPolyline,
-              "map-markers": $setup.guideTrackMarkers,
+              "map-markers": [],
+              "show-center-marker": false,
               "map-mode-key": "satellite"
-            }, null, 8, ["map-center", "map-polyline", "map-markers"])
+            }, null, 8, ["map-center", "map-polyline"]),
+            vue.createElementVNode("view", {
+              class: "track-map-hint",
+              onClick: $setup.openTrackPreview
+            }, "放大查看路线")
           ]),
           vue.createElementVNode("view", { class: "track-meta-row" }, [
             vue.createElementVNode("text", { class: "track-meta-label" }, "终点坐标"),
@@ -6575,7 +7915,11 @@ if (uni.restoreGlobal) {
               1
               /* TEXT */
             )
-          ])
+          ]),
+          vue.createElementVNode("view", {
+            class: "track-preview-action",
+            onClick: $setup.openTrackPreview
+          }, "查看大图")
         ])) : vue.createCommentVNode("v-if", true),
         vue.createElementVNode("view", { class: "comment-head section" }, [
           vue.createElementVNode("view", null, [
@@ -6823,7 +8167,373 @@ if (uni.restoreGlobal) {
       ])) : vue.createCommentVNode("v-if", true)
     ]);
   }
-  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$c], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  const PagesGuideDetailIndex = /* @__PURE__ */ _export_sfc(_sfc_main$e, [["render", _sfc_render$d], ["__scopeId", "data-v-202be074"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/guide-detail/index.vue"]]);
+  const PI = Math.PI;
+  const AXIS = 6378245;
+  const OFFSET = 0.006693421622965943;
+  function gcj02ToWgs84(longitude, latitude) {
+    const lng = Number(longitude);
+    const lat = Number(latitude);
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+      return null;
+    }
+    if (isOutOfChina(lng, lat)) {
+      return { longitude: lng, latitude: lat };
+    }
+    const delta = calcDelta(lng, lat);
+    return {
+      longitude: lng * 2 - delta.longitude,
+      latitude: lat * 2 - delta.latitude
+    };
+  }
+  function wgs84ToGcj02(longitude, latitude) {
+    const lng = Number(longitude);
+    const lat = Number(latitude);
+    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
+      return null;
+    }
+    if (isOutOfChina(lng, lat)) {
+      return { longitude: lng, latitude: lat };
+    }
+    return calcDelta(lng, lat);
+  }
+  function isOutOfChina(longitude, latitude) {
+    return longitude < 72.004 || longitude > 137.8347 || latitude < 0.8293 || latitude > 55.8271;
+  }
+  function calcDelta(longitude, latitude) {
+    let dLat = transformLat(longitude - 105, latitude - 35);
+    let dLng = transformLng(longitude - 105, latitude - 35);
+    const radLat = latitude / 180 * PI;
+    let magic = Math.sin(radLat);
+    magic = 1 - OFFSET * magic * magic;
+    const sqrtMagic = Math.sqrt(magic);
+    dLat = dLat * 180 / (AXIS * (1 - OFFSET) / (magic * sqrtMagic) * PI);
+    dLng = dLng * 180 / (AXIS / sqrtMagic * Math.cos(radLat) * PI);
+    return {
+      longitude: longitude + dLng,
+      latitude: latitude + dLat
+    };
+  }
+  function transformLat(longitude, latitude) {
+    let value = -100 + 2 * longitude + 3 * latitude + 0.2 * latitude * latitude;
+    value += 0.1 * longitude * latitude + 0.2 * Math.sqrt(Math.abs(longitude));
+    value += (20 * Math.sin(6 * longitude * PI) + 20 * Math.sin(2 * longitude * PI)) * 2 / 3;
+    value += (20 * Math.sin(latitude * PI) + 40 * Math.sin(latitude / 3 * PI)) * 2 / 3;
+    value += (160 * Math.sin(latitude / 12 * PI) + 320 * Math.sin(latitude * PI / 30)) * 2 / 3;
+    return value;
+  }
+  function transformLng(longitude, latitude) {
+    let value = 300 + longitude + 2 * latitude + 0.1 * longitude * longitude;
+    value += 0.1 * longitude * latitude + 0.1 * Math.sqrt(Math.abs(longitude));
+    value += (20 * Math.sin(6 * longitude * PI) + 20 * Math.sin(2 * longitude * PI)) * 2 / 3;
+    value += (20 * Math.sin(longitude * PI) + 40 * Math.sin(longitude / 3 * PI)) * 2 / 3;
+    value += (150 * Math.sin(longitude / 12 * PI) + 300 * Math.sin(longitude / 30 * PI)) * 2 / 3;
+    return value;
+  }
+  const MIN_MAP_SCALE$1 = 12;
+  const MAX_MAP_SCALE$1 = 18;
+  const DEFAULT_MAP_SCALE = 15;
+  const _sfc_main$d = {
+    __name: "index",
+    setup(__props, { expose: __expose }) {
+      __expose();
+      const track = vue.ref(null);
+      const guideTitle = vue.ref("");
+      const mapScale = vue.ref(DEFAULT_MAP_SCALE);
+      const systemInfo = typeof uni.getSystemInfoSync === "function" ? uni.getSystemInfoSync() : {};
+      const statusBarHeight = systemInfo.statusBarHeight || 20;
+      const statusBarStyle = vue.computed(() => ({ height: `${statusBarHeight}px` }));
+      const headerSubtitle = vue.computed(() => guideTitle.value || "徒步路线预览");
+      const trackCenter = vue.computed(() => {
+        var _a, _b;
+        return ((_a = track.value) == null ? void 0 : _a.endPoint) || ((_b = track.value) == null ? void 0 : _b.startPoint) || null;
+      });
+      const trackPolyline = vue.computed(() => {
+        var _a;
+        return buildTrackPolyline(((_a = track.value) == null ? void 0 : _a.points) || []);
+      });
+      const mapTrackCenter = vue.computed(() => convertPointToMap(trackCenter.value));
+      const mapTrackPolyline = vue.computed(() => {
+        return trackPolyline.value.map((line) => ({
+          ...line,
+          points: Array.isArray(line == null ? void 0 : line.points) ? line.points.map((point) => convertPointToMap(point)).filter(Boolean) : []
+        })).filter((line) => line.points.length);
+      });
+      const distanceText = vue.computed(() => {
+        var _a;
+        const distanceKm = Number(((_a = track.value) == null ? void 0 : _a.distanceKm) || 0);
+        return distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : "--";
+      });
+      const durationText = vue.computed(() => {
+        var _a;
+        return formatTrackDuration(((_a = track.value) == null ? void 0 : _a.durationMs) || 0);
+      });
+      const ascentText = vue.computed(() => {
+        var _a;
+        const ascent = Number(((_a = track.value) == null ? void 0 : _a.altitudeGain) || 0);
+        return ascent > 0 ? `${Math.round(ascent)} m` : "--";
+      });
+      const pointCountText = vue.computed(() => {
+        var _a, _b, _c;
+        return `${Number(((_a = track.value) == null ? void 0 : _a.pointCount) || ((_c = (_b = track.value) == null ? void 0 : _b.points) == null ? void 0 : _c.length) || 0)} 点`;
+      });
+      const previewPoints = vue.computed(() => {
+        var _a;
+        return Array.isArray((_a = track.value) == null ? void 0 : _a.points) ? track.value.points.slice(0, 6) : [];
+      });
+      const coordinateText = vue.computed(() => {
+        var _a;
+        const points = Array.isArray((_a = track.value) == null ? void 0 : _a.points) ? track.value.points : [];
+        const point = points.length ? points[points.length - 1] : null;
+        if (!point) {
+          return "--";
+        }
+        return `${formatCoordinate(point.latitude, "lat")} / ${formatCoordinate(point.longitude, "lng")}`;
+      });
+      onLoad(() => {
+        const payload = loadGuideTrackPreview();
+        guideTitle.value = String((payload == null ? void 0 : payload.title) || "").trim();
+        track.value = normalizeGuideTrack(payload == null ? void 0 : payload.track);
+      });
+      onUnload(() => {
+        clearGuideTrackPreview();
+      });
+      function formatPoint(point) {
+        return `${formatCoordinate(point.latitude, "lat")} / ${formatCoordinate(point.longitude, "lng")}`;
+      }
+      function convertPointToMap(point) {
+        const latitude = Number(point == null ? void 0 : point.latitude);
+        const longitude = Number(point == null ? void 0 : point.longitude);
+        if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+          return null;
+        }
+        const converted = wgs84ToGcj02(longitude, latitude);
+        if (!converted) {
+          return null;
+        }
+        return {
+          ...point,
+          longitude: converted.longitude,
+          latitude: converted.latitude
+        };
+      }
+      function zoomIn() {
+        if (mapScale.value >= MAX_MAP_SCALE$1) {
+          return;
+        }
+        mapScale.value += 1;
+      }
+      function zoomOut() {
+        if (mapScale.value <= MIN_MAP_SCALE$1) {
+          return;
+        }
+        mapScale.value -= 1;
+      }
+      function goBack() {
+        if (getCurrentPages().length > 1) {
+          uni.navigateBack();
+          return;
+        }
+        uni.reLaunch({ url: "/pages/guides/index" });
+      }
+      const __returned__ = { MIN_MAP_SCALE: MIN_MAP_SCALE$1, MAX_MAP_SCALE: MAX_MAP_SCALE$1, DEFAULT_MAP_SCALE, track, guideTitle, mapScale, systemInfo, statusBarHeight, statusBarStyle, headerSubtitle, trackCenter, trackPolyline, mapTrackCenter, mapTrackPolyline, distanceText, durationText, ascentText, pointCountText, previewPoints, coordinateText, formatPoint, convertPointToMap, zoomIn, zoomOut, goBack, computed: vue.computed, ref: vue.ref, get onLoad() {
+        return onLoad;
+      }, get onUnload() {
+        return onUnload;
+      }, get clearGuideTrackPreview() {
+        return clearGuideTrackPreview;
+      }, get loadGuideTrackPreview() {
+        return loadGuideTrackPreview;
+      }, get normalizeGuideTrack() {
+        return normalizeGuideTrack;
+      }, get formatTrackDuration() {
+        return formatTrackDuration;
+      }, get buildTrackPolyline() {
+        return buildTrackPolyline;
+      }, get formatCoordinate() {
+        return formatCoordinate;
+      }, get wgs84ToGcj02() {
+        return wgs84ToGcj02;
+      } };
+      Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
+      return __returned__;
+    }
+  };
+  function _sfc_render$c(_ctx, _cache, $props, $setup, $data, $options) {
+    return vue.openBlock(), vue.createElementBlock("view", { class: "track-preview-page" }, [
+      vue.createElementVNode(
+        "view",
+        {
+          class: "status-space",
+          style: vue.normalizeStyle($setup.statusBarStyle)
+        },
+        null,
+        4
+        /* STYLE */
+      ),
+      vue.createElementVNode("view", { class: "topbar" }, [
+        vue.createElementVNode("view", {
+          class: "icon-btn",
+          onClick: $setup.goBack
+        }, "‹"),
+        vue.createElementVNode("view", { class: "topbar-copy" }, [
+          vue.createElementVNode("text", { class: "topbar-title" }, "轨迹大图"),
+          vue.createElementVNode(
+            "text",
+            { class: "topbar-subtitle" },
+            vue.toDisplayString($setup.headerSubtitle),
+            1
+            /* TEXT */
+          )
+        ])
+      ]),
+      $setup.track ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 0,
+        class: "content-shell"
+      }, [
+        vue.createElementVNode("view", { class: "stat-row" }, [
+          vue.createElementVNode("view", { class: "stat-card" }, [
+            vue.createElementVNode(
+              "text",
+              { class: "stat-value" },
+              vue.toDisplayString($setup.distanceText),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "stat-label" }, "路线距离")
+          ]),
+          vue.createElementVNode("view", { class: "stat-card" }, [
+            vue.createElementVNode(
+              "text",
+              { class: "stat-value" },
+              vue.toDisplayString($setup.durationText),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "stat-label" }, "记录时长")
+          ]),
+          vue.createElementVNode("view", { class: "stat-card" }, [
+            vue.createElementVNode(
+              "text",
+              { class: "stat-value" },
+              vue.toDisplayString($setup.ascentText),
+              1
+              /* TEXT */
+            ),
+            vue.createElementVNode("text", { class: "stat-label" }, "累计爬升")
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "safe-card" }, [
+          vue.createElementVNode("text", { class: "safe-title" }, "路线概览"),
+          vue.createElementVNode(
+            "text",
+            { class: "safe-copy" },
+            "轨迹点数：" + vue.toDisplayString($setup.pointCountText),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            { class: "safe-copy" },
+            "终点坐标：" + vue.toDisplayString($setup.coordinateText),
+            1
+            /* TEXT */
+          )
+        ]),
+        vue.createElementVNode("view", { class: "map-card" }, [
+          $setup.mapTrackCenter ? (vue.openBlock(), vue.createElementBlock("map", {
+            key: 0,
+            class: "preview-map",
+            latitude: $setup.mapTrackCenter.latitude,
+            longitude: $setup.mapTrackCenter.longitude,
+            scale: $setup.mapScale,
+            polyline: $setup.mapTrackPolyline,
+            markers: [],
+            "show-location": false,
+            "enable-overlooking": false,
+            "enable-rotate": false,
+            "enable-satellite": false,
+            "enable-traffic": false
+          }, null, 8, ["latitude", "longitude", "scale", "polyline"])) : (vue.openBlock(), vue.createElementBlock("view", {
+            key: 1,
+            class: "map-empty"
+          }, "暂无可展示的轨迹地图")),
+          vue.createElementVNode("view", { class: "zoom-group" }, [
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["zoom-btn", { disabled: $setup.mapScale >= $setup.MAX_MAP_SCALE }]),
+                onClick: $setup.zoomIn
+              },
+              "+",
+              2
+              /* CLASS */
+            ),
+            vue.createElementVNode(
+              "view",
+              {
+                class: vue.normalizeClass(["zoom-btn", { disabled: $setup.mapScale <= $setup.MIN_MAP_SCALE }]),
+                onClick: $setup.zoomOut
+              },
+              "-",
+              2
+              /* CLASS */
+            )
+          ])
+        ]),
+        vue.createElementVNode("view", { class: "points-card" }, [
+          vue.createElementVNode("view", { class: "points-head" }, [
+            vue.createElementVNode("text", { class: "points-title" }, "轨迹点"),
+            vue.createElementVNode(
+              "text",
+              { class: "points-badge" },
+              vue.toDisplayString($setup.pointCountText),
+              1
+              /* TEXT */
+            )
+          ]),
+          (vue.openBlock(true), vue.createElementBlock(
+            vue.Fragment,
+            null,
+            vue.renderList($setup.previewPoints, (point, index) => {
+              return vue.openBlock(), vue.createElementBlock("view", {
+                key: `${index}-${point.latitude}-${point.longitude}`,
+                class: "point-row"
+              }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "point-index" },
+                  vue.toDisplayString(index + 1),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "point-text" },
+                  vue.toDisplayString($setup.formatPoint(point)),
+                  1
+                  /* TEXT */
+                )
+              ]);
+            }),
+            128
+            /* KEYED_FRAGMENT */
+          ))
+        ])
+      ])) : (vue.openBlock(), vue.createElementBlock("view", {
+        key: 1,
+        class: "empty-shell"
+      }, [
+        vue.createElementVNode("text", { class: "empty-title" }, "未找到轨迹数据"),
+        vue.createElementVNode("text", { class: "empty-subtitle" }, "请返回攻略详情页后重新打开大图。"),
+        vue.createElementVNode("view", {
+          class: "primary-btn",
+          onClick: $setup.goBack
+        }, "返回")
+      ]))
+    ]);
+  }
+  const PagesTrackPreviewIndex = /* @__PURE__ */ _export_sfc(_sfc_main$d, [["render", _sfc_render$c], ["__scopeId", "data-v-31356f10"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/track-preview/index.vue"]]);
   var isVue2 = false;
   function set(target, key, val) {
     if (Array.isArray(target)) {
@@ -7897,9 +9607,9 @@ Only state can be modified.`);
     };
     {
       $subscribeOptions.onTrigger = (event) => {
-        if (isListening) {
+        if (isListening2) {
           debuggerEvents = event;
-        } else if (isListening == false && !store._hotUpdating) {
+        } else if (isListening2 == false && !store._hotUpdating) {
           if (Array.isArray(debuggerEvents)) {
             debuggerEvents.push(event);
           } else {
@@ -7908,7 +9618,7 @@ Only state can be modified.`);
         }
       };
     }
-    let isListening;
+    let isListening2;
     let isSyncListening;
     let subscriptions = [];
     let actionSubscriptions = [];
@@ -7923,7 +9633,7 @@ Only state can be modified.`);
     let activeListener;
     function $patch(partialStateOrMutator) {
       let subscriptionMutation;
-      isListening = isSyncListening = false;
+      isListening2 = isSyncListening = false;
       {
         debuggerEvents = [];
       }
@@ -7946,7 +9656,7 @@ Only state can be modified.`);
       const myListenerId = activeListener = Symbol();
       vue.nextTick().then(() => {
         if (activeListener === myListenerId) {
-          isListening = true;
+          isListening2 = true;
         }
       });
       isSyncListening = true;
@@ -8025,7 +9735,7 @@ Only state can be modified.`);
       $subscribe(callback, options2 = {}) {
         const removeSubscription = addSubscription(subscriptions, callback, options2.detached, () => stopWatcher());
         const stopWatcher = scope.run(() => vue.watch(() => pinia.state.value[$id], (state) => {
-          if (options2.flush === "sync" ? isSyncListening : isListening) {
+          if (options2.flush === "sync" ? isSyncListening : isListening2) {
             callback({
               storeId: $id,
               type: MutationType.direct,
@@ -8128,12 +9838,12 @@ Only state can be modified.`);
             del(store, stateKey);
           }
         });
-        isListening = false;
+        isListening2 = false;
         isSyncListening = false;
         pinia.state.value[$id] = vue.toRef(newStore._hmrPayload, "hotState");
         isSyncListening = true;
         vue.nextTick().then(() => {
-          isListening = true;
+          isListening2 = true;
         });
         for (const actionName in newStore._hmrPayload.actions) {
           const action = newStore[actionName];
@@ -8203,7 +9913,7 @@ Found in store "${store.$id}".`);
     if (initialState && isOptionsStore && options.hydrate) {
       options.hydrate(store.$state, initialState);
     }
-    isListening = true;
+    isListening2 = true;
     isSyncListening = true;
     return store;
   }
@@ -8280,71 +9990,75 @@ This will fail in production.`);
       return refs;
     }
   }
-  const PI = Math.PI;
-  const AXIS = 6378245;
-  const OFFSET = 0.006693421622965943;
-  function gcj02ToWgs84(longitude, latitude) {
-    const lng = Number(longitude);
-    const lat = Number(latitude);
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
-      return null;
+  const HIKING_SAVED_TRACKS_KEY = "meet-xinjiang-hiking-saved-tracks";
+  function buildStorageKey(scope = "guest") {
+    const normalizedScope = String(scope || "guest").trim() || "guest";
+    return `${HIKING_SAVED_TRACKS_KEY}:${normalizedScope}`;
+  }
+  function normalizeTrackId(track) {
+    return String((track == null ? void 0 : track.id) || (track == null ? void 0 : track.capturedAt) || "").trim();
+  }
+  function readStorage(scope = "guest") {
+    const raw = uni.getStorageSync(buildStorageKey(scope));
+    if (!raw) {
+      return [];
     }
-    if (isOutOfChina(lng, lat)) {
-      return { longitude: lng, latitude: lat };
+    try {
+      const parsed = JSON.parse(raw);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch (error) {
+      return [];
     }
-    const delta = calcDelta(lng, lat);
-    return {
-      longitude: lng * 2 - delta.longitude,
-      latitude: lat * 2 - delta.latitude
-    };
   }
-  function wgs84ToGcj02(longitude, latitude) {
-    const lng = Number(longitude);
-    const lat = Number(latitude);
-    if (!Number.isFinite(lng) || !Number.isFinite(lat)) {
-      return null;
-    }
-    if (isOutOfChina(lng, lat)) {
-      return { longitude: lng, latitude: lat };
-    }
-    return calcDelta(lng, lat);
+  function writeStorage(scope, list) {
+    uni.setStorageSync(buildStorageKey(scope), JSON.stringify(Array.isArray(list) ? list : []));
   }
-  function isOutOfChina(longitude, latitude) {
-    return longitude < 72.004 || longitude > 137.8347 || latitude < 0.8293 || latitude > 55.8271;
+  function getSavedHikingTracks(scope) {
+    return readStorage(scope);
   }
-  function calcDelta(longitude, latitude) {
-    let dLat = transformLat(longitude - 105, latitude - 35);
-    let dLng = transformLng(longitude - 105, latitude - 35);
-    const radLat = latitude / 180 * PI;
-    let magic = Math.sin(radLat);
-    magic = 1 - OFFSET * magic * magic;
-    const sqrtMagic = Math.sqrt(magic);
-    dLat = dLat * 180 / (AXIS * (1 - OFFSET) / (magic * sqrtMagic) * PI);
-    dLng = dLng * 180 / (AXIS / sqrtMagic * Math.cos(radLat) * PI);
-    return {
-      longitude: longitude + dLng,
-      latitude: latitude + dLat
-    };
+  function saveSavedHikingTracks(scope, tracks) {
+    writeStorage(scope, tracks);
+    return Array.isArray(tracks) ? tracks : [];
   }
-  function transformLat(longitude, latitude) {
-    let value = -100 + 2 * longitude + 3 * latitude + 0.2 * latitude * latitude;
-    value += 0.1 * longitude * latitude + 0.2 * Math.sqrt(Math.abs(longitude));
-    value += (20 * Math.sin(6 * longitude * PI) + 20 * Math.sin(2 * longitude * PI)) * 2 / 3;
-    value += (20 * Math.sin(latitude * PI) + 40 * Math.sin(latitude / 3 * PI)) * 2 / 3;
-    value += (160 * Math.sin(latitude / 12 * PI) + 320 * Math.sin(latitude * PI / 30)) * 2 / 3;
-    return value;
+  function clearSavedHikingTracks(scope) {
+    writeStorage(scope, []);
+    return [];
   }
-  function transformLng(longitude, latitude) {
-    let value = 300 + longitude + 2 * latitude + 0.1 * longitude * longitude;
-    value += 0.1 * longitude * latitude + 0.1 * Math.sqrt(Math.abs(longitude));
-    value += (20 * Math.sin(6 * longitude * PI) + 20 * Math.sin(2 * longitude * PI)) * 2 / 3;
-    value += (20 * Math.sin(longitude * PI) + 40 * Math.sin(longitude / 3 * PI)) * 2 / 3;
-    value += (150 * Math.sin(longitude / 12 * PI) + 300 * Math.sin(longitude / 30 * PI)) * 2 / 3;
-    return value;
+  function upsertSavedHikingTrack(scope, track) {
+    const nextId = normalizeTrackId(track);
+    const current = readStorage(scope);
+    const filtered = nextId ? current.filter((item) => normalizeTrackId(item) !== nextId) : current;
+    const next = [track, ...filtered];
+    writeStorage(scope, next);
+    return next;
+  }
+  function removeSavedHikingTrack(scope, trackId) {
+    const normalizedTrackId = String(trackId || "").trim();
+    const next = readStorage(scope).filter((item) => normalizeTrackId(item) !== normalizedTrackId);
+    writeStorage(scope, next);
+    return next;
+  }
+  function updateSavedHikingTrack(scope, trackId, updater) {
+    const normalizedTrackId = String(trackId || "").trim();
+    const current = readStorage(scope);
+    const next = current.map((item) => {
+      if (normalizeTrackId(item) !== normalizedTrackId) {
+        return item;
+      }
+      const updated = typeof updater === "function" ? updater(item) : { ...item, ...updater || {} };
+      return updated || item;
+    });
+    writeStorage(scope, next);
+    return next;
   }
   const HIKING_SESSION_KEY = "meet-xinjiang-hiking-session";
-  function readSession() {
-    const raw = uni.getStorageSync(HIKING_SESSION_KEY);
+  function buildSessionKey(scope = "guest") {
+    const normalizedScope = String(scope || "guest").trim() || "guest";
+    return `${HIKING_SESSION_KEY}:${normalizedScope}`;
+  }
+  function readSession(scope = "guest") {
+    const scopedKey = buildSessionKey(scope);
+    const raw = uni.getStorageSync(scopedKey) || (scope === "guest" ? uni.getStorageSync(HIKING_SESSION_KEY) : "");
     if (!raw) {
       return null;
     }
@@ -8355,31 +10069,94 @@ This will fail in production.`);
       return null;
     }
   }
-  function writeSession(session) {
-    uni.setStorageSync(HIKING_SESSION_KEY, JSON.stringify(session || {}));
+  function writeSession(session, scope = "guest") {
+    uni.setStorageSync(buildSessionKey(scope), JSON.stringify(session || {}));
   }
-  function getHikingSession() {
-    return readSession();
+  function getHikingSession(scope) {
+    return readSession(scope);
   }
-  function saveHikingSession(session) {
-    writeSession(session);
+  function saveHikingSession(session, scope) {
+    writeSession(session, scope);
     return session;
   }
+  const HIKING_TRACK_API_BASE = API_BASE_URL;
+  function hasHikingTrackApi() {
+    return hasApiBaseUrl() && Boolean(HIKING_TRACK_API_BASE);
+  }
+  function buildUrl(path) {
+    return `${HIKING_TRACK_API_BASE}${path}`;
+  }
+  function request$1(method, path, data, token = getStoredAuthToken()) {
+    return new Promise((resolve, reject) => {
+      if (!hasHikingTrackApi()) {
+        reject(new Error("徒步轨迹服务地址未配置。"));
+        return;
+      }
+      const headers = {
+        "Content-Type": "application/json",
+        ...token ? { Authorization: `Bearer ${token}` } : {}
+      };
+      requestJson({
+        url: buildUrl(path),
+        method,
+        timeout: 2e4,
+        headers,
+        header: headers,
+        data: method === "GET" ? void 0 : data
+      }).then((res) => {
+        var _a;
+        if (res.statusCode < 200 || res.statusCode >= 300) {
+          const error = new Error(((_a = res.data) == null ? void 0 : _a.message) || `HTTP ${res.statusCode}`);
+          error.statusCode = res.statusCode;
+          reject(error);
+          return;
+        }
+        resolve(res.data || {});
+      }).catch((error) => {
+        reject(new Error((error == null ? void 0 : error.message) || "无法连接徒步轨迹服务，请检查服务器地址或网络。"));
+      });
+    });
+  }
+  async function getMyHikingTracks(token = getStoredAuthToken()) {
+    const data = await request$1("GET", "/users/me/hiking-tracks", void 0, token);
+    return Array.isArray(data == null ? void 0 : data.list) ? data.list : [];
+  }
+  async function createMyHikingTrack(payload, token = getStoredAuthToken()) {
+    const data = await request$1("POST", "/users/me/hiking-tracks", payload, token);
+    return (data == null ? void 0 : data.data) || null;
+  }
+  async function updateMyHikingTrack(trackId, payload, token = getStoredAuthToken()) {
+    const data = await request$1("PATCH", `/users/me/hiking-tracks/${encodeURIComponent(trackId)}`, payload, token);
+    return (data == null ? void 0 : data.data) || null;
+  }
+  async function deleteMyHikingTrack(trackId, token = getStoredAuthToken()) {
+    const data = await request$1("DELETE", `/users/me/hiking-tracks/${encodeURIComponent(trackId)}`, void 0, token);
+    return Boolean(data == null ? void 0 : data.ok);
+  }
   const MAX_TRACK_POINTS = 1200;
-  const MAX_SAVED_TRACKS = 6;
-  const MAX_ACCEPTABLE_ACCURACY = 80;
-  const MIN_MOVEMENT_METERS = 5;
-  const MAX_HIKING_SPEED_MPS = 3.6;
-  const MAX_WALKING_JUMP_METERS = 60;
+  const MAX_ACCEPTABLE_ACCURACY = 120;
+  const MIN_MOVEMENT_METERS = 2;
+  const MAX_HIKING_SPEED_MPS = 5.5;
+  const MAX_WALKING_JUMP_METERS = 120;
   let listenerBound = false;
   let locationUpdating = false;
+  let trackingPollTimer = null;
   const useHikingStore = defineStore("hiking", () => {
     const isTracking = vue.ref(false);
     const currentLocation = vue.ref(null);
     const trackPoints = vue.ref([]);
+    const trackingStartedAt = vue.ref(0);
+    const trackingActiveFrom = vue.ref(0);
+    const accumulatedDurationMs = vue.ref(0);
+    const currentSegmentIndex = vue.ref(0);
     const savedTracks = vue.ref([]);
     const locationError = vue.ref("");
     const hydrated = vue.ref(false);
+    const savedTracksLoading = vue.ref(false);
+    const activeUserId = vue.ref("guest");
+    const activeToken = vue.ref("");
+    const loadTracksPromise = vue.ref(null);
+    const trackSyncState = vue.ref("idle");
     const mapCenter = vue.computed(() => {
       if (!currentLocation.value) {
         return null;
@@ -8391,44 +10168,154 @@ This will fail in production.`);
     });
     const hasMapLocation = vue.computed(() => Boolean(mapCenter.value));
     const mapPolyline = vue.computed(() => buildTrackPolyline(trackPoints.value));
-    const mapMarkers = vue.computed(() => buildCurrentMarker(currentLocation.value, isTracking.value));
+    const hasTrackInProgress = vue.computed(() => Boolean(trackPoints.value.length || trackingStartedAt.value));
+    const trackDurationMs = vue.computed(() => getElapsedTrackingDuration());
+    const pendingSyncCount = vue.computed(() => savedTracks.value.filter((item) => isLocalTrackId(item == null ? void 0 : item.id)).length);
+    const currentUserProfile = vue.computed(() => {
+      const user = getStoredAuthUser() || null;
+      const nickname = String((user == null ? void 0 : user.nickname) || "旅行者").trim();
+      return {
+        avatarUrl: String((user == null ? void 0 : user.avatar_url) || (user == null ? void 0 : user.avatar) || "").trim(),
+        avatarInitial: (nickname || "旅").slice(0, 1)
+      };
+    });
+    const trackSyncText = vue.computed(() => {
+      if (savedTracksLoading.value && activeToken.value) {
+        return pendingSyncCount.value ? `正在同步 ${pendingSyncCount.value} 条本地轨迹` : "正在同步云端轨迹";
+      }
+      if (pendingSyncCount.value > 0) {
+        if (!activeToken.value || activeUserId.value === "guest") {
+          return `已本地保存 ${pendingSyncCount.value} 条轨迹，登录后自动同步`;
+        }
+        return `${pendingSyncCount.value} 条轨迹待同步重试`;
+      }
+      if (trackSyncState.value === "synced") {
+        return "轨迹已同步到云端";
+      }
+      if (trackSyncState.value === "saved") {
+        return "轨迹已保存";
+      }
+      return "";
+    });
+    const trackSyncTone = vue.computed(() => {
+      if (savedTracksLoading.value && activeToken.value) {
+        return "syncing";
+      }
+      if (pendingSyncCount.value > 0) {
+        return activeToken.value && activeUserId.value !== "guest" ? "warning" : "local";
+      }
+      if (trackSyncState.value === "synced") {
+        return "synced";
+      }
+      return "neutral";
+    });
+    const mapMarkers = vue.computed(() => buildCurrentMarker(currentLocation.value, isTracking.value, currentUserProfile.value));
+    function getSessionScope() {
+      return activeUserId.value || "guest";
+    }
+    function readAuthScope() {
+      const user = getStoredAuthUser();
+      return {
+        userId: String((user == null ? void 0 : user.id) || "guest"),
+        token: getStoredAuthToken()
+      };
+    }
+    function hydrateSession(scope = getSessionScope()) {
+      var _a;
+      const session = getHikingSession(scope);
+      currentLocation.value = normalizeLocation(session == null ? void 0 : session.lastLocation);
+      trackPoints.value = Array.isArray(session == null ? void 0 : session.points) ? session.points.map(normalizeLocation).filter(Boolean) : [];
+      trackingStartedAt.value = Number((session == null ? void 0 : session.trackingStartedAt) || 0);
+      trackingActiveFrom.value = Number((session == null ? void 0 : session.trackingActiveFrom) || 0);
+      accumulatedDurationMs.value = Math.max(0, Number((session == null ? void 0 : session.accumulatedDurationMs) || 0));
+      currentSegmentIndex.value = resolveNextSegmentIndex(trackPoints.value, Number((session == null ? void 0 : session.currentSegmentIndex) || 0));
+      isTracking.value = Boolean(session == null ? void 0 : session.isTracking);
+      if (isTracking.value && !trackingStartedAt.value) {
+        trackingStartedAt.value = Number(((_a = trackPoints.value[0]) == null ? void 0 : _a.timestamp) || (session == null ? void 0 : session.updatedAt) || Date.now());
+      }
+      if (isTracking.value && !trackingActiveFrom.value) {
+        trackingActiveFrom.value = Number((session == null ? void 0 : session.updatedAt) || Date.now());
+      }
+    }
+    function loadLocalSavedTracks(scope = getSessionScope()) {
+      return getSavedHikingTracks(scope).map(normalizeSavedTrack).filter(Boolean);
+    }
+    function persistSavedTracks(scope = getSessionScope()) {
+      return saveSavedHikingTracks(scope, savedTracks.value);
+    }
+    function syncAuthScope() {
+      const previousScope = activeUserId.value || "guest";
+      const shouldAdoptGuestTracks = previousScope === "guest";
+      const nextScope = readAuthScope();
+      const scopeChanged = nextScope.userId !== activeUserId.value;
+      const tokenChanged = nextScope.token !== activeToken.value;
+      if (!scopeChanged && !tokenChanged) {
+        return { ...nextScope, scopeChanged: false, tokenChanged: false };
+      }
+      activeUserId.value = nextScope.userId;
+      activeToken.value = nextScope.token;
+      loadTracksPromise.value = null;
+      const scopedTracks = mergeSavedTracks(
+        loadLocalSavedTracks(nextScope.userId),
+        shouldAdoptGuestTracks && nextScope.userId !== "guest" ? loadLocalSavedTracks(previousScope) : []
+      );
+      savedTracks.value = scopedTracks;
+      persistSavedTracks(nextScope.userId);
+      if (previousScope !== nextScope.userId && previousScope === "guest" && nextScope.userId !== "guest") {
+        clearSavedHikingTracks(previousScope);
+      }
+      savedTracksLoading.value = false;
+      if (scopedTracks.length && !pendingSyncCount.value) {
+        trackSyncState.value = nextScope.userId === "guest" ? "saved" : "synced";
+      }
+      hydrateSession(nextScope.userId);
+      return {
+        ...nextScope,
+        scopeChanged,
+        tokenChanged
+      };
+    }
     function hydrate() {
-      if (hydrated.value) {
-        return;
+      const authScope = syncAuthScope();
+      if (!hydrated.value) {
+        hydrateSession(authScope.userId);
+        hydrated.value = true;
       }
-      const session = getHikingSession();
-      if (session) {
-        currentLocation.value = normalizeLocation(session.lastLocation);
-        trackPoints.value = Array.isArray(session.points) ? session.points.map(normalizeLocation).filter(Boolean) : [];
-        savedTracks.value = Array.isArray(session.savedTracks) ? session.savedTracks.map(normalizeSavedTrack).filter(Boolean) : [];
-        isTracking.value = Boolean(session.isTracking);
-      }
-      hydrated.value = true;
       if (isTracking.value) {
         ensureLocationListener();
         startLocationUpdates().catch((error) => {
           locationError.value = (error == null ? void 0 : error.message) || "定位监听启动失败";
         });
       }
+      return authScope;
     }
     function ensureLocationListener() {
       if (listenerBound || typeof uni.onLocationChange !== "function") {
         return;
       }
       uni.onLocationChange((payload) => {
-        const nextLocation = normalizeLocation({
+        const nextLocation = normalizeTrackLocation({
           ...payload,
           provider: (payload == null ? void 0 : payload.provider) || (payload == null ? void 0 : payload.sourceProvider) || "uni-location-update",
           source: (payload == null ? void 0 : payload.source) || "uni.onLocationChange"
         });
         if (!nextLocation) {
+          formatAppLog("warn", "at stores/useHikingStore.js:222", "[hiking-track] receive invalid live point", payload);
           return;
         }
-        currentLocation.value = nextLocation;
-        locationError.value = "";
+        formatAppLog("log", "at stores/useHikingStore.js:226", "[hiking-track] receive live point", {
+          latitude: nextLocation.latitude,
+          longitude: nextLocation.longitude,
+          accuracy: nextLocation.accuracy,
+          provider: nextLocation.provider,
+          source: nextLocation.source,
+          coordinateSystem: nextLocation.coordinateSystem
+        });
         if (isTracking.value) {
           appendTrackPoint(nextLocation);
         } else {
+          currentLocation.value = nextLocation;
+          locationError.value = "";
           persistSession();
         }
       });
@@ -8446,14 +10333,71 @@ This will fail in production.`);
         });
       });
     }
+    async function loadSavedTracks(options = {}) {
+      const authScope = hydrate();
+      if (!activeToken.value || activeUserId.value === "guest") {
+        savedTracks.value = loadLocalSavedTracks(activeUserId.value);
+        trackSyncState.value = savedTracks.value.length ? "saved" : "idle";
+        loadTracksPromise.value = null;
+        return savedTracks.value;
+      }
+      if (!hasHikingTrackApi()) {
+        savedTracks.value = loadLocalSavedTracks(activeUserId.value);
+        trackSyncState.value = pendingSyncCount.value ? "local" : "saved";
+        return savedTracks.value;
+      }
+      if (!options.force && !authScope.scopeChanged && !authScope.tokenChanged && loadTracksPromise.value) {
+        return loadTracksPromise.value;
+      }
+      savedTracksLoading.value = true;
+      trackSyncState.value = "syncing";
+      const currentScope = activeUserId.value;
+      const currentToken = activeToken.value;
+      const request2 = getMyHikingTracks(currentToken).then(async (list) => {
+        if (activeUserId.value !== currentScope || activeToken.value !== currentToken) {
+          return savedTracks.value;
+        }
+        const remoteTracks = list.map(normalizeSavedTrack).filter(Boolean);
+        const localTracks = loadLocalSavedTracks(currentScope);
+        const uploadedTracks = await syncPendingLocalTracks(localTracks, remoteTracks, currentToken);
+        const mergedTracks = mergeSavedTracks(remoteTracks, uploadedTracks);
+        savedTracks.value = mergedTracks;
+        persistSavedTracks(currentScope);
+        persistSession();
+        trackSyncState.value = mergedTracks.some((item) => isLocalTrackId(item == null ? void 0 : item.id)) ? "local" : mergedTracks.length ? "synced" : "idle";
+        return savedTracks.value;
+      }).catch((error) => {
+        if (activeUserId.value === currentScope && activeToken.value === currentToken) {
+          savedTracks.value = loadLocalSavedTracks(currentScope);
+          trackSyncState.value = savedTracks.value.length ? "local" : "idle";
+        }
+        throw error;
+      }).finally(() => {
+        if (loadTracksPromise.value === request2) {
+          loadTracksPromise.value = null;
+        }
+        if (activeUserId.value === currentScope) {
+          savedTracksLoading.value = false;
+        }
+      });
+      loadTracksPromise.value = request2;
+      return request2;
+    }
     async function startTracking() {
       hydrate();
       ensureLocationListener();
       try {
         await startLocationUpdates();
+        const now2 = Date.now();
+        if (!trackingStartedAt.value) {
+          trackingStartedAt.value = now2;
+        }
+        trackingActiveFrom.value = now2;
+        currentSegmentIndex.value = trackPoints.value.length ? resolveNextSegmentIndex(trackPoints.value) : 0;
         isTracking.value = true;
         locationError.value = "";
         persistSession();
+        startTrackingPoll();
         if (!currentLocation.value) {
           await refreshLocation({ appendWhenTracking: true });
         }
@@ -8465,7 +10409,14 @@ This will fail in production.`);
       }
     }
     async function stopTracking() {
+      hydrate();
+      if (!isTracking.value) {
+        return;
+      }
+      accumulatedDurationMs.value = getElapsedTrackingDuration();
+      trackingActiveFrom.value = 0;
       isTracking.value = false;
+      stopTrackingPoll();
       persistSession();
       if (typeof uni.stopLocationUpdate !== "function") {
         locationUpdating = false;
@@ -8482,18 +10433,35 @@ This will fail in production.`);
     }
     async function refreshLocation(options = {}) {
       hydrate();
-      const location2 = normalizeTrackLocation(await getCurrentLocation({
+      const requestOptions = {
         highAccuracy: true,
         allowGpsOffline: true,
         coordsType: "wgs84",
-        providers: ["gps", "system", "wgs84", "network"],
+        providers: ["gcj02", "system", "network", "wgs84", "gps"],
         gpsTimeout: 18e3,
+        gpsMaximumAgeMs: 3e3,
         networkTimeout: 6e3,
+        networkMaximumAgeMs: 2e3,
         ...options
-      }));
+      };
+      formatAppLog("log", "at stores/useHikingStore.js:393", "[hiking-track] refreshLocation start", {
+        isTracking: isTracking.value,
+        appendWhenTracking: Boolean(options.appendWhenTracking),
+        requestOptions
+      });
+      const location2 = normalizeTrackLocation(await getCurrentLocation(requestOptions));
       if (!location2) {
+        formatAppLog("error", "at stores/useHikingStore.js:402", "[hiking-track] refreshLocation invalid result");
         throw new Error("定位结果无效");
       }
+      formatAppLog("log", "at stores/useHikingStore.js:406", "[hiking-track] refreshLocation resolved", {
+        latitude: location2.latitude,
+        longitude: location2.longitude,
+        accuracy: location2.accuracy,
+        provider: location2.provider,
+        source: location2.source,
+        coordinateSystem: location2.coordinateSystem
+      });
       currentLocation.value = location2;
       locationError.value = "";
       if (isTracking.value || options.appendWhenTracking) {
@@ -8508,8 +10476,17 @@ This will fail in production.`);
       if (!normalized) {
         return;
       }
+      locationError.value = "";
+      normalized.segmentIndex = Number.isFinite(Number(normalized.segmentIndex)) ? Number(normalized.segmentIndex) : Number(currentSegmentIndex.value || 0);
       const lastPoint = trackPoints.value[trackPoints.value.length - 1];
       if (shouldSkipTrackPoint(normalized, lastPoint)) {
+        formatAppLog("log", "at stores/useHikingStore.js:441", "[hiking-track] skip point", {
+          latitude: normalized.latitude,
+          longitude: normalized.longitude,
+          accuracy: normalized.accuracy,
+          provider: normalized.provider,
+          source: normalized.source
+        });
         if (!currentLocation.value || shouldReplaceCurrentLocation(currentLocation.value, normalized)) {
           currentLocation.value = normalized;
           persistSession();
@@ -8523,18 +10500,61 @@ This will fail in production.`);
       }
       trackPoints.value = [...trackPoints.value, normalized].slice(-MAX_TRACK_POINTS);
       currentLocation.value = normalized;
+      formatAppLog("log", "at stores/useHikingStore.js:468", "[hiking-track] append point", {
+        pointCount: trackPoints.value.length,
+        latitude: normalized.latitude,
+        longitude: normalized.longitude,
+        accuracy: normalized.accuracy,
+        provider: normalized.provider,
+        source: normalized.source,
+        segmentIndex: normalized.segmentIndex
+      });
       persistSession();
     }
     async function finishTracking() {
       hydrate();
-      const savedTrack = createSavedTrack(trackPoints.value);
-      await stopTracking();
-      if (!savedTrack) {
+      const durationMs = getElapsedTrackingDuration();
+      const payload = createSavedTrack(trackPoints.value, { durationMs });
+      if (!payload) {
         throw new Error("当前轨迹太短，至少记录两个有效点后再结束");
       }
-      savedTracks.value = [savedTrack, ...savedTracks.value.filter((item) => item.id !== savedTrack.id)].slice(0, MAX_SAVED_TRACKS);
-      trackPoints.value = [];
-      persistSession();
+      if (isTracking.value) {
+        await stopTracking();
+      }
+      if (!activeToken.value || activeUserId.value === "guest") {
+        const localTrack = normalizeSavedTrack({
+          id: `local-${payload.capturedAt}`,
+          ...payload
+        });
+        if (!localTrack) {
+          throw new Error("轨迹保存失败，请稍后再试");
+        }
+        savedTracks.value = [localTrack, ...savedTracks.value.filter((item) => item.id !== localTrack.id)];
+        upsertSavedHikingTrack(getSessionScope(), localTrack);
+        trackSyncState.value = "local";
+        resetActiveTrackState();
+        return localTrack;
+      }
+      let savedTrack = null;
+      try {
+        const createdTrack = await createMyHikingTrack({ title: payload.title, ...payload }, activeToken.value);
+        savedTrack = normalizeSavedTrack(createdTrack);
+      } catch (error) {
+        savedTrack = normalizeSavedTrack({
+          id: `local-${payload.capturedAt}`,
+          ...payload
+        });
+        if (!savedTrack) {
+          throw error;
+        }
+      }
+      if (!savedTrack) {
+        throw new Error("轨迹保存失败，请稍后再试");
+      }
+      savedTracks.value = [savedTrack, ...savedTracks.value.filter((item) => item.id !== savedTrack.id)];
+      upsertSavedHikingTrack(getSessionScope(), savedTrack);
+      trackSyncState.value = isLocalTrackId(savedTrack.id) ? "local" : "synced";
+      resetActiveTrackState();
       return savedTrack;
     }
     async function clearCurrentTrack() {
@@ -8542,21 +10562,96 @@ This will fail in production.`);
       if (isTracking.value) {
         await stopTracking();
       }
-      trackPoints.value = [];
-      locationError.value = "";
-      persistSession();
+      resetActiveTrackState();
     }
-    function clearSavedTrack(trackId) {
+    async function clearSavedTrack(trackId) {
+      hydrate();
+      if (!activeToken.value || activeUserId.value === "guest") {
+        savedTracks.value = savedTracks.value.filter((item) => item.id !== trackId);
+        removeSavedHikingTrack(getSessionScope(), trackId);
+        trackSyncState.value = pendingSyncCount.value ? "local" : savedTracks.value.length ? "saved" : "idle";
+        persistSession();
+        return;
+      }
+      if (!String(trackId || "").startsWith("local-")) {
+        await deleteMyHikingTrack(trackId, activeToken.value);
+      }
       savedTracks.value = savedTracks.value.filter((item) => item.id !== trackId);
+      removeSavedHikingTrack(getSessionScope(), trackId);
+      trackSyncState.value = savedTracks.value.some((item) => isLocalTrackId(item == null ? void 0 : item.id)) ? "local" : savedTracks.value.length ? "synced" : "idle";
       persistSession();
     }
-    function createSavedTrack(points) {
-      const payload = createGuideTrackPayload(points);
+    async function renameSavedTrack(trackId, nextTitle) {
+      hydrate();
+      const normalizedTrackId = String(trackId || "").trim();
+      const normalizedTitle = String(nextTitle || "").trim();
+      if (!normalizedTrackId) {
+        throw new Error("轨迹不存在，无法修改名称");
+      }
+      if (!normalizedTitle) {
+        throw new Error("轨迹名称不能为空");
+      }
+      const currentTrack = savedTracks.value.find((item) => String((item == null ? void 0 : item.id) || "") === normalizedTrackId);
+      if (!currentTrack) {
+        throw new Error("轨迹不存在，无法修改名称");
+      }
+      const applyRenamedTrack = (track, targetTrackId = normalizedTrackId) => {
+        const normalized = normalizeSavedTrack({
+          ...track,
+          title: normalizedTitle
+        });
+        if (!normalized) {
+          throw new Error("轨迹名称更新失败，请稍后再试");
+        }
+        savedTracks.value = savedTracks.value.map((item) => item.id === targetTrackId ? normalized : item);
+        const nextLocalTracks = updateSavedHikingTrack(getSessionScope(), targetTrackId, normalized);
+        savedTracks.value = mergeSavedTracks(savedTracks.value, nextLocalTracks);
+        persistSavedTracks(getSessionScope());
+        trackSyncState.value = savedTracks.value.some((item) => isLocalTrackId(item == null ? void 0 : item.id)) ? "local" : savedTracks.value.length ? activeToken.value && activeUserId.value !== "guest" ? "synced" : "saved" : "idle";
+        persistSession();
+        return normalized;
+      };
+      if (!activeToken.value || activeUserId.value === "guest" || isLocalTrackId(normalizedTrackId) || !hasHikingTrackApi()) {
+        return applyRenamedTrack(currentTrack);
+      }
+      try {
+        const updatedTrack = await updateMyHikingTrack(normalizedTrackId, { title: normalizedTitle }, activeToken.value);
+        return applyRenamedTrack(updatedTrack || currentTrack);
+      } catch (error) {
+        const shouldFallbackToRecreate = Number((error == null ? void 0 : error.statusCode) || 0) === 404 || String((error == null ? void 0 : error.message) || "").includes("接口不存在") || String((error == null ? void 0 : error.message) || "").includes("徒步轨迹不存在");
+        if (!shouldFallbackToRecreate) {
+          throw error;
+        }
+        const recreatedTrack = await createMyHikingTrack({
+          title: normalizedTitle,
+          points: currentTrack.points,
+          pointCount: currentTrack.pointCount,
+          segmentCount: currentTrack.segmentCount,
+          distanceKm: currentTrack.distanceKm,
+          durationMs: currentTrack.durationMs,
+          altitudeGain: currentTrack.altitudeGain,
+          capturedAt: currentTrack.capturedAt,
+          startPoint: currentTrack.startPoint,
+          endPoint: currentTrack.endPoint
+        }, activeToken.value);
+        if (!recreatedTrack) {
+          throw error;
+        }
+        if (!String(normalizedTrackId || "").startsWith("local-")) {
+          await deleteMyHikingTrack(normalizedTrackId, activeToken.value);
+        }
+        savedTracks.value = savedTracks.value.map((item) => item.id === normalizedTrackId ? normalizeSavedTrack(recreatedTrack) : item);
+        removeSavedHikingTrack(getSessionScope(), normalizedTrackId);
+        upsertSavedHikingTrack(getSessionScope(), normalizeSavedTrack(recreatedTrack));
+        return applyRenamedTrack(recreatedTrack, normalizedTrackId);
+      }
+    }
+    function createSavedTrack(points, extras = {}) {
+      const payload = createGuideTrackPayload(points, extras);
       if (!payload) {
         return null;
       }
       return {
-        id: `track-${payload.capturedAt}`,
         title: formatSavedTrackTitle(payload.capturedAt),
         ...payload
       };
@@ -8571,6 +10666,88 @@ This will fail in production.`);
         title: String(track.title || formatSavedTrackTitle(normalized.capturedAt)),
         ...normalized
       };
+    }
+    function mergeSavedTracks(primaryTracks = [], secondaryTracks = []) {
+      const mergedMap = /* @__PURE__ */ new Map();
+      [...primaryTracks, ...secondaryTracks].forEach((item) => {
+        const normalized = normalizeSavedTrack(item);
+        if (!normalized) {
+          return;
+        }
+        const key = normalized.id || `track-${normalized.capturedAt}`;
+        if (!mergedMap.has(key)) {
+          mergedMap.set(key, normalized);
+        }
+      });
+      return Array.from(mergedMap.values()).sort((left, right) => Number(right.capturedAt || 0) - Number(left.capturedAt || 0));
+    }
+    async function syncPendingLocalTracks(localTracks = [], remoteTracks = [], token = activeToken.value) {
+      const remoteTrackSignatures = new Set(remoteTracks.map(buildTrackSignature).filter(Boolean));
+      const syncedTracks = [];
+      for (const item of localTracks) {
+        const normalized = normalizeSavedTrack(item);
+        if (!normalized) {
+          continue;
+        }
+        const signature = buildTrackSignature(normalized);
+        if (signature && remoteTrackSignatures.has(signature)) {
+          continue;
+        }
+        if (!isLocalTrackId(normalized.id)) {
+          syncedTracks.push(normalized);
+          if (signature) {
+            remoteTrackSignatures.add(signature);
+          }
+          continue;
+        }
+        try {
+          const createdTrack = await createMyHikingTrack({
+            title: normalized.title,
+            points: normalized.points,
+            pointCount: normalized.pointCount,
+            segmentCount: normalized.segmentCount,
+            distanceKm: normalized.distanceKm,
+            durationMs: normalized.durationMs,
+            altitudeGain: normalized.altitudeGain,
+            capturedAt: normalized.capturedAt,
+            startPoint: normalized.startPoint,
+            endPoint: normalized.endPoint
+          }, token);
+          const uploadedTrack = normalizeSavedTrack(createdTrack);
+          if (uploadedTrack) {
+            syncedTracks.push(uploadedTrack);
+            const uploadedSignature = buildTrackSignature(uploadedTrack);
+            if (uploadedSignature) {
+              remoteTrackSignatures.add(uploadedSignature);
+            }
+            continue;
+          }
+        } catch (error) {
+        }
+        syncedTracks.push(normalized);
+      }
+      return syncedTracks;
+    }
+    function buildTrackSignature(track) {
+      var _a, _b, _c;
+      const normalized = normalizeSavedTrack(track);
+      if (!normalized) {
+        return "";
+      }
+      const startPoint = normalized.startPoint || ((_a = normalized.points) == null ? void 0 : _a[0]);
+      const endPoint = normalized.endPoint || ((_b = normalized.points) == null ? void 0 : _b[normalized.points.length - 1]);
+      return [
+        Number(normalized.capturedAt || 0),
+        Number(normalized.pointCount || ((_c = normalized.points) == null ? void 0 : _c.length) || 0),
+        Number(normalized.distanceKm || 0).toFixed(4),
+        Number((startPoint == null ? void 0 : startPoint.latitude) || 0).toFixed(5),
+        Number((startPoint == null ? void 0 : startPoint.longitude) || 0).toFixed(5),
+        Number((endPoint == null ? void 0 : endPoint.latitude) || 0).toFixed(5),
+        Number((endPoint == null ? void 0 : endPoint.longitude) || 0).toFixed(5)
+      ].join("|");
+    }
+    function isLocalTrackId(trackId) {
+      return String(trackId || "").startsWith("local-");
     }
     function normalizeTrackLocation(location2) {
       const normalized = normalizeLocation(location2);
@@ -8606,10 +10783,13 @@ This will fail in production.`);
       const distanceMeters = getDistanceKm(lastPoint, nextPoint) * 1e3;
       const elapsedSeconds = Math.max(1, (Number(nextPoint.timestamp || 0) - Number(lastPoint.timestamp || 0)) / 1e3);
       const inferredSpeed = distanceMeters / elapsedSeconds;
-      if (distanceMeters < MIN_MOVEMENT_METERS && accuracy > 15) {
+      if (accuracy <= 10) {
+        return false;
+      }
+      if (distanceMeters < MIN_MOVEMENT_METERS && accuracy > 25) {
         return true;
       }
-      if (distanceMeters > MAX_WALKING_JUMP_METERS && inferredSpeed > MAX_HIKING_SPEED_MPS && accuracy > 20) {
+      if (distanceMeters > MAX_WALKING_JUMP_METERS && inferredSpeed > MAX_HIKING_SPEED_MPS && accuracy > 35) {
         return true;
       }
       return false;
@@ -8639,27 +10819,82 @@ This will fail in production.`);
         isTracking: isTracking.value,
         lastLocation: currentLocation.value,
         points: trackPoints.value,
-        savedTracks: savedTracks.value,
+        trackingStartedAt: trackingStartedAt.value,
+        trackingActiveFrom: trackingActiveFrom.value,
+        accumulatedDurationMs: accumulatedDurationMs.value,
+        currentSegmentIndex: currentSegmentIndex.value,
         updatedAt: Date.now()
-      });
+      }, getSessionScope());
+    }
+    function resetActiveTrackState() {
+      stopTrackingPoll();
+      trackPoints.value = [];
+      trackingStartedAt.value = 0;
+      trackingActiveFrom.value = 0;
+      accumulatedDurationMs.value = 0;
+      currentSegmentIndex.value = 0;
+      locationError.value = "";
+      persistSession();
+    }
+    function getElapsedTrackingDuration() {
+      const baseDuration = Math.max(0, Number(accumulatedDurationMs.value || 0));
+      if (!isTracking.value || !trackingActiveFrom.value) {
+        return baseDuration;
+      }
+      return baseDuration + Math.max(0, Date.now() - Number(trackingActiveFrom.value || 0));
+    }
+    function startTrackingPoll() {
+      stopTrackingPoll();
+      trackingPollTimer = setInterval(() => {
+        if (!isTracking.value) {
+          return;
+        }
+        refreshLocation({ appendWhenTracking: true }).catch((error) => {
+          formatAppLog("warn", "at stores/useHikingStore.js:889", "[hiking-track] tracking poll refresh failed", error);
+        });
+      }, 4e3);
+    }
+    function stopTrackingPoll() {
+      if (trackingPollTimer) {
+        clearInterval(trackingPollTimer);
+        trackingPollTimer = null;
+      }
+    }
+    function resolveNextSegmentIndex(points = [], fallback = 0) {
+      if (!Array.isArray(points) || !points.length) {
+        return Math.max(0, Number(fallback || 0));
+      }
+      const maxSegment = points.reduce((result, item) => {
+        const value = Number(item == null ? void 0 : item.segmentIndex);
+        return Number.isFinite(value) ? Math.max(result, value) : result;
+      }, 0);
+      return maxSegment + 1;
     }
     return {
       isTracking,
       currentLocation,
       trackPoints,
+      trackingStartedAt,
+      hasTrackInProgress,
+      trackDurationMs,
       savedTracks,
+      savedTracksLoading,
+      trackSyncText,
+      trackSyncTone,
       locationError,
       hasMapLocation,
       mapCenter,
       mapPolyline,
       mapMarkers,
       hydrate,
+      loadSavedTracks,
       refreshLocation,
       startTracking,
       stopTracking,
       finishTracking,
       clearCurrentTrack,
-      clearSavedTrack
+      clearSavedTrack,
+      renameSavedTrack
     };
   });
   const _sfc_main$c = {
@@ -8676,7 +10911,7 @@ This will fail in production.`);
       const locationOptions = vue.ref([]);
       const publishForm = vue.reactive(createDefaultPublishForm());
       const hikingStore = useHikingStore();
-      const { trackPoints, isTracking, savedTracks } = storeToRefs(hikingStore);
+      const { trackPoints, isTracking, savedTracks, savedTracksLoading } = storeToRefs(hikingStore);
       const systemInfo = typeof uni.getSystemInfoSync === "function" ? uni.getSystemInfoSync() : {};
       const statusBarHeight = systemInfo.statusBarHeight || 20;
       const statusBarStyle = vue.computed(() => ({ height: `${statusBarHeight}px` }));
@@ -8705,6 +10940,25 @@ This will fail in production.`);
         tagText: publishForm.tagText,
         contentType: derivedContentType.value
       }));
+      const destinationPickerOptions = vue.computed(() => [
+        { id: "", label: "暂不关联景区", hint: "保留为普通攻略" },
+        ...destinationList.map((item) => ({
+          id: String(item.id),
+          label: item.name,
+          hint: `${item.location} · ${item.category}`
+        }))
+      ]);
+      const selectedDestination = vue.computed(() => getDestinationById(publishForm.destinationId));
+      const selectedDestinationLabel = vue.computed(() => {
+        var _a;
+        return ((_a = selectedDestination.value) == null ? void 0 : _a.name) || "选择要关联的景区";
+      });
+      const selectedDestinationHint = vue.computed(() => {
+        if (selectedDestination.value) {
+          return `${selectedDestination.value.location} · ${selectedDestination.value.category}`;
+        }
+        return "不选也能发布；选了以后景区详情页会优先精准展示";
+      });
       const locationTagText = vue.computed(() => publishForm.locationTag || "新疆同城");
       const mediaSummary = vue.computed(() => {
         if (publishForm.video) {
@@ -8783,6 +11037,12 @@ This will fail in production.`);
         const selected = availableTracks.value.find((item) => item.id === publishForm.selectedTrackId);
         return (selected == null ? void 0 : selected.summary) || summarizeTrack(track, "已保存");
       });
+      const trackEmptyText = vue.computed(() => {
+        if (savedTracksLoading.value) {
+          return "正在同步当前账号的徒步轨迹，请稍候。";
+        }
+        return "先去徒步模式记录并保存路线，返回这里就能选择附带。";
+      });
       onLoad(() => {
         if (!currentUser.value) {
           uni.showModal({
@@ -8796,6 +11056,8 @@ This will fail in production.`);
           return;
         }
         hikingStore.hydrate();
+        hikingStore.loadSavedTracks().catch(() => {
+        });
         syncTrackSelection();
         loadCurrentLocation();
         setTimeout(() => {
@@ -8813,6 +11075,7 @@ This will fail in production.`);
           title: "",
           excerpt: "",
           tagText: "",
+          destinationId: "",
           locationTag: "",
           locationLatitude: null,
           locationLongitude: null,
@@ -8934,6 +11197,18 @@ This will fail in production.`);
         publishForm.locationTag = (option == null ? void 0 : option.value) || publishForm.locationTag;
         closeLocationPicker();
       }
+      function handleDestinationChange(event) {
+        var _a;
+        const selectedIndex = Number(((_a = event == null ? void 0 : event.detail) == null ? void 0 : _a.value) || 0);
+        const option = destinationPickerOptions.value[selectedIndex];
+        publishForm.destinationId = (option == null ? void 0 : option.id) || "";
+        if (publishForm.destinationId) {
+          const destination = getDestinationById(publishForm.destinationId);
+          if (destination) {
+            publishForm.locationTag = destination.name;
+          }
+        }
+      }
       function locationSourceText(source) {
         if (source === "poi")
           return "附近地点";
@@ -9054,6 +11329,7 @@ This will fail in production.`);
           const summaryText = publishForm.excerpt.trim() || (highlights.length ? `#${highlights.join(" #")}` : "来自新疆旅途中的一条真实笔记。");
           const attachedTrack = publishForm.attachHikingTrack ? attachableTrack.value : null;
           const guidePayload = {
+            destinationId: publishForm.destinationId ? Number(publishForm.destinationId) : void 0,
             title: publishForm.title.trim(),
             excerpt: summaryText,
             summary: summaryText,
@@ -9098,7 +11374,7 @@ This will fail in production.`);
         }
         return "";
       }
-      const __returned__ = { publishSubmitting, publishError, autoFocusTitle, locating, locationFailed, showLocationPicker, locationOptionsLoading, locationOptions, publishForm, hikingStore, trackPoints, isTracking, savedTracks, systemInfo, statusBarHeight, statusBarStyle, currentUser, authorAvatarUrl, authorInitial, derivedContentType, derivedSubCategory, locationTagText, mediaSummary, locationStatusText, locationStatusClass, normalizedTrackPoints, liveTrack, availableTracks, attachableTrack, hasAttachableTrack, trackSummaryText, createDefaultPublishForm, handleTrackSwitchChange, selectTrackOption, syncTrackSelection, summarizeTrack, loadCurrentLocation, normalizeLocationPart: normalizeLocationPart2, formatLocationTag, loadNearbyLocationOptions, reloadCurrentLocation, openLocationPicker, closeLocationPicker, selectLocationOption, locationSourceText, inferSubCategory, mapCategoryName, goBack, removePublishImage, removePublishVideo, pickMedia, pickPublishImages, pickPublishVideo, submitPublishedGuide, validatePublishedGuide, computed: vue.computed, reactive: vue.reactive, ref: vue.ref, watch: vue.watch, get storeToRefs() {
+      const __returned__ = { publishSubmitting, publishError, autoFocusTitle, locating, locationFailed, showLocationPicker, locationOptionsLoading, locationOptions, publishForm, hikingStore, trackPoints, isTracking, savedTracks, savedTracksLoading, systemInfo, statusBarHeight, statusBarStyle, currentUser, authorAvatarUrl, authorInitial, derivedContentType, derivedSubCategory, destinationPickerOptions, selectedDestination, selectedDestinationLabel, selectedDestinationHint, locationTagText, mediaSummary, locationStatusText, locationStatusClass, normalizedTrackPoints, liveTrack, availableTracks, attachableTrack, hasAttachableTrack, trackSummaryText, trackEmptyText, createDefaultPublishForm, handleTrackSwitchChange, selectTrackOption, syncTrackSelection, summarizeTrack, loadCurrentLocation, normalizeLocationPart: normalizeLocationPart2, formatLocationTag, loadNearbyLocationOptions, reloadCurrentLocation, openLocationPicker, closeLocationPicker, selectLocationOption, handleDestinationChange, locationSourceText, inferSubCategory, mapCategoryName, goBack, removePublishImage, removePublishVideo, pickMedia, pickPublishImages, pickPublishVideo, submitPublishedGuide, validatePublishedGuide, computed: vue.computed, reactive: vue.reactive, ref: vue.ref, watch: vue.watch, get storeToRefs() {
         return storeToRefs;
       }, get onLoad() {
         return onLoad;
@@ -9120,6 +11396,10 @@ This will fail in production.`);
         return persistGuideImages;
       }, get persistLocalFile() {
         return persistLocalFile;
+      }, get destinationList() {
+        return destinationList;
+      }, get getDestinationById() {
+        return getDestinationById;
       }, get getCurrentLocation() {
         return getCurrentLocation;
       }, get getNearbyLocationOptions() {
@@ -9297,6 +11577,37 @@ This will fail in production.`);
             [vue.vModelText, $setup.publishForm.tagText]
           ])
         ]),
+        vue.createElementVNode("view", { class: "form-card scenic-card" }, [
+          vue.createElementVNode("view", { class: "section-head" }, [
+            vue.createElementVNode("text", { class: "field-label no-gap" }, "关联景区"),
+            vue.createElementVNode("text", { class: "section-tip" }, "选中后会保存景区 ID，景区详情页能更精准显示这条攻略")
+          ]),
+          vue.createElementVNode("picker", {
+            range: $setup.destinationPickerOptions,
+            "range-key": "label",
+            onChange: $setup.handleDestinationChange
+          }, [
+            vue.createElementVNode("view", { class: "scenic-picker-row" }, [
+              vue.createElementVNode("view", null, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "scenic-picker-value" },
+                  vue.toDisplayString($setup.selectedDestinationLabel),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "scenic-picker-hint muted-text" },
+                  vue.toDisplayString($setup.selectedDestinationHint),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode("text", { class: "scenic-picker-arrow" }, "›")
+            ])
+          ], 40, ["range"])
+        ]),
         vue.createElementVNode("view", { class: "form-card media-card" }, [
           vue.createElementVNode("view", { class: "media-icon-row" }, [
             vue.createElementVNode("view", {
@@ -9460,7 +11771,13 @@ This will fail in production.`);
             class: "track-empty"
           }, [
             vue.createElementVNode("text", { class: "track-empty-title" }, "还没有可附带的轨迹"),
-            vue.createElementVNode("text", { class: "track-empty-desc" }, "先去徒步模式记录一段路线，返回这里就能选择附带。")
+            vue.createElementVNode(
+              "text",
+              { class: "track-empty-desc" },
+              vue.toDisplayString($setup.trackEmptyText),
+              1
+              /* TEXT */
+            )
           ]))
         ]),
         $setup.publishError ? (vue.openBlock(), vue.createElementBlock(
@@ -10792,30 +13109,37 @@ ${infoText}`;
         editModalVisible.value = true;
       }
       async function saveProfile() {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _i;
         const nickname = editNickname.value.trim();
+        formatAppLog("log", "at pages/account/index.vue:302", "[account-profile] save start", {
+          nickname,
+          currentNickname: ((_a = currentUser.value) == null ? void 0 : _a.nickname) || "",
+          hasToken: Boolean(authToken.value)
+        });
         if (!nickname) {
           editModalVisible.value = false;
           return;
         }
         const payload = { nickname };
-        if (nickname === ((_a = currentUser.value) == null ? void 0 : _a.nickname)) {
+        if (nickname === ((_b = currentUser.value) == null ? void 0 : _b.nickname)) {
           editModalVisible.value = false;
           return;
         }
         try {
           const res = await updateUserProfile(authToken.value, payload);
+          formatAppLog("log", "at pages/account/index.vue:313", "[account-profile] save success", res);
           const merged = {
             ...currentUser.value,
             ...res.user,
-            avatar_url: ((_b = res.user) == null ? void 0 : _b.avatar_url) || ((_c = currentUser.value) == null ? void 0 : _c.avatar_url) || ((_d = currentUser.value) == null ? void 0 : _d.avatar) || "",
-            avatar: ((_e = res.user) == null ? void 0 : _e.avatar) || ((_f = res.user) == null ? void 0 : _f.avatar_url) || ((_g = currentUser.value) == null ? void 0 : _g.avatar) || ((_h = currentUser.value) == null ? void 0 : _h.avatar_url) || ""
+            avatar_url: ((_c = res.user) == null ? void 0 : _c.avatar_url) || ((_d = currentUser.value) == null ? void 0 : _d.avatar_url) || ((_e = currentUser.value) == null ? void 0 : _e.avatar) || "",
+            avatar: ((_f = res.user) == null ? void 0 : _f.avatar) || ((_g = res.user) == null ? void 0 : _g.avatar_url) || ((_h = currentUser.value) == null ? void 0 : _h.avatar) || ((_i = currentUser.value) == null ? void 0 : _i.avatar_url) || ""
           };
           saveAuthSession({ token: authToken.value, user: merged });
           currentUser.value = merged;
           editModalVisible.value = false;
           uni.showToast({ title: "资料已更新", icon: "success" });
         } catch (e) {
+          formatAppLog("error", "at pages/account/index.vue:325", "[account-profile] save fail", e);
           uni.showToast({ title: e.message || "更新失败", icon: "none" });
         }
       }
@@ -11245,8 +13569,7 @@ ${infoText}`;
       vue.createElementVNode("view", { class: "page-scroll" }, [
         vue.createElementVNode("view", { class: "hero-gradient auth-banner section" }, [
           vue.createElementVNode("text", { class: "auth-kicker" }, "Account Center"),
-          vue.createElementVNode("text", { class: "auth-title" }, "登录 / 注册"),
-          vue.createElementVNode("text", { class: "auth-subtitle" }, "先把账号体系接好，后续只需要填服务器地址和 PostgreSQL 配置就能连起来。")
+          vue.createElementVNode("text", { class: "auth-title" }, "登录 / 注册")
         ]),
         vue.createElementVNode("view", { class: "section auth-panel-shell" }, [
           vue.createElementVNode("view", { class: "card auth-card" }, [
@@ -11388,23 +13711,7 @@ ${infoText}`;
               vue.toDisplayString($setup.submitting ? "提交中..." : $setup.mode === "login" ? "立即登录" : "创建账号"),
               3
               /* TEXT, CLASS */
-            ),
-            vue.createElementVNode("text", { class: "auth-note muted-text" }, "接口已预留，后续把认证服务地址填到 `config/auth.js` 即可联调。")
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "当前预留接口"),
-          vue.createElementVNode("view", { class: "card reserve-card" }, [
-            vue.createElementVNode("view", { class: "reserve-row" }, [
-              vue.createElementVNode("text", { class: "reserve-tag" }, "POST"),
-              vue.createElementVNode("text", { class: "reserve-path" }, "/auth/register")
-            ]),
-            vue.createElementVNode("text", { class: "reserve-desc muted-text" }, "注册账号，建议返回 `token`、`user`。"),
-            vue.createElementVNode("view", { class: "reserve-row second" }, [
-              vue.createElementVNode("text", { class: "reserve-tag" }, "POST"),
-              vue.createElementVNode("text", { class: "reserve-path" }, "/auth/login")
-            ]),
-            vue.createElementVNode("text", { class: "reserve-desc muted-text" }, "邮箱 + 密码登录，建议返回 `token`、`user`。")
+            )
           ])
         ]),
         vue.createElementVNode("view", { class: "bottom-space" })
@@ -11446,8 +13753,23 @@ ${infoText}`;
     if (!destinationId || !mapUrl) {
       throw new Error("离线地图资源不存在。");
     }
+    const normalizedUrl = String(mapUrl || "").trim();
+    if (!/^https?:\/\//i.test(normalizedUrl)) {
+      const record2 = {
+        destinationId: String(destinationId),
+        scenicName: scenicName || "景区离线地图",
+        savedFilePath: normalizedUrl,
+        sourceUrl: normalizedUrl,
+        version: version || "v1",
+        downloadedAt: Date.now(),
+        metadata: metadata || null,
+        resourceType: "bundled"
+      };
+      saveOfflineMapRecord(destinationId, record2);
+      return record2;
+    }
     const downloadRes = await uni.downloadFile({
-      url: mapUrl
+      url: normalizedUrl
     });
     if (downloadRes.statusCode !== 200 || !downloadRes.tempFilePath) {
       throw new Error("离线地图下载失败，请稍后重试。");
@@ -11462,17 +13784,18 @@ ${infoText}`;
       destinationId: String(destinationId),
       scenicName: scenicName || "景区离线地图",
       savedFilePath: saveRes.savedFilePath,
-      sourceUrl: mapUrl,
+      sourceUrl: normalizedUrl,
       version: version || "v1",
       downloadedAt: Date.now(),
-      metadata: metadata || null
+      metadata: metadata || null,
+      resourceType: "downloaded"
     };
     saveOfflineMapRecord(destinationId, record);
     return record;
   }
   async function deleteOfflineMap(destinationId) {
     const record = getOfflineMapRecord(destinationId);
-    if (record == null ? void 0 : record.savedFilePath) {
+    if ((record == null ? void 0 : record.savedFilePath) && record.resourceType !== "bundled") {
       try {
         await uni.removeSavedFile({
           filePath: record.savedFilePath
@@ -11508,7 +13831,7 @@ ${infoText}`;
         openHours: ""
       });
       const destinationSafetyMap = vue.computed(() => getDestinationSafetyMap(currentId.value) || {
-        title: "景区安全图",
+        title: "景区导览攻略图",
         zoom: 14,
         coverage: "主入口与核心游线",
         emergencyLevel: "中",
@@ -11529,6 +13852,21 @@ ${infoText}`;
       const weatherError = vue.ref("");
       const offlineMapRecord = vue.ref(null);
       const offlineMapBusy = vue.ref(false);
+      const relatedGuides = vue.ref([]);
+      const relatedGuidesLoading = vue.ref(false);
+      const relatedGuidesError = vue.ref("");
+      const introExpanded = vue.ref(false);
+      const tipsExpanded = vue.ref(false);
+      const mediaExpanded = vue.ref(false);
+      const showAllRelatedGuides = vue.ref(false);
+      const guideExpanded = vue.ref(false);
+      const guideImageCandidateIndex = vue.ref(0);
+      const guideImageUnavailable = vue.ref(false);
+      const relatedGuidesVisible = vue.computed(() => relatedGuidesLoading.value || relatedGuides.value.length > 0 || Boolean(relatedGuidesError.value));
+      const hasExtendedCulture = vue.computed(() => {
+        var _a, _b;
+        return Boolean(((_a = destinationCulture.value) == null ? void 0 : _a.history) || ((_b = destinationCulture.value) == null ? void 0 : _b.highlights));
+      });
       const liveWeather = vue.computed(() => {
         var _a;
         if (liveWeatherData.value) {
@@ -11596,24 +13934,45 @@ ${infoText}`;
           markers
         });
       });
-      const safetyMapImageUrl = vue.computed(() => {
+      const safetyGuidePreviewUrl = vue.computed(() => {
         var _a;
-        const coords = (_a = destination.value) == null ? void 0 : _a.coordinates;
-        if (!coords) {
+        return String(((_a = destinationSafetyMap.value) == null ? void 0 : _a.guideMapImage) || "").trim();
+      });
+      const guidePreviewCandidates = vue.computed(() => {
+        var _a;
+        const base = String(((_a = destinationSafetyMap.value) == null ? void 0 : _a.guideMapImage) || "").trim();
+        if (!base) {
+          return [];
+        }
+        const candidates = [base];
+        if (/\.jpg$/i.test(base)) {
+          candidates.push(`${base}.jpg`);
+          candidates.push(base.replace(/\.jpg$/i, ".png"));
+          candidates.push(base.replace(/\.jpg$/i, ".jpeg"));
+        } else if (/\.png$/i.test(base)) {
+          candidates.push(`${base}.png`);
+          candidates.push(base.replace(/\.png$/i, ".jpg"));
+          candidates.push(base.replace(/\.png$/i, ".jpeg"));
+        } else if (/\.jpeg$/i.test(base)) {
+          candidates.push(`${base}.jpeg`);
+          candidates.push(base.replace(/\.jpeg$/i, ".jpg"));
+          candidates.push(base.replace(/\.jpeg$/i, ".png"));
+        }
+        return Array.from(new Set(candidates));
+      });
+      const displayGuideImageUrl = vue.computed(() => {
+        var _a;
+        if (guideImageUnavailable.value) {
           return "";
         }
-        return getStaticMapUrl({
-          longitude: coords.longitude,
-          latitude: coords.latitude,
-          zoom: destinationSafetyMap.value.zoom,
-          size: "900*540",
-          markers: [
-            { longitude: coords.longitude, latitude: coords.latitude, label: "景", size: "large" }
-          ]
-        });
+        if (hasOfflineMap.value && ((_a = offlineMapRecord.value) == null ? void 0 : _a.savedFilePath)) {
+          return toDisplayPath(offlineMapRecord.value.savedFilePath);
+        }
+        const previewUrl = guidePreviewCandidates.value[guideImageCandidateIndex.value] || "";
+        return previewUrl ? toDisplayPath(previewUrl) : "";
       });
-      const offlineMapVersion = vue.computed(() => `map-${currentId.value || "default"}-v2`);
-      const offlineMapAvailable = vue.computed(() => Boolean(safetyMapImageUrl.value));
+      const offlineMapVersion = vue.computed(() => `guide-${currentId.value || "default"}-v3`);
+      const offlineMapAvailable = vue.computed(() => Boolean(safetyGuidePreviewUrl.value));
       const hasOfflineMap = vue.computed(() => {
         var _a;
         return Boolean((_a = offlineMapRecord.value) == null ? void 0 : _a.savedFilePath);
@@ -11623,22 +13982,22 @@ ${infoText}`;
         if (!hasOfflineMap.value || !offlineMapAvailable.value) {
           return false;
         }
-        return ((_a = offlineMapRecord.value) == null ? void 0 : _a.sourceUrl) !== safetyMapImageUrl.value || ((_b = offlineMapRecord.value) == null ? void 0 : _b.version) !== offlineMapVersion.value;
+        return ((_a = offlineMapRecord.value) == null ? void 0 : _a.sourceUrl) !== safetyGuidePreviewUrl.value || ((_b = offlineMapRecord.value) == null ? void 0 : _b.version) !== offlineMapVersion.value;
       });
       const offlineMapStatusText = vue.computed(() => {
         if (offlineMapBusy.value) {
-          return "下载中";
+          return "保存中";
         }
         if (hasOfflineMapUpdate.value) {
           return "可更新";
         }
         if (hasOfflineMap.value) {
-          return "已下载";
+          return "已保存";
         }
-        return offlineMapAvailable.value ? "未下载" : "暂未提供";
+        return offlineMapAvailable.value ? "未保存" : "暂未提供";
       });
       const offlineMapSupportText = vue.computed(() => {
-        return offlineMapAvailable.value ? "支持下载景区级离线安全图" : "当前景区暂未生成离线地图资源";
+        return offlineMapAvailable.value ? "支持保存景区导览图到本地" : "当前景区暂未提供离线导览图";
       });
       const offlineMapLocalText = vue.computed(() => {
         var _a;
@@ -11646,19 +14005,40 @@ ${infoText}`;
           return "本地暂无离线文件";
         }
         const timeText = formatDateTime((_a = offlineMapRecord.value) == null ? void 0 : _a.downloadedAt);
-        return timeText ? `已保存，下载于 ${timeText}` : "已保存到本地";
+        return timeText ? `已保存，处理于 ${timeText}` : "已保存到本地";
+      });
+      const offlineMapSupportShort = vue.computed(() => offlineMapAvailable.value ? "支持离线" : "暂无离线");
+      const offlineMapLocalStatusShort = vue.computed(() => {
+        if (hasOfflineMap.value) {
+          return hasOfflineMapUpdate.value ? "已保存，可更新" : "已保存";
+        }
+        return offlineMapAvailable.value ? "未保存" : "暂未提供";
       });
       const offlineMapButtonText = vue.computed(() => {
         if (offlineMapBusy.value) {
-          return "下载中...";
+          return "保存中...";
         }
         if (hasOfflineMapUpdate.value) {
-          return "更新离线地图";
+          return "更新离线导览图";
         }
         if (hasOfflineMap.value) {
-          return "重新下载离线地图";
+          return "重新保存离线导览图";
         }
-        return "下载离线地图";
+        return "保存离线导览图";
+      });
+      const visibleRelatedGuides = vue.computed(() => {
+        if (showAllRelatedGuides.value) {
+          return relatedGuides.value;
+        }
+        return relatedGuides.value.slice(0, 2);
+      });
+      const visibleDestinationTips = vue.computed(() => {
+        var _a;
+        const list = Array.isArray((_a = destination.value) == null ? void 0 : _a.tips) ? destination.value.tips : [];
+        if (tipsExpanded.value) {
+          return list;
+        }
+        return list.slice(0, 3);
       });
       const safetyTips = vue.computed(() => {
         if (!destination.value) {
@@ -11667,7 +14047,7 @@ ${infoText}`;
         const tips = [
           {
             title: "弱网先备份",
-            desc: `出发前先下载 ${destination.value.name} 景区级离线安全图，优先保存主入口、返程口和游客中心位置。`
+            desc: `出发前先保存 ${destination.value.name} 的离线导览图，弱网时直接看整张景区图，不依赖错误点位。`
           },
           {
             title: "地形风险",
@@ -11688,14 +14068,45 @@ ${infoText}`;
         });
         return tips;
       });
+      const visibleSafetyTips = vue.computed(() => {
+        if (guideExpanded.value) {
+          return safetyTips.value;
+        }
+        return safetyTips.value.slice(0, 2);
+      });
       onLoad(async (options) => {
         currentId.value = (options == null ? void 0 : options.id) || "";
+        guideImageCandidateIndex.value = 0;
+        guideImageUnavailable.value = false;
         syncOfflineMapState();
-        await refreshLocationAndWeather();
+        await Promise.all([
+          refreshLocationAndWeather(),
+          loadRelatedGuides()
+        ]);
       });
       onShow(() => {
+        guideImageCandidateIndex.value = 0;
+        guideImageUnavailable.value = false;
         syncOfflineMapState();
+        loadRelatedGuides();
       });
+      async function loadRelatedGuides() {
+        if (!destination.value) {
+          relatedGuides.value = [];
+          relatedGuidesError.value = "";
+          return;
+        }
+        relatedGuidesLoading.value = true;
+        relatedGuidesError.value = "";
+        try {
+          relatedGuides.value = await getRelatedGuidesForDestination(destination.value, 3);
+        } catch (error) {
+          relatedGuides.value = [];
+          relatedGuidesError.value = (error == null ? void 0 : error.message) || "暂时无法加载相关攻略，请稍后重试。";
+        } finally {
+          relatedGuidesLoading.value = false;
+        }
+      }
       async function refreshLocationAndWeather() {
         var _a;
         if (!destination.value) {
@@ -11790,12 +14201,63 @@ ${infoText}`;
         }
         uni.reLaunch({ url: "/pages/home/index" });
       }
+      function openRelatedGuide(id) {
+        if (!id) {
+          return;
+        }
+        uni.navigateTo({
+          url: `/pages/guide-detail/index?id=${encodeURIComponent(id)}`
+        });
+      }
       function syncOfflineMapState() {
         if (!currentId.value) {
           offlineMapRecord.value = null;
           return;
         }
         offlineMapRecord.value = getOfflineMapRecord(currentId.value);
+      }
+      function toDisplayPath(filePath) {
+        const raw = String(filePath || "").trim();
+        if (!raw) {
+          return "";
+        }
+        if (/^(https?:|file:|content:|blob:|data:)/i.test(raw)) {
+          return raw;
+        }
+        if (raw.startsWith("/static/") || raw.startsWith("static/")) {
+          return raw.startsWith("/") ? raw : `/${raw}`;
+        }
+        if (typeof plus !== "undefined" && plus.io && typeof plus.io.convertLocalFileSystemURL === "function") {
+          const absolutePath = plus.io.convertLocalFileSystemURL(raw);
+          if (absolutePath) {
+            return absolutePath.startsWith("file://") ? absolutePath : `file://${absolutePath}`;
+          }
+        }
+        return raw;
+      }
+      function previewGuideImage() {
+        if (!displayGuideImageUrl.value) {
+          return;
+        }
+        uni.previewImage({
+          current: displayGuideImageUrl.value,
+          urls: [displayGuideImageUrl.value]
+        });
+      }
+      function handleGuideImageError() {
+        var _a;
+        if (hasOfflineMap.value && ((_a = offlineMapRecord.value) == null ? void 0 : _a.savedFilePath)) {
+          guideImageUnavailable.value = true;
+          return;
+        }
+        if (guidePreviewCandidates.value.length && guideImageCandidateIndex.value < guidePreviewCandidates.value.length - 1) {
+          guideImageCandidateIndex.value += 1;
+          return;
+        }
+        guideImageUnavailable.value = true;
+      }
+      function handleGuideImageLoad() {
+        guideImageUnavailable.value = false;
       }
       async function handleOfflineMapDownload() {
         if (offlineMapBusy.value || !destination.value || !offlineMapAvailable.value) {
@@ -11806,19 +14268,19 @@ ${infoText}`;
           await downloadOfflineMap({
             destinationId: currentId.value,
             scenicName: destination.value.name,
-            mapUrl: safetyMapImageUrl.value,
+            mapUrl: safetyGuidePreviewUrl.value,
             version: offlineMapVersion.value,
             metadata: destinationSafetyMap.value
           });
           syncOfflineMapState();
           uni.showToast({
-            title: "离线地图已保存",
+            title: "离线导览图已保存",
             icon: "none"
           });
         } catch (error) {
           uni.showModal({
-            title: "下载失败",
-            content: error.message || "离线地图下载失败，请稍后再试。",
+            title: "保存失败",
+            content: error.message || "离线导览图保存失败，请稍后再试。",
             showCancel: false
           });
         } finally {
@@ -11846,8 +14308,8 @@ ${infoText}`;
           return;
         }
         uni.showModal({
-          title: "删除离线地图",
-          content: "确认删除当前景区已下载的离线地图吗？删除后需要重新下载。",
+          title: "删除离线导览图",
+          content: "确认删除当前景区已保存的离线导览图吗？删除后需要重新保存。",
           success: async ({ confirm }) => {
             if (!confirm) {
               return;
@@ -11855,7 +14317,7 @@ ${infoText}`;
             await deleteOfflineMap(currentId.value);
             syncOfflineMapState();
             uni.showToast({
-              title: "已删除离线地图",
+              title: "已删除离线导览图",
               icon: "none"
             });
           }
@@ -11865,21 +14327,37 @@ ${infoText}`;
         if (!destination.value) {
           return;
         }
+        const keyword = destination.value.liveKeyword;
         const url = getDouyinSearchUrl(destination.value.liveKeyword);
+        const appUrls = getDouyinAppSearchUrls(keyword);
         if (typeof plus !== "undefined" && plus.runtime && plus.runtime.openURL) {
-          plus.runtime.openURL(url);
+          const [preferredAppUrl] = appUrls;
+          if (preferredAppUrl) {
+            plus.runtime.openURL(preferredAppUrl, () => {
+              plus.runtime.openURL(url, () => {
+                fallbackToCopyKeyword(keyword);
+              });
+            });
+            return;
+          }
+          plus.runtime.openURL(url, () => {
+            fallbackToCopyKeyword(keyword);
+          });
           return;
         }
         if (typeof window !== "undefined" && window.open) {
           window.open(url, "_blank");
           return;
         }
+        fallbackToCopyKeyword(keyword);
+      }
+      function fallbackToCopyKeyword(keyword) {
         uni.setClipboardData({
-          data: destination.value.liveKeyword,
+          data: keyword,
           success: () => {
             uni.showModal({
               title: "已准备跳转",
-              content: "已复制抖音搜索词。当前端若不支持直接打开抖音，请手动粘贴搜索。",
+              content: "已优先尝试唤起抖音 App 搜索；如果当前设备未成功打开抖音，已帮你复制搜索词，可手动粘贴搜索。",
               showCancel: false
             });
           }
@@ -11896,29 +14374,56 @@ ${infoText}`;
           }
         });
       }
-      function openScenicLocation() {
+      async function openScenicLocation() {
         var _a;
         const coords = (_a = destination.value) == null ? void 0 : _a.coordinates;
         if (!coords) {
           return;
         }
-        const amapUrl = `amapuri://route/plan/?dlat=${coords.latitude}&dlon=${coords.longitude}&dname=${encodeURIComponent(destination.value.name)}&dev=0&t=0`;
+        const navigationName = destination.value.navigationName || destination.value.name;
+        const navigationAddress = destination.value.navigationAddress || destination.value.location;
+        let targetPoint = {
+          longitude: Number(coords.longitude),
+          latitude: Number(coords.latitude),
+          name: navigationName,
+          address: navigationAddress
+        };
+        try {
+          const resolvedPoint = await resolveNavigationPoint({
+            name: navigationName,
+            address: navigationAddress,
+            region: destination.value.location,
+            longitude: coords.longitude,
+            latitude: coords.latitude
+          });
+          if (resolvedPoint) {
+            targetPoint = {
+              longitude: resolvedPoint.longitude,
+              latitude: resolvedPoint.latitude,
+              name: resolvedPoint.name || navigationName,
+              address: resolvedPoint.address || navigationAddress
+            };
+          }
+        } catch (error) {
+          formatAppLog("warn", "at pages/destination-detail/index.vue:1056", "[destination-detail] resolve navigation point failed", error);
+        }
+        const amapUrl = `amapuri://navi?sourceApplication=${encodeURIComponent("丝路疆寻")}&lat=${targetPoint.latitude}&lon=${targetPoint.longitude}&dev=0&style=2&poiname=${encodeURIComponent(targetPoint.name)}`;
         if (typeof plus !== "undefined" && plus.runtime && plus.runtime.openURL) {
           plus.runtime.openURL(amapUrl, () => {
             uni.openLocation({
-              longitude: coords.longitude,
-              latitude: coords.latitude,
-              name: destination.value.name,
-              address: destination.value.location
+              longitude: targetPoint.longitude,
+              latitude: targetPoint.latitude,
+              name: targetPoint.name,
+              address: targetPoint.address
             });
           });
           return;
         }
         uni.openLocation({
-          longitude: coords.longitude,
-          latitude: coords.latitude,
-          name: destination.value.name,
-          address: destination.value.location
+          longitude: targetPoint.longitude,
+          latitude: targetPoint.latitude,
+          name: targetPoint.name,
+          address: targetPoint.address
         });
       }
       function openAiAssistantForScenic() {
@@ -11979,7 +14484,7 @@ ${infoText}`;
         const minutes = String(date.getMinutes()).padStart(2, "0");
         return `${year}-${month}-${day} ${hours}:${minutes}`;
       }
-      const __returned__ = { routeModeOptions, currentId, destination, destinationCulture, destinationTravelMeta, destinationVisitMeta, destinationSafetyMap, locationReady, locationStatusText, routeMode, routeData, liveWeatherData, weatherError, offlineMapRecord, offlineMapBusy, liveWeather, hasRealWeather, weatherSourceText, scenicLocationText, routeDurationText, routeDistanceText, taxiCostText, mapImageUrl, safetyMapImageUrl, offlineMapVersion, offlineMapAvailable, hasOfflineMap, hasOfflineMapUpdate, offlineMapStatusText, offlineMapSupportText, offlineMapLocalText, offlineMapButtonText, safetyTips, refreshLocationAndWeather, changeRouteMode, loadRoute, formatDuration, formatDistance, goBack, syncOfflineMapState, handleOfflineMapDownload, openOfflineMap, openSafetyMapPage, deleteOfflineMapWithConfirm, openDouyinSearch, copyKeyword, openScenicLocation, openAiAssistantForScenic, openAiAssistantForRoute, openAiAssistant, buildAiAssistantParams, formatDateTime, computed: vue.computed, ref: vue.ref, get onLoad() {
+      const __returned__ = { routeModeOptions, currentId, destination, destinationCulture, destinationTravelMeta, destinationVisitMeta, destinationSafetyMap, locationReady, locationStatusText, routeMode, routeData, liveWeatherData, weatherError, offlineMapRecord, offlineMapBusy, relatedGuides, relatedGuidesLoading, relatedGuidesError, introExpanded, tipsExpanded, mediaExpanded, showAllRelatedGuides, guideExpanded, guideImageCandidateIndex, guideImageUnavailable, relatedGuidesVisible, hasExtendedCulture, liveWeather, hasRealWeather, weatherSourceText, scenicLocationText, routeDurationText, routeDistanceText, taxiCostText, mapImageUrl, safetyGuidePreviewUrl, guidePreviewCandidates, displayGuideImageUrl, offlineMapVersion, offlineMapAvailable, hasOfflineMap, hasOfflineMapUpdate, offlineMapStatusText, offlineMapSupportText, offlineMapLocalText, offlineMapSupportShort, offlineMapLocalStatusShort, offlineMapButtonText, visibleRelatedGuides, visibleDestinationTips, safetyTips, visibleSafetyTips, loadRelatedGuides, refreshLocationAndWeather, changeRouteMode, loadRoute, formatDuration, formatDistance, goBack, openRelatedGuide, syncOfflineMapState, toDisplayPath, previewGuideImage, handleGuideImageError, handleGuideImageLoad, handleOfflineMapDownload, openOfflineMap, openSafetyMapPage, deleteOfflineMapWithConfirm, openDouyinSearch, fallbackToCopyKeyword, copyKeyword, openScenicLocation, openAiAssistantForScenic, openAiAssistantForRoute, openAiAssistant, buildAiAssistantParams, formatDateTime, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
       }, get onShow() {
         return onShow;
@@ -11993,6 +14498,8 @@ ${infoText}`;
         return getDestinationTravelMeta;
       }, get getDestinationVisitMeta() {
         return getDestinationVisitMeta;
+      }, get getDouyinAppSearchUrls() {
+        return getDouyinAppSearchUrls;
       }, get getDouyinSearchUrl() {
         return getDouyinSearchUrl;
       }, get deleteOfflineMap() {
@@ -12011,8 +14518,12 @@ ${infoText}`;
         return getStaticMapUrl;
       }, get getWalkingRoute() {
         return getWalkingRoute;
+      }, get resolveNavigationPoint() {
+        return resolveNavigationPoint;
       }, get reverseGeocode() {
         return reverseGeocode;
+      }, get getRelatedGuidesForDestination() {
+        return getRelatedGuidesForDestination;
       }, get hasAmapKey() {
         return hasAmapKey;
       } };
@@ -12072,7 +14583,20 @@ ${infoText}`;
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "景区介绍"),
+          vue.createElementVNode("view", { class: "section-head-row" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "景区介绍"),
+            $setup.hasExtendedCulture ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 0,
+                class: "section-toggle-chip",
+                onClick: _cache[0] || (_cache[0] = ($event) => $setup.introExpanded = !$setup.introExpanded)
+              },
+              vue.toDisplayString($setup.introExpanded ? "收起" : "展开更多"),
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true)
+          ]),
           vue.createElementVNode("view", { class: "story-card card" }, [
             vue.createElementVNode("view", { class: "travel-meta-grid" }, [
               vue.createElementVNode("view", { class: "travel-meta-item" }, [
@@ -12138,7 +14662,10 @@ ${infoText}`;
                 /* TEXT */
               )
             ]),
-            vue.createElementVNode("view", { class: "story-row" }, [
+            $setup.introExpanded ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "story-row"
+            }, [
               vue.createElementVNode("text", { class: "story-label" }, "历史由来"),
               vue.createElementVNode(
                 "text",
@@ -12147,8 +14674,11 @@ ${infoText}`;
                 1
                 /* TEXT */
               )
-            ]),
-            vue.createElementVNode("view", { class: "story-row last-row" }, [
+            ])) : vue.createCommentVNode("v-if", true),
+            $setup.introExpanded ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 1,
+              class: "story-row last-row"
+            }, [
               vue.createElementVNode("text", { class: "story-label" }, "值得了解"),
               vue.createElementVNode(
                 "text",
@@ -12157,16 +14687,146 @@ ${infoText}`;
                 1
                 /* TEXT */
               )
-            ])
+            ])) : vue.createCommentVNode("v-if", true)
           ])
         ]),
+        $setup.relatedGuidesVisible ? (vue.openBlock(), vue.createElementBlock("view", {
+          key: 0,
+          class: "section section-block"
+        }, [
+          vue.createElementVNode("view", { class: "section-head-row" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "相关攻略"),
+            $setup.relatedGuides.length > 2 ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 0,
+                class: "section-toggle-chip",
+                onClick: _cache[1] || (_cache[1] = ($event) => $setup.showAllRelatedGuides = !$setup.showAllRelatedGuides)
+              },
+              vue.toDisplayString($setup.showAllRelatedGuides ? "收起" : `展开全部 ${$setup.relatedGuides.length} 条`),
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true)
+          ]),
+          vue.createElementVNode("view", { class: "related-guides-card card" }, [
+            vue.createElementVNode("view", { class: "related-guides-head" }, [
+              vue.createElementVNode("view", null, [
+                vue.createElementVNode("text", { class: "map-title" }, "来自攻略指南的相关内容"),
+                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "进入景区详情后，这里会自动匹配所有用户发布的相关攻略，方便你直接继续看别人的实地经验。")
+              ]),
+              $setup.relatedGuidesLoading ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "offline-status"
+              }, "加载中")) : vue.createCommentVNode("v-if", true)
+            ]),
+            $setup.relatedGuides.length ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "related-guides-list"
+            }, [
+              (vue.openBlock(true), vue.createElementBlock(
+                vue.Fragment,
+                null,
+                vue.renderList($setup.visibleRelatedGuides, (guide) => {
+                  return vue.openBlock(), vue.createElementBlock("view", {
+                    key: guide.id,
+                    class: "related-guide-item card-lite",
+                    onClick: ($event) => $setup.openRelatedGuide(guide.id)
+                  }, [
+                    vue.createElementVNode("view", { class: "related-guide-cover" }, [
+                      guide.image ? (vue.openBlock(), vue.createBlock($setup["CachedImage"], {
+                        key: 0,
+                        src: guide.image,
+                        "image-class": "cover-image"
+                      }, null, 8, ["src"])) : (vue.openBlock(), vue.createElementBlock("view", {
+                        key: 1,
+                        class: "related-guide-cover-fallback"
+                      }, [
+                        vue.createElementVNode("text", null, "攻略")
+                      ]))
+                    ]),
+                    vue.createElementVNode("view", { class: "related-guide-body" }, [
+                      vue.createElementVNode(
+                        "text",
+                        { class: "related-guide-title" },
+                        vue.toDisplayString(guide.title),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "related-guide-meta muted-text" },
+                        vue.toDisplayString(guide.nickname || guide.author) + " · " + vue.toDisplayString(guide.locationTag || guide.location || "新疆同城"),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode(
+                        "text",
+                        { class: "related-guide-summary muted-text" },
+                        vue.toDisplayString(guide.excerpt || guide.summaryText || "这条攻略还没有补充摘要，点进去看完整内容。"),
+                        1
+                        /* TEXT */
+                      ),
+                      vue.createElementVNode("view", { class: "related-guide-foot" }, [
+                        vue.createElementVNode(
+                          "text",
+                          { class: "related-guide-stat" },
+                          vue.toDisplayString(guide.contentType || "图文"),
+                          1
+                          /* TEXT */
+                        ),
+                        vue.createElementVNode(
+                          "text",
+                          { class: "related-guide-stat" },
+                          vue.toDisplayString(guide.publishDate || ""),
+                          1
+                          /* TEXT */
+                        )
+                      ])
+                    ])
+                  ], 8, ["onClick"]);
+                }),
+                128
+                /* KEYED_FRAGMENT */
+              )),
+              $setup.relatedGuides.length > 2 ? (vue.openBlock(), vue.createElementBlock(
+                "view",
+                {
+                  key: 0,
+                  class: "list-toggle-inline",
+                  onClick: _cache[2] || (_cache[2] = ($event) => $setup.showAllRelatedGuides = !$setup.showAllRelatedGuides)
+                },
+                vue.toDisplayString($setup.showAllRelatedGuides ? "收起相关攻略" : "查看更多相关攻略"),
+                1
+                /* TEXT */
+              )) : vue.createCommentVNode("v-if", true)
+            ])) : $setup.relatedGuidesError ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 1,
+              class: "map-fallback"
+            }, [
+              vue.createElementVNode("text", { class: "map-fallback-title" }, "相关攻略加载失败"),
+              vue.createElementVNode(
+                "text",
+                { class: "map-fallback-desc muted-text" },
+                vue.toDisplayString($setup.relatedGuidesError),
+                1
+                /* TEXT */
+              )
+            ])) : (vue.openBlock(), vue.createElementBlock("view", {
+              key: 2,
+              class: "map-fallback"
+            }, [
+              vue.createElementVNode("text", { class: "map-fallback-title" }, "暂时没有相关攻略"),
+              vue.createElementVNode("text", { class: "map-fallback-desc muted-text" }, "等用户发布包含这个景区名称或相关地点标签的攻略后，这里会自动显示。")
+            ]))
+          ])
+        ])) : vue.createCommentVNode("v-if", true),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "地图与定位"),
+          vue.createElementVNode("text", { class: "section-title" }, "路线与天气"),
           vue.createElementVNode("view", { class: "map-card card" }, [
             vue.createElementVNode("view", { class: "map-head" }, [
               vue.createElementVNode("view", null, [
-                vue.createElementVNode("text", { class: "map-title" }, "景区位置与导航"),
-                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "展示景区地图位置，并可估算当前出发的时间和距离")
+                vue.createElementVNode("text", { class: "map-title" }, "景区位置、路线与天气"),
+                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "把导航距离、出发方式和当地天气合并到一块，出发前先看这一屏就够了。")
               ]),
               vue.createElementVNode(
                 "view",
@@ -12177,6 +14837,42 @@ ${infoText}`;
                 3
                 /* TEXT, CLASS */
               )
+            ]),
+            vue.createElementVNode("view", { class: "travel-overview-grid" }, [
+              vue.createElementVNode("view", { class: "travel-overview-card card-lite" }, [
+                vue.createElementVNode("text", { class: "travel-overview-label" }, "当前天气"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "travel-overview-value weather-emphasis" },
+                  vue.toDisplayString($setup.liveWeather.temperature),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "travel-overview-sub muted-text" },
+                  vue.toDisplayString($setup.liveWeather.condition),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode("view", { class: "travel-overview-card card-lite" }, [
+                vue.createElementVNode("text", { class: "travel-overview-label" }, "空气湿度"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "travel-overview-value" },
+                  vue.toDisplayString($setup.liveWeather.humidity),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "travel-overview-sub muted-text" },
+                  "风力 " + vue.toDisplayString($setup.liveWeather.wind),
+                  1
+                  /* TEXT */
+                )
+              ])
             ]),
             vue.createElementVNode("view", { class: "location-meta" }, [
               vue.createElementVNode("text", { class: "meta-label" }, "景区位置"),
@@ -12265,16 +14961,41 @@ ${infoText}`;
                 class: "secondary-btn",
                 onClick: $setup.refreshLocationAndWeather
               }, "刷新路线")
-            ])
+            ]),
+            $setup.weatherError ? (vue.openBlock(), vue.createElementBlock(
+              "text",
+              {
+                key: 2,
+                class: "weather-note travel-weather-note"
+              },
+              vue.toDisplayString($setup.weatherError),
+              1
+              /* TEXT */
+            )) : !$setup.hasRealWeather ? (vue.openBlock(), vue.createElementBlock("text", {
+              key: 3,
+              class: "weather-note travel-weather-note"
+            }, "当前显示的是本地预设天气，填入高德 Key 后会自动切换为实时天气。")) : vue.createCommentVNode("v-if", true)
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "安全保障"),
+          vue.createElementVNode("view", { class: "section-head-row" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "导览攻略"),
+            vue.createElementVNode(
+              "view",
+              {
+                class: "section-toggle-chip guide-chip",
+                onClick: _cache[3] || (_cache[3] = ($event) => $setup.guideExpanded = !$setup.guideExpanded)
+              },
+              vue.toDisplayString($setup.guideExpanded ? "收起" : "展开"),
+              1
+              /* TEXT */
+            )
+          ]),
           vue.createElementVNode("view", { class: "safety-card card" }, [
             vue.createElementVNode("view", { class: "safety-head" }, [
               vue.createElementVNode("view", null, [
-                vue.createElementVNode("text", { class: "map-title" }, "离线地图与应急提醒"),
-                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "进入山区、峡谷或高原前，建议先把景区离线地图下载到本地，弱网时也能快速查看位置参考。")
+                vue.createElementVNode("text", { class: "map-title" }, "景区导览攻略图"),
+                vue.createElementVNode("text", { class: "map-subtitle muted-text" }, "详情页直接看导览图，点图可放大，完整信息放到展开区和导览页里。")
               ]),
               vue.createElementVNode(
                 "view",
@@ -12298,7 +15019,7 @@ ${infoText}`;
                 )
               ]),
               vue.createElementVNode("view", { class: "travel-meta-item" }, [
-                vue.createElementVNode("text", { class: "travel-meta-label" }, "安全等级"),
+                vue.createElementVNode("text", { class: "travel-meta-label" }, "攻略强度"),
                 vue.createElementVNode(
                   "text",
                   { class: "travel-meta-value" },
@@ -12306,16 +15027,66 @@ ${infoText}`;
                   1
                   /* TEXT */
                 )
+              ]),
+              vue.createElementVNode("view", { class: "travel-meta-item" }, [
+                vue.createElementVNode("text", { class: "travel-meta-label" }, "本地状态"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "travel-meta-value" },
+                  vue.toDisplayString($setup.offlineMapLocalStatusShort),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode("view", { class: "travel-meta-item" }, [
+                vue.createElementVNode("text", { class: "travel-meta-label" }, "离线资源"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "travel-meta-value" },
+                  vue.toDisplayString($setup.offlineMapSupportShort),
+                  1
+                  /* TEXT */
+                )
               ])
             ]),
-            vue.createElementVNode("view", { class: "safety-map-preview" }, [
+            $setup.displayGuideImageUrl ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "safety-map-preview",
+              onClick: $setup.previewGuideImage
+            }, [
               vue.createVNode($setup["CachedImage"], {
-                src: $setup.safetyMapImageUrl,
-                "image-class": "cover-image"
+                src: $setup.displayGuideImageUrl,
+                "image-class": "cover-image guide-preview-image",
+                mode: "aspectFit",
+                "fallback-to-remote": false,
+                onError: $setup.handleGuideImageError,
+                onLoad: $setup.handleGuideImageLoad
               }, null, 8, ["src"]),
-              vue.createElementVNode("view", { class: "safety-map-badge" }, "景区核心安全参考图")
-            ]),
-            vue.createElementVNode("view", { class: "offline-meta-grid compact-grid" }, [
+              vue.createElementVNode("view", { class: "safety-map-badge" }, "点击放大查看导览图")
+            ])) : (vue.openBlock(), vue.createElementBlock("view", {
+              key: 1,
+              class: "map-fallback"
+            }, [
+              vue.createElementVNode("text", { class: "map-fallback-title" }, "暂无景区导览图"),
+              vue.createElementVNode("text", { class: "map-fallback-desc muted-text" }, "请把对应景区导览图放进 `static/guide-maps`，页面会自动尝试同名不同后缀并优先读取本地离线图。")
+            ])),
+            $setup.guideExpanded ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 2,
+              class: "safety-legend card-lite"
+            }, [
+              vue.createElementVNode("text", { class: "safety-item-title" }, "导览重点"),
+              vue.createElementVNode(
+                "text",
+                { class: "safety-item-desc muted-text" },
+                vue.toDisplayString($setup.destinationSafetyMap.highlights.join("；")),
+                1
+                /* TEXT */
+              )
+            ])) : vue.createCommentVNode("v-if", true),
+            $setup.guideExpanded ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 3,
+              class: "offline-meta-grid compact-grid guide-detail-grid"
+            }, [
               vue.createElementVNode("view", { class: "travel-meta-item" }, [
                 vue.createElementVNode("text", { class: "travel-meta-label" }, "离线资源"),
                 vue.createElementVNode(
@@ -12336,25 +15107,15 @@ ${infoText}`;
                   /* TEXT */
                 )
               ])
-            ]),
-            vue.createElementVNode("view", { class: "safety-legend card-lite" }, [
-              vue.createElementVNode("text", { class: "safety-item-title" }, "安全图重点"),
-              vue.createElementVNode(
-                "text",
-                { class: "safety-item-desc muted-text" },
-                vue.toDisplayString($setup.destinationSafetyMap.highlights.join("；")),
-                1
-                /* TEXT */
-              )
-            ]),
-            vue.createElementVNode("view", { class: "safety-list" }, [
+            ])) : vue.createCommentVNode("v-if", true),
+            vue.createElementVNode("view", { class: "safety-list compact-safety-list" }, [
               (vue.openBlock(true), vue.createElementBlock(
                 vue.Fragment,
                 null,
-                vue.renderList($setup.safetyTips, (item) => {
+                vue.renderList($setup.visibleSafetyTips, (item) => {
                   return vue.openBlock(), vue.createElementBlock("view", {
                     key: item.title,
-                    class: "safety-item card-lite"
+                    class: "safety-item card-lite compact-safety-item"
                   }, [
                     vue.createElementVNode(
                       "text",
@@ -12376,11 +15137,22 @@ ${infoText}`;
                 /* KEYED_FRAGMENT */
               ))
             ]),
-            vue.createElementVNode("view", { class: "map-actions safety-actions" }, [
+            $setup.safetyTips.length > 2 ? (vue.openBlock(), vue.createElementBlock(
+              "view",
+              {
+                key: 4,
+                class: "list-toggle-inline",
+                onClick: _cache[4] || (_cache[4] = ($event) => $setup.guideExpanded = !$setup.guideExpanded)
+              },
+              vue.toDisplayString($setup.guideExpanded ? "收起导览提醒" : `查看更多导览提醒 ${$setup.safetyTips.length} 条`),
+              1
+              /* TEXT */
+            )) : vue.createCommentVNode("v-if", true),
+            vue.createElementVNode("view", { class: "map-actions guide-actions" }, [
               vue.createElementVNode("view", {
                 class: "primary-btn",
                 onClick: $setup.openSafetyMapPage
-              }, "查看完整安全图"),
+              }, "完整导览页"),
               vue.createElementVNode(
                 "view",
                 {
@@ -12391,101 +15163,50 @@ ${infoText}`;
                 3
                 /* TEXT, CLASS */
               ),
-              vue.createElementVNode(
+              $setup.guideExpanded ? (vue.openBlock(), vue.createElementBlock(
                 "view",
                 {
+                  key: 0,
                   class: vue.normalizeClass(["secondary-btn", { disabled: !$setup.hasOfflineMap }]),
                   onClick: $setup.openOfflineMap
                 },
-                "打开离线安全图",
+                "打开离线图",
                 2
                 /* CLASS */
-              ),
-              vue.createElementVNode(
+              )) : vue.createCommentVNode("v-if", true),
+              $setup.guideExpanded ? (vue.openBlock(), vue.createElementBlock(
                 "view",
                 {
+                  key: 1,
                   class: vue.normalizeClass(["secondary-btn", { disabled: !$setup.hasOfflineMap }]),
                   onClick: $setup.deleteOfflineMapWithConfirm
                 },
-                "删除离线地图",
+                "删除离线图",
                 2
                 /* CLASS */
-              )
+              )) : vue.createCommentVNode("v-if", true)
             ])
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "当地天气"),
-          vue.createElementVNode("view", { class: "weather-card card" }, [
-            vue.createElementVNode("view", { class: "weather-main" }, [
-              vue.createElementVNode(
-                "text",
-                { class: "weather-temp" },
-                vue.toDisplayString($setup.liveWeather.temperature),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "weather-texts" }, [
-                vue.createElementVNode(
-                  "text",
-                  { class: "weather-condition" },
-                  vue.toDisplayString($setup.liveWeather.condition),
-                  1
-                  /* TEXT */
-                ),
-                vue.createElementVNode(
-                  "text",
-                  { class: "muted-text" },
-                  vue.toDisplayString($setup.weatherSourceText),
-                  1
-                  /* TEXT */
-                )
-              ])
-            ]),
-            vue.createElementVNode("view", { class: "weather-grid" }, [
-              vue.createElementVNode("view", { class: "weather-item" }, [
-                vue.createElementVNode("text", { class: "weather-label" }, "湿度"),
-                vue.createElementVNode(
-                  "text",
-                  { class: "weather-value" },
-                  vue.toDisplayString($setup.liveWeather.humidity),
-                  1
-                  /* TEXT */
-                )
-              ]),
-              vue.createElementVNode("view", { class: "weather-item" }, [
-                vue.createElementVNode("text", { class: "weather-label" }, "风力"),
-                vue.createElementVNode(
-                  "text",
-                  { class: "weather-value" },
-                  vue.toDisplayString($setup.liveWeather.wind),
-                  1
-                  /* TEXT */
-                )
-              ])
-            ]),
-            $setup.weatherError ? (vue.openBlock(), vue.createElementBlock(
-              "text",
+          vue.createElementVNode("view", { class: "section-head-row" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "游玩建议"),
+            vue.createElementVNode(
+              "view",
               {
-                key: 0,
-                class: "weather-note"
+                class: "section-toggle-chip",
+                onClick: _cache[5] || (_cache[5] = ($event) => $setup.tipsExpanded = !$setup.tipsExpanded)
               },
-              vue.toDisplayString($setup.weatherError),
+              vue.toDisplayString($setup.tipsExpanded ? "收起" : "展开"),
               1
               /* TEXT */
-            )) : !$setup.hasRealWeather ? (vue.openBlock(), vue.createElementBlock("text", {
-              key: 1,
-              class: "weather-note"
-            }, "当前显示的是本地预设天气，填入高德 Key 后会自动切换为实时天气。")) : vue.createCommentVNode("v-if", true)
-          ])
-        ]),
-        vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "游玩建议"),
+            )
+          ]),
           vue.createElementVNode("view", { class: "tips-list" }, [
             (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
               null,
-              vue.renderList($setup.destination.tips, (tip) => {
+              vue.renderList($setup.visibleDestinationTips, (tip) => {
                 return vue.openBlock(), vue.createElementBlock("view", {
                   key: tip,
                   class: "tip-card card"
@@ -12504,6 +15225,17 @@ ${infoText}`;
               /* KEYED_FRAGMENT */
             ))
           ]),
+          $setup.destination.tips.length > 3 ? (vue.openBlock(), vue.createElementBlock(
+            "view",
+            {
+              key: 0,
+              class: "list-toggle-inline",
+              onClick: _cache[6] || (_cache[6] = ($event) => $setup.tipsExpanded = !$setup.tipsExpanded)
+            },
+            vue.toDisplayString($setup.tipsExpanded ? "收起建议" : `查看更多建议 ${$setup.destination.tips.length} 条`),
+            1
+            /* TEXT */
+          )) : vue.createCommentVNode("v-if", true),
           vue.createElementVNode("view", { class: "suggestion-box" }, [
             vue.createElementVNode("text", { class: "suggestion-title" }, "路线建议"),
             vue.createElementVNode(
@@ -12532,51 +15264,82 @@ ${infoText}`;
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "抖音直播参考"),
+          vue.createElementVNode("view", { class: "section-head-row" }, [
+            vue.createElementVNode("text", { class: "section-title" }, "抖音直播参考"),
+            vue.createElementVNode(
+              "view",
+              {
+                class: "section-toggle-chip",
+                onClick: _cache[7] || (_cache[7] = ($event) => $setup.mediaExpanded = !$setup.mediaExpanded)
+              },
+              vue.toDisplayString($setup.mediaExpanded ? "收起" : "展开"),
+              1
+              /* TEXT */
+            )
+          ]),
           vue.createElementVNode("view", { class: "live-card card" }, [
-            vue.createElementVNode("view", { class: "live-preview" }, [
-              vue.createVNode($setup["CachedImage"], {
-                src: $setup.destination.image,
-                "image-class": "cover-image"
-              }, null, 8, ["src"]),
-              vue.createElementVNode("view", { class: "live-badge" }, [
-                vue.createElementVNode("view", { class: "live-dot" }),
-                vue.createElementVNode("text", null, "DY")
-              ])
+            vue.createElementVNode("view", {
+              class: "live-preview-compact",
+              onClick: _cache[8] || (_cache[8] = ($event) => $setup.mediaExpanded = !$setup.mediaExpanded)
+            }, [
+              vue.createElementVNode("view", null, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "live-title" },
+                  vue.toDisplayString($setup.destination.liveTitle),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode(
+                  "text",
+                  { class: "live-hint muted-text" },
+                  vue.toDisplayString($setup.destination.liveHint),
+                  1
+                  /* TEXT */
+                )
+              ]),
+              vue.createElementVNode(
+                "view",
+                { class: "section-toggle-chip compact-chip" },
+                vue.toDisplayString($setup.mediaExpanded ? "隐藏" : "查看"),
+                1
+                /* TEXT */
+              )
             ]),
-            vue.createElementVNode("view", { class: "live-body" }, [
-              vue.createElementVNode(
-                "text",
-                { class: "live-title" },
-                vue.toDisplayString($setup.destination.liveTitle),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode(
-                "text",
-                { class: "live-hint muted-text" },
-                vue.toDisplayString($setup.destination.liveHint),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode(
-                "text",
-                { class: "live-keyword" },
-                "搜索词：" + vue.toDisplayString($setup.destination.liveKeyword),
-                1
-                /* TEXT */
-              ),
-              vue.createElementVNode("view", { class: "live-actions one-col" }, [
-                vue.createElementVNode("view", {
-                  class: "primary-btn",
-                  onClick: $setup.openDouyinSearch
-                }, "跳转抖音搜索"),
-                vue.createElementVNode("view", {
-                  class: "secondary-btn",
-                  onClick: $setup.copyKeyword
-                }, "复制搜索词")
+            $setup.mediaExpanded ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "live-expanded-content"
+            }, [
+              vue.createElementVNode("view", { class: "live-preview" }, [
+                vue.createVNode($setup["CachedImage"], {
+                  src: $setup.destination.image,
+                  "image-class": "cover-image"
+                }, null, 8, ["src"]),
+                vue.createElementVNode("view", { class: "live-badge" }, [
+                  vue.createElementVNode("view", { class: "live-dot" }),
+                  vue.createElementVNode("text", null, "DY")
+                ])
+              ]),
+              vue.createElementVNode("view", { class: "live-body" }, [
+                vue.createElementVNode(
+                  "text",
+                  { class: "live-keyword" },
+                  "搜索词：" + vue.toDisplayString($setup.destination.liveKeyword),
+                  1
+                  /* TEXT */
+                ),
+                vue.createElementVNode("view", { class: "live-actions one-col" }, [
+                  vue.createElementVNode("view", {
+                    class: "primary-btn",
+                    onClick: $setup.openDouyinSearch
+                  }, "跳转抖音搜索"),
+                  vue.createElementVNode("view", {
+                    class: "secondary-btn",
+                    onClick: $setup.copyKeyword
+                  }, "复制搜索词")
+                ])
               ])
-            ])
+            ])) : vue.createCommentVNode("v-if", true)
           ])
         ]),
         vue.createElementVNode("view", { class: "bottom-space" })
@@ -12600,9 +15363,13 @@ ${infoText}`;
       const currentId = vue.ref("");
       const offlineMode = vue.ref(false);
       const offlineRecord = vue.ref(null);
+      const activeMode = vue.ref("interactive");
+      const mapScale = vue.ref(14);
+      const guideImageCandidateIndex = vue.ref(0);
+      const guideImageUnavailable = vue.ref(false);
       const destination = vue.computed(() => getDestinationById(currentId.value));
       const onlineSafetyMap = vue.computed(() => getDestinationSafetyMap(currentId.value) || {
-        title: "景区安全图",
+        title: "景区导览攻略图",
         zoom: 14,
         coverage: "",
         emergencyLevel: "中",
@@ -12612,7 +15379,10 @@ ${infoText}`;
         safeRoute: [],
         servicePoints: [],
         emergencyContacts: [],
-        note: ""
+        note: "",
+        guideMapSourceName: "",
+        guideMapSourceUrl: "",
+        guideMapImage: ""
       });
       const safetyMap = vue.computed(() => {
         var _a;
@@ -12621,35 +15391,181 @@ ${infoText}`;
         }
         return onlineSafetyMap.value;
       });
-      const onlineMapUrl = vue.computed(() => {
+      const guidePageTitle = vue.computed(() => {
+        return destination.value ? `${destination.value.name}导览攻略图` : "景区导览攻略图";
+      });
+      const guideModeTag = vue.computed(() => {
+        if (offlineMode.value) {
+          return "离线可看";
+        }
+        return activeMode.value === "interactive" ? "地图模式" : "导览模式";
+      });
+      const guideHighlightsText = vue.computed(() => {
+        const list = Array.isArray(safetyMap.value.highlights) ? safetyMap.value.highlights.filter(Boolean) : [];
+        if (list.length) {
+          return list.join("；");
+        }
+        return "当前页面以景区导览图和游览顺序建议为主，适合出发前快速做路线规划。";
+      });
+      const mapCenter = vue.computed(() => {
         var _a;
         const coords = (_a = destination.value) == null ? void 0 : _a.coordinates;
         if (!coords) {
+          return null;
+        }
+        return {
+          longitude: Number(coords.longitude),
+          latitude: Number(coords.latitude)
+        };
+      });
+      const guidePreviewCandidates = vue.computed(() => {
+        const base = String(safetyMap.value.guideMapImage || "").trim();
+        if (!base) {
+          return [];
+        }
+        const candidates = [base];
+        if (/\.jpg$/i.test(base)) {
+          candidates.push(`${base}.jpg`);
+          candidates.push(base.replace(/\.jpg$/i, ".png"));
+          candidates.push(base.replace(/\.jpg$/i, ".jpeg"));
+        } else if (/\.png$/i.test(base)) {
+          candidates.push(`${base}.png`);
+          candidates.push(base.replace(/\.png$/i, ".jpg"));
+          candidates.push(base.replace(/\.png$/i, ".jpeg"));
+        } else if (/\.jpeg$/i.test(base)) {
+          candidates.push(`${base}.jpeg`);
+          candidates.push(base.replace(/\.jpeg$/i, ".jpg"));
+          candidates.push(base.replace(/\.jpeg$/i, ".png"));
+        }
+        return Array.from(new Set(candidates));
+      });
+      const guidePreviewUrl = vue.computed(() => {
+        return guidePreviewCandidates.value[guideImageCandidateIndex.value] || "";
+      });
+      function toDisplayPath(filePath) {
+        const raw = String(filePath || "").trim();
+        if (!raw) {
           return "";
         }
-        return getStaticMapUrl({
-          longitude: coords.longitude,
-          latitude: coords.latitude,
-          zoom: safetyMap.value.zoom,
-          size: "1080*720",
-          markers: [
-            { longitude: coords.longitude, latitude: coords.latitude, label: "景", size: "large" }
-          ]
-        });
-      });
-      const displayMapUrl = vue.computed(() => {
-        var _a;
-        if (offlineMode.value && ((_a = offlineRecord.value) == null ? void 0 : _a.savedFilePath)) {
-          return offlineRecord.value.savedFilePath;
+        if (/^(https?:|file:|content:|blob:|data:)/i.test(raw)) {
+          return raw;
         }
-        return onlineMapUrl.value;
+        if (raw.startsWith("/static/") || raw.startsWith("static/")) {
+          return raw.startsWith("/") ? raw : `/${raw}`;
+        }
+        if (typeof plus !== "undefined" && plus.io && typeof plus.io.convertLocalFileSystemURL === "function") {
+          const absolutePath = plus.io.convertLocalFileSystemURL(raw);
+          if (absolutePath) {
+            return absolutePath.startsWith("file://") ? absolutePath : `file://${absolutePath}`;
+          }
+        }
+        return raw;
+      }
+      const displayGuideImageUrl = vue.computed(() => {
+        var _a;
+        if (guideImageUnavailable.value) {
+          return "";
+        }
+        if (offlineMode.value && ((_a = offlineRecord.value) == null ? void 0 : _a.savedFilePath)) {
+          return toDisplayPath(offlineRecord.value.savedFilePath);
+        }
+        if (guidePreviewUrl.value) {
+          return toDisplayPath(guidePreviewUrl.value);
+        }
+        return "";
+      });
+      const modeDescription = vue.computed(() => {
+        if (offlineMode.value) {
+          return "离线模式只展示已保存的景区导览攻略图，适合在景区内直接对照整张图查看。";
+        }
+        if (activeMode.value === "interactive") {
+          return "当前是地图浏览视图，方便先看景区大致方位和缩放范围。";
+        }
+        return "当前显示的是景区导览攻略大图，优先读取你手动放入的本地图片。";
+      });
+      const guideSummaryText = vue.computed(() => {
+        if (offlineMode.value) {
+          return "这是你已经保存到本地的离线导览攻略图，弱网或无网时也能直接对照游览。";
+        }
+        if (safetyMap.value.guideMapSourceName) {
+          return `当前导览图优先采用 ${safetyMap.value.guideMapSourceName}，并结合景区现有攻略信息整理成更适合出发前查看的导览页。`;
+        }
+        return "当前导览图以景区总览为主，点击图片可以继续放大查看细节。";
       });
       onLoad((options = {}) => {
+        var _a;
         currentId.value = options.id || "";
         offlineMode.value = options.offline === "1";
         offlineRecord.value = getOfflineMapRecord(currentId.value);
+        mapScale.value = Number(((_a = safetyMap.value) == null ? void 0 : _a.zoom) || 14);
+        activeMode.value = offlineMode.value ? "guide" : "interactive";
+        guideImageCandidateIndex.value = 0;
+        guideImageUnavailable.value = false;
       });
-      const __returned__ = { currentId, offlineMode, offlineRecord, destination, onlineSafetyMap, safetyMap, onlineMapUrl, displayMapUrl, computed: vue.computed, ref: vue.ref, get onLoad() {
+      function zoomIn() {
+        mapScale.value = Math.min(20, Number(mapScale.value || 14) + 1);
+      }
+      function zoomOut() {
+        mapScale.value = Math.max(5, Number(mapScale.value || 14) - 1);
+      }
+      function previewGuideImage() {
+        if (!displayGuideImageUrl.value) {
+          return;
+        }
+        uni.previewImage({
+          current: displayGuideImageUrl.value,
+          urls: [displayGuideImageUrl.value]
+        });
+      }
+      function handleGuideImageError() {
+        if (guidePreviewCandidates.value.length && guideImageCandidateIndex.value < guidePreviewCandidates.value.length - 1) {
+          guideImageCandidateIndex.value += 1;
+          return;
+        }
+        guideImageUnavailable.value = true;
+      }
+      function handleGuideImageLoad() {
+        guideImageUnavailable.value = false;
+        guideImageCandidateIndex.value = Math.max(0, guideImageCandidateIndex.value);
+      }
+      function openExternalMap() {
+        const coords = mapCenter.value;
+        if (!coords || !destination.value) {
+          return;
+        }
+        const amapUrl = `amapuri://route/plan/?dlat=${coords.latitude}&dlon=${coords.longitude}&dname=${encodeURIComponent(destination.value.name)}&dev=0&t=0`;
+        if (typeof plus !== "undefined" && plus.runtime && plus.runtime.openURL) {
+          plus.runtime.openURL(amapUrl, () => {
+            uni.openLocation({
+              longitude: coords.longitude,
+              latitude: coords.latitude,
+              name: destination.value.name,
+              address: destination.value.location
+            });
+          });
+          return;
+        }
+        uni.openLocation({
+          longitude: coords.longitude,
+          latitude: coords.latitude,
+          name: destination.value.name,
+          address: destination.value.location
+        });
+      }
+      function openGuideSource() {
+        if (!safetyMap.value.guideMapSourceUrl) {
+          return;
+        }
+        const url = safetyMap.value.guideMapSourceUrl;
+        if (typeof plus !== "undefined" && plus.runtime && plus.runtime.openURL) {
+          plus.runtime.openURL(url);
+          return;
+        }
+        if (typeof window !== "undefined" && window.open) {
+          window.open(url, "_blank");
+        }
+      }
+      const __returned__ = { currentId, offlineMode, offlineRecord, activeMode, mapScale, guideImageCandidateIndex, guideImageUnavailable, destination, onlineSafetyMap, safetyMap, guidePageTitle, guideModeTag, guideHighlightsText, mapCenter, guidePreviewCandidates, guidePreviewUrl, toDisplayPath, displayGuideImageUrl, modeDescription, guideSummaryText, zoomIn, zoomOut, previewGuideImage, handleGuideImageError, handleGuideImageLoad, openExternalMap, openGuideSource, computed: vue.computed, ref: vue.ref, get onLoad() {
         return onLoad;
       }, CachedImage, get getDestinationById() {
         return getDestinationById;
@@ -12657,8 +15573,6 @@ ${infoText}`;
         return getDestinationSafetyMap;
       }, get getOfflineMapRecord() {
         return getOfflineMapRecord;
-      }, get getStaticMapUrl() {
-        return getStaticMapUrl;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -12671,21 +15585,15 @@ ${infoText}`;
         class: "page-scroll"
       }, [
         vue.createElementVNode("view", { class: "hero-gradient safety-hero section" }, [
-          vue.createElementVNode("text", { class: "safety-kicker" }, "Scenic Safety Map"),
+          vue.createElementVNode("text", { class: "safety-kicker" }, "Scenic Guide Map"),
           vue.createElementVNode(
             "text",
             { class: "safety-title" },
-            vue.toDisplayString($setup.safetyMap.title),
+            vue.toDisplayString($setup.guidePageTitle),
             1
             /* TEXT */
           ),
-          vue.createElementVNode(
-            "text",
-            { class: "safety-subtitle" },
-            "覆盖 " + vue.toDisplayString($setup.safetyMap.coverage) + "，适合在进入景区前先确认主入口、返程线和应急联系信息。",
-            1
-            /* TEXT */
-          )
+          vue.createElementVNode("text", { class: "safety-subtitle" }, "当前页面已改为景区导览攻略图，优先展示导览大图，并补充游览顺序、补给点和出行提醒。")
         ]),
         vue.createElementVNode("view", { class: "section safety-shell" }, [
           vue.createElementVNode("view", { class: "card map-card-large" }, [
@@ -12694,14 +15602,14 @@ ${infoText}`;
                 vue.createElementVNode(
                   "text",
                   { class: "map-title" },
-                  vue.toDisplayString($setup.offlineMode ? "离线安全图" : "景区核心安全图"),
+                  vue.toDisplayString($setup.offlineMode ? "离线导览攻略图" : "景区导览攻略图"),
                   1
                   /* TEXT */
                 ),
                 vue.createElementVNode(
                   "text",
                   { class: "map-desc muted-text" },
-                  vue.toDisplayString($setup.offlineMode ? "当前优先展示本地已保存版本。" : "当前展示的是景区级安全参考图，建议离线保存后再进山入谷。"),
+                  vue.toDisplayString($setup.modeDescription),
                   1
                   /* TEXT */
                 )
@@ -12709,27 +15617,127 @@ ${infoText}`;
               vue.createElementVNode(
                 "view",
                 { class: "map-level" },
-                vue.toDisplayString($setup.safetyMap.emergencyLevel),
+                vue.toDisplayString($setup.guideModeTag),
                 1
                 /* TEXT */
               )
             ]),
-            vue.createElementVNode("view", { class: "map-preview-large" }, [
-              vue.createVNode($setup["CachedImage"], {
-                src: $setup.displayMapUrl,
-                "image-class": "cover-image"
-              }, null, 8, ["src"]),
+            !$setup.offlineMode ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 0,
+              class: "mode-switch"
+            }, [
               vue.createElementVNode(
                 "view",
-                { class: "map-badge" },
-                vue.toDisplayString($setup.offlineMode ? "OFFLINE" : "ONLINE"),
-                1
-                /* TEXT */
+                {
+                  class: vue.normalizeClass(["mode-chip", { active: $setup.activeMode === "interactive" }]),
+                  onClick: _cache[0] || (_cache[0] = ($event) => $setup.activeMode = "interactive")
+                },
+                " 交互地图 ",
+                2
+                /* CLASS */
+              ),
+              vue.createElementVNode(
+                "view",
+                {
+                  class: vue.normalizeClass(["mode-chip", { active: $setup.activeMode === "guide" }]),
+                  onClick: _cache[1] || (_cache[1] = ($event) => $setup.activeMode = "guide")
+                },
+                " 导览大图 ",
+                2
+                /* CLASS */
               )
+            ])) : vue.createCommentVNode("v-if", true),
+            $setup.activeMode === "interactive" ? (vue.openBlock(), vue.createElementBlock("view", {
+              key: 1,
+              class: "interactive-shell"
+            }, [
+              $setup.mapCenter ? (vue.openBlock(), vue.createElementBlock("map", {
+                key: 0,
+                class: "interactive-map",
+                longitude: $setup.mapCenter.longitude,
+                latitude: $setup.mapCenter.latitude,
+                scale: $setup.mapScale,
+                "enable-scroll": true,
+                "enable-zoom": true,
+                "enable-rotate": true,
+                "enable-overlooking": false
+              }, null, 8, ["longitude", "latitude", "scale"])) : (vue.openBlock(), vue.createElementBlock("view", {
+                key: 1,
+                class: "map-empty-state"
+              }, [
+                vue.createElementVNode("text", { class: "map-empty-title" }, "暂无可用地图中心点"),
+                vue.createElementVNode("text", { class: "map-empty-copy muted-text" }, "当前景区没有有效坐标，暂时无法生成交互地图。")
+              ])),
+              vue.createElementVNode("view", { class: "map-floating-tools" }, [
+                vue.createElementVNode("view", {
+                  class: "floating-btn",
+                  onClick: $setup.zoomIn
+                }, "+"),
+                vue.createElementVNode("view", {
+                  class: "floating-btn",
+                  onClick: $setup.zoomOut
+                }, "-")
+              ])
+            ])) : (vue.openBlock(), vue.createElementBlock("view", {
+              key: 2,
+              class: "guide-shell"
+            }, [
+              $setup.displayGuideImageUrl ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "guide-preview",
+                onClick: $setup.previewGuideImage
+              }, [
+                vue.createVNode($setup["CachedImage"], {
+                  src: $setup.displayGuideImageUrl,
+                  "image-class": "guide-image",
+                  mode: "aspectFit",
+                  "fallback-to-remote": false,
+                  onError: $setup.handleGuideImageError,
+                  onLoad: $setup.handleGuideImageLoad
+                }, null, 8, ["src"]),
+                vue.createElementVNode("view", { class: "guide-badge" }, "点击放大查看")
+              ])) : (vue.openBlock(), vue.createElementBlock("view", {
+                key: 1,
+                class: "map-empty-state guide-empty-state"
+              }, [
+                vue.createElementVNode("text", { class: "map-empty-title" }, "暂无导览大图"),
+                vue.createElementVNode("text", { class: "map-empty-copy muted-text" }, "请先把对应景区导览图放进 static/guide-maps，当前页面不会再回退为错误的自动地图。")
+              ])),
+              vue.createElementVNode("view", { class: "guide-meta card-lite" }, [
+                vue.createElementVNode("text", { class: "smart-map-title" }, "导览图说明"),
+                vue.createElementVNode(
+                  "text",
+                  { class: "smart-map-copy muted-text" },
+                  vue.toDisplayString($setup.guideSummaryText),
+                  1
+                  /* TEXT */
+                )
+              ])
+            ])),
+            vue.createElementVNode("view", { class: "map-actions compact-actions" }, [
+              vue.createElementVNode("view", {
+                class: "primary-action",
+                onClick: $setup.openExternalMap
+              }, "打开系统地图"),
+              !$setup.offlineMode ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 0,
+                class: "secondary-action",
+                onClick: _cache[2] || (_cache[2] = ($event) => $setup.activeMode = $setup.activeMode === "interactive" ? "guide" : "interactive")
+              }, "切换查看方式")) : vue.createCommentVNode("v-if", true),
+              $setup.displayGuideImageUrl ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 1,
+                class: "secondary-action",
+                onClick: $setup.previewGuideImage
+              }, "放大导览图")) : vue.createCommentVNode("v-if", true),
+              $setup.safetyMap.guideMapSourceUrl ? (vue.openBlock(), vue.createElementBlock("view", {
+                key: 2,
+                class: "secondary-action",
+                onClick: $setup.openGuideSource
+              }, "地图来源")) : vue.createCommentVNode("v-if", true)
             ]),
             vue.createElementVNode("view", { class: "meta-grid" }, [
               vue.createElementVNode("view", { class: "meta-card" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "地形风险"),
+                vue.createElementVNode("text", { class: "meta-label" }, "地形提醒"),
                 vue.createElementVNode(
                   "text",
                   { class: "meta-value" },
@@ -12739,7 +15747,7 @@ ${infoText}`;
                 )
               ]),
               vue.createElementVNode("view", { class: "meta-card" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "天气风险"),
+                vue.createElementVNode("text", { class: "meta-label" }, "天气提醒"),
                 vue.createElementVNode(
                   "text",
                   { class: "meta-value" },
@@ -12749,7 +15757,7 @@ ${infoText}`;
                 )
               ]),
               vue.createElementVNode("view", { class: "meta-card full-width" }, [
-                vue.createElementVNode("text", { class: "meta-label" }, "信号提示"),
+                vue.createElementVNode("text", { class: "meta-label" }, "通信提示"),
                 vue.createElementVNode(
                   "text",
                   { class: "meta-value" },
@@ -12762,7 +15770,7 @@ ${infoText}`;
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "推荐安全路线"),
+          vue.createElementVNode("text", { class: "section-title" }, "推荐游览顺序"),
           vue.createElementVNode("view", { class: "route-list" }, [
             (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
@@ -12794,7 +15802,7 @@ ${infoText}`;
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "服务点与集合点"),
+          vue.createElementVNode("text", { class: "section-title" }, "补给点与服务点"),
           vue.createElementVNode("view", { class: "service-list" }, [
             (vue.openBlock(true), vue.createElementBlock(
               vue.Fragment,
@@ -12820,12 +15828,12 @@ ${infoText}`;
           ])
         ]),
         vue.createElementVNode("view", { class: "section section-block" }, [
-          vue.createElementVNode("text", { class: "section-title" }, "应急联系"),
+          vue.createElementVNode("text", { class: "section-title" }, "攻略补充说明"),
           vue.createElementVNode("view", { class: "contact-card card" }, [
             vue.createElementVNode(
               "text",
               { class: "contact-copy" },
-              vue.toDisplayString($setup.safetyMap.emergencyContacts.join(" / ")),
+              vue.toDisplayString($setup.guideHighlightsText),
               1
               /* TEXT */
             ),
@@ -12843,7 +15851,7 @@ ${infoText}`;
         key: 1,
         class: "empty-shell section"
       }, [
-        vue.createElementVNode("text", { class: "section-title" }, "未找到景区安全图")
+        vue.createElementVNode("text", { class: "section-title" }, "未找到景区导览攻略图")
       ]))
     ]);
   }
@@ -12898,6 +15906,18 @@ ${infoText}`;
       guardStatusLevel: {
         type: String,
         default: "safe"
+      },
+      compassText: {
+        type: String,
+        default: "方向校准中"
+      },
+      syncStatusText: {
+        type: String,
+        default: ""
+      },
+      syncStatusTone: {
+        type: String,
+        default: "neutral"
       }
     },
     setup(__props, { expose: __expose }) {
@@ -12996,6 +16016,25 @@ ${infoText}`;
         2
         /* CLASS */
       )) : vue.createCommentVNode("v-if", true),
+      $props.syncStatusText ? (vue.openBlock(), vue.createElementBlock(
+        "view",
+        {
+          key: 2,
+          class: vue.normalizeClass(["sync-banner", `sync-${$props.syncStatusTone}`])
+        },
+        [
+          vue.createElementVNode("text", { class: "sync-title" }, "轨迹同步"),
+          vue.createElementVNode(
+            "text",
+            { class: "sync-text" },
+            vue.toDisplayString($props.syncStatusText),
+            1
+            /* TEXT */
+          )
+        ],
+        2
+        /* CLASS */
+      )) : vue.createCommentVNode("v-if", true),
       vue.createElementVNode("view", { class: "stats-grid" }, [
         vue.createElementVNode("view", { class: "stat-card" }, [
           vue.createElementVNode("view", { class: "label" }, "海拔 (m)"),
@@ -13029,6 +16068,16 @@ ${infoText}`;
             ),
             vue.createElementVNode("view", { class: "status-indicator" })
           ])
+        ]),
+        vue.createElementVNode("view", { class: "stat-card" }, [
+          vue.createElementVNode("view", { class: "label" }, "手机朝向"),
+          vue.createElementVNode(
+            "view",
+            { class: "value compass-value" },
+            vue.toDisplayString($props.compassText),
+            1
+            /* TEXT */
+          )
         ])
       ])
     ]);
@@ -13056,51 +16105,83 @@ ${infoText}`;
       },
       mapModeKey: {
         type: String,
-        default: "satellite"
+        default: "normal"
+      },
+      overlayActive: {
+        type: Boolean,
+        default: false
       }
     },
-    setup(__props, { expose: __expose }) {
+    emits: ["refresh", "recenter"],
+    setup(__props, { expose: __expose, emit: __emit }) {
       __expose();
+      const emit = __emit;
       const props = __props;
       const hostRef = vue.ref(null);
       const instance = vue.getCurrentInstance();
       let childWebview = null;
       let childWebviewId = `hiking-amap-${Date.now()}`;
+      const refreshBridgeName = `__HIKING_APP_MAP_REFRESH_${Date.now()}__`;
+      const recenterBridgeName = `__HIKING_APP_MAP_RECENTER_${Date.now()}__`;
+      const refreshEventName = `hiking-map-refresh-${Date.now()}`;
+      const recenterEventName = `hiking-map-recenter-${Date.now()}`;
+      let hostWebviewId = "";
       let syncTimer = null;
+      let stateSyncTimer = null;
       let initRetryTimer = null;
       let initRetryCount = 0;
-      function logAppMap(message, extra) {
-        if (extra !== void 0) {
-          formatAppLog("log", "at pages/hiking/components/AppAmapWebview.vue:46", "[hiking-app-map]", message, extra);
-          return;
-        }
-        formatAppLog("log", "at pages/hiking/components/AppAmapWebview.vue:49", "[hiking-app-map]", message);
-      }
+      let hasSyncedAfterLoad = false;
+      let lastSyncedSnapshot = null;
+      const handleRefreshBridge = () => {
+        emit("refresh");
+      };
+      const handleRecenterBridge = () => {
+        emit("recenter");
+      };
       vue.onMounted(() => {
-        logAppMap("component mounted");
+        globalThis[refreshBridgeName] = handleRefreshBridge;
+        globalThis[recenterBridgeName] = handleRecenterBridge;
+        if (typeof uni !== "undefined" && typeof uni.$on === "function") {
+          uni.$on(refreshEventName, handleRefreshBridge);
+          uni.$on(recenterEventName, handleRecenterBridge);
+        }
+        if (typeof window !== "undefined") {
+          window[refreshBridgeName] = handleRefreshBridge;
+          window[recenterBridgeName] = handleRecenterBridge;
+        }
         initChildWebview().catch(() => {
         });
       });
       vue.watch(() => props.mapCenter, () => {
-        syncMapState();
+        scheduleStateSync();
       }, { deep: true });
       vue.watch(() => props.mapScale, () => {
-        syncMapState();
+        scheduleStateSync();
       });
       vue.watch(() => props.mapPolyline, () => {
-        syncMapState();
+        scheduleStateSync();
       }, { deep: true });
       vue.watch(() => props.mapMarkers, () => {
-        syncMapState();
+        scheduleStateSync();
       }, { deep: true });
       vue.watch(() => props.mapModeKey, () => {
-        syncMapState();
+        scheduleStateSync();
+      });
+      vue.watch(() => props.overlayActive, (value) => {
+        syncChildVisibility(value);
       });
       vue.onBeforeUnmount(() => {
-        logAppMap("component before unmount");
+        if (typeof uni !== "undefined" && typeof uni.$off === "function") {
+          uni.$off(refreshEventName, handleRefreshBridge);
+          uni.$off(recenterEventName, handleRecenterBridge);
+        }
         if (syncTimer) {
           clearTimeout(syncTimer);
           syncTimer = null;
+        }
+        if (stateSyncTimer) {
+          clearTimeout(stateSyncTimer);
+          stateSyncTimer = null;
         }
         if (initRetryTimer) {
           clearTimeout(initRetryTimer);
@@ -13113,23 +16194,48 @@ ${infoText}`;
           }
           childWebview = null;
         }
+        try {
+          delete globalThis[refreshBridgeName];
+        } catch (error) {
+          globalThis[refreshBridgeName] = void 0;
+        }
+        try {
+          delete globalThis[recenterBridgeName];
+        } catch (error) {
+          globalThis[recenterBridgeName] = void 0;
+        }
+        if (typeof window !== "undefined") {
+          try {
+            delete window[refreshBridgeName];
+          } catch (error) {
+            window[refreshBridgeName] = void 0;
+          }
+          try {
+            delete window[recenterBridgeName];
+          } catch (error) {
+            window[recenterBridgeName] = void 0;
+          }
+        }
       });
       async function initChildWebview() {
         if (typeof plus === "undefined" || !plus.webview) {
-          logAppMap("plus.webview unavailable");
           return;
         }
         await vue.nextTick();
         const rect = await getRect();
-        logAppMap("init rect", rect);
         if (!rect || rect.width <= 0 || rect.height <= 0) {
-          scheduleInitRetry(rect);
+          scheduleInitRetry();
           return;
         }
         initRetryCount = 0;
-        const current = plus.webview.currentWebview();
+        hasSyncedAfterLoad = false;
+        lastSyncedSnapshot = null;
+        const current = resolveHostWebview();
+        if (!current) {
+          throw new Error("host webview unavailable");
+        }
+        hostWebviewId = String(current.id || "");
         const url = resolveLocalMapUrl();
-        logAppMap("creating child webview", { id: childWebviewId, url });
         childWebview = plus.webview.create(url, childWebviewId, {
           position: "absolute",
           left: `${rect.left}px`,
@@ -13142,26 +16248,24 @@ ${infoText}`;
           cachemode: "noCache"
         });
         childWebview.addEventListener("loaded", () => {
-          logAppMap("child webview loaded");
-        });
-        childWebview.addEventListener("loading", () => {
-          logAppMap("child webview loading");
-        });
-        childWebview.addEventListener("rendering", () => {
-          logAppMap("child webview rendering");
+          hasSyncedAfterLoad = true;
+          updateBounds().finally(() => {
+            syncMapState({ forceFull: true });
+          });
         });
         childWebview.addEventListener("rendered", () => {
-          logAppMap("child webview rendered");
-        });
-        childWebview.addEventListener("error", (event) => {
-          logAppMap("child webview error", event);
+          if (!hasSyncedAfterLoad) {
+            hasSyncedAfterLoad = true;
+            updateBounds().finally(() => {
+              syncMapState({ forceFull: true });
+            });
+          }
         });
         current.append(childWebview);
-        childWebview.show("none");
-        logAppMap("child webview appended and shown");
+        syncChildVisibility(props.overlayActive);
         syncTimer = setTimeout(() => {
           updateBounds().finally(() => {
-            syncMapState();
+            syncMapState({ forceFull: true });
           });
         }, 600);
       }
@@ -13170,45 +16274,69 @@ ${infoText}`;
         if (hasAmapKey()) {
           query.push(`key=${encodeURIComponent(AMAP_WEB_KEY)}`);
         }
-        query.push(`mode=${encodeURIComponent(String(props.mapModeKey || "satellite"))}`);
-        const suffix = query.length ? `?${query.join("&")}` : "";
-        if (typeof plus === "undefined" || !plus.io || typeof plus.io.convertLocalFileSystemURL !== "function") {
-          logAppMap("convertLocalFileSystemURL unavailable, fallback raw path");
-          return `_www/static/hiking-amap.html${suffix}`;
+        if (hasAmapSecurityCode()) {
+          query.push(`securityJsCode=${encodeURIComponent(AMAP_SECURITY_JS_CODE)}`);
         }
-        const absolutePath = plus.io.convertLocalFileSystemURL("_www/static/hiking-amap.html");
-        logAppMap("resolved local map path", absolutePath);
-        return `${absolutePath || "_www/static/hiking-amap.html"}${suffix}`;
+        if (hostWebviewId) {
+          query.push(`hostWebviewId=${encodeURIComponent(hostWebviewId)}`);
+        }
+        query.push(`refreshBridge=${encodeURIComponent(refreshBridgeName)}`);
+        query.push(`recenterBridge=${encodeURIComponent(recenterBridgeName)}`);
+        query.push(`refreshEvent=${encodeURIComponent(refreshEventName)}`);
+        query.push(`recenterEvent=${encodeURIComponent(recenterEventName)}`);
+        query.push(`mode=${encodeURIComponent(String(props.mapModeKey || "normal"))}`);
+        const suffix = query.length ? `?${query.join("&")}` : "";
+        return `_www/static/hiking-amap.html${suffix}`;
       }
       function scheduleInitRetry(rect) {
         if (childWebview) {
           return;
         }
         if (initRetryCount >= MAX_INIT_RETRIES) {
-          logAppMap("invalid rect, max retries reached", rect);
           return;
         }
         initRetryCount += 1;
         const delay = initRetryCount <= 3 ? 180 : 300;
-        logAppMap(`invalid rect, retry ${initRetryCount}/${MAX_INIT_RETRIES}`, rect);
         if (initRetryTimer) {
           clearTimeout(initRetryTimer);
         }
         initRetryTimer = setTimeout(() => {
           initRetryTimer = null;
-          initChildWebview().catch((error) => {
-            logAppMap("retry init failed", (error == null ? void 0 : error.message) || error);
+          initChildWebview().catch(() => {
           });
         }, delay);
+      }
+      function resolveHostWebview() {
+        if (typeof plus === "undefined" || !plus.webview) {
+          return null;
+        }
+        const pages = typeof getCurrentPages === "function" ? getCurrentPages() : [];
+        const page = Array.isArray(pages) && pages.length ? pages[pages.length - 1] : null;
+        const pageWebview = page && typeof page.$getAppWebview === "function" ? page.$getAppWebview() : null;
+        if (pageWebview) {
+          return pageWebview;
+        }
+        return plus.webview.currentWebview() || null;
+      }
+      function syncChildVisibility(hidden) {
+        if (!childWebview) {
+          return;
+        }
+        try {
+          if (hidden) {
+            childWebview.hide("none");
+            return;
+          }
+          childWebview.show("none");
+        } catch (error) {
+        }
       }
       async function updateBounds() {
         if (!childWebview) {
           return;
         }
         const rect = await getRect();
-        logAppMap("updateBounds rect", rect);
         if (!rect || rect.width <= 0 || rect.height <= 0) {
-          logAppMap("updateBounds skipped because rect invalid");
           return;
         }
         childWebview.setStyle({
@@ -13230,12 +16358,23 @@ ${infoText}`;
       function getCurrentInstanceProxy() {
         return (instance == null ? void 0 : instance.proxy) || null;
       }
-      function syncMapState() {
+      function syncMapState(options = {}) {
+        syncMapStateInternal({ forceFull: Boolean(options.forceFull) });
+      }
+      function scheduleStateSync() {
+        if (stateSyncTimer) {
+          clearTimeout(stateSyncTimer);
+        }
+        stateSyncTimer = setTimeout(() => {
+          stateSyncTimer = null;
+          syncMapStateInternal({ forceFull: false });
+        }, 16);
+      }
+      function syncMapStateInternal(options = {}) {
         var _a, _b;
         if (!childWebview) {
-          logAppMap("syncMapState skipped, child webview missing");
           if (!initRetryTimer && initRetryCount < MAX_INIT_RETRIES) {
-            scheduleInitRetry({ reason: "sync-without-webview" });
+            scheduleInitRetry();
           }
           return;
         }
@@ -13243,32 +16382,110 @@ ${infoText}`;
           longitude: Number(((_a = props.mapCenter) == null ? void 0 : _a.longitude) || 0),
           latitude: Number(((_b = props.mapCenter) == null ? void 0 : _b.latitude) || 0),
           zoom: Math.max(8, Math.min(18, Math.round(Number(props.mapScale || 16)))),
-          mode: String(props.mapModeKey || "satellite"),
+          mode: String(props.mapModeKey || "normal"),
           markers: extractMarkerPoints(props.mapMarkers),
-          track: extractTrackPoints(props.mapPolyline)
+          track: extractTrackSegments(props.mapPolyline)
         };
-        logAppMap("syncMapState payload", state);
-        childWebview.evalJS(`window.updateMapState && window.updateMapState(${JSON.stringify(state)})`);
+        formatAppLog("log", "at pages/hiking/components/AppAmapWebview.vue:344", "[hiking-map-sync] sync state", {
+          zoom: state.zoom,
+          mode: state.mode,
+          markerCount: state.markers.length,
+          segmentCount: state.track.length,
+          pointCount: state.track.reduce((total, segment) => total + segment.length, 0),
+          longitude: state.longitude,
+          latitude: state.latitude
+        });
+        const nextSnapshot = buildSnapshot(state);
+        if (options.forceFull || !lastSyncedSnapshot) {
+          runChildCommand("initMapState", state);
+          lastSyncedSnapshot = nextSnapshot;
+          return;
+        }
+        const previous = lastSyncedSnapshot;
+        const trackSignatureChanged = previous.trackSignature !== nextSnapshot.trackSignature;
+        const modeChanged = state.mode !== previous.mode;
+        const zoomChanged = state.zoom !== previous.zoom;
+        if (modeChanged) {
+          runChildCommand("initMapState", state);
+          lastSyncedSnapshot = nextSnapshot;
+          return;
+        }
+        if (trackSignatureChanged) {
+          runChildCommand("replaceTrack", state.track);
+        }
+        if (zoomChanged || shouldUpdateViewport(previous, state)) {
+          runChildCommand("updateViewport", {
+            longitude: state.longitude,
+            latitude: state.latitude,
+            zoom: state.zoom,
+            mode: state.mode,
+            markers: state.markers
+          });
+        }
+        lastSyncedSnapshot = nextSnapshot;
       }
-      function extractTrackPoints(polyline) {
-        const line = Array.isArray(polyline) ? polyline[0] : null;
-        const points = Array.isArray(line == null ? void 0 : line.points) ? line.points : [];
-        return points.map((item) => ({
-          longitude: Number(item.longitude),
-          latitude: Number(item.latitude)
-        })).filter((item) => Number.isFinite(item.longitude) && Number.isFinite(item.latitude));
+      function buildSnapshot(state) {
+        const lastTrackSegment = Array.isArray(state.track[state.track.length - 1]) ? state.track[state.track.length - 1] : [];
+        const lastTrackPoint = lastTrackSegment[lastTrackSegment.length - 1] || null;
+        const firstMarker = state.markers[0] || null;
+        const trackPointCount = state.track.reduce((total, segment) => total + (Array.isArray(segment) ? segment.length : 0), 0);
+        return {
+          longitude: state.longitude,
+          latitude: state.latitude,
+          zoom: state.zoom,
+          mode: state.mode,
+          trackLength: state.track.length,
+          trackPointCount,
+          lastTrackLongitude: Number((lastTrackPoint == null ? void 0 : lastTrackPoint.longitude) || 0),
+          lastTrackLatitude: Number((lastTrackPoint == null ? void 0 : lastTrackPoint.latitude) || 0),
+          trackSignature: JSON.stringify(state.track),
+          markerSignature: JSON.stringify(firstMarker || null)
+        };
+      }
+      function shouldUpdateViewport(previous, state) {
+        if (Math.abs(previous.longitude - state.longitude) > 1e-6) {
+          return true;
+        }
+        if (Math.abs(previous.latitude - state.latitude) > 1e-6) {
+          return true;
+        }
+        return previous.markerSignature !== JSON.stringify(state.markers[0] || null);
+      }
+      function runChildCommand(name, payload) {
+        if (!childWebview) {
+          return;
+        }
+        try {
+          childWebview.evalJS(`window.${name} && window.${name}(${JSON.stringify(payload)})`);
+        } catch (error) {
+        }
+      }
+      function extractTrackSegments(polyline) {
+        if (!Array.isArray(polyline)) {
+          return [];
+        }
+        return polyline.map((line) => {
+          const points = Array.isArray(line == null ? void 0 : line.points) ? line.points : [];
+          return points.map((item) => ({
+            longitude: Number(item.longitude),
+            latitude: Number(item.latitude)
+          })).filter((item) => Number.isFinite(item.longitude) && Number.isFinite(item.latitude));
+        }).filter((segment) => segment.length);
       }
       function extractMarkerPoints(markers) {
         return Array.isArray(markers) ? markers.map((item) => {
-          var _a;
+          var _a, _b;
           return {
             longitude: Number(item.longitude),
             latitude: Number(item.latitude),
-            label: ((_a = item == null ? void 0 : item.callout) == null ? void 0 : _a.content) || ""
+            label: ((_a = item == null ? void 0 : item.callout) == null ? void 0 : _a.content) || "",
+            avatarUrl: String((item == null ? void 0 : item.avatarUrl) || ""),
+            avatarInitial: String((item == null ? void 0 : item.avatarInitial) || "游").slice(0, 1) || "游",
+            statusText: String((item == null ? void 0 : item.statusText) || ((_b = item == null ? void 0 : item.callout) == null ? void 0 : _b.content) || "当前位置")
           };
         }).filter((item) => Number.isFinite(item.longitude) && Number.isFinite(item.latitude)) : [];
       }
-      const __returned__ = { props, hostRef, instance, get childWebview() {
+      const __returned__ = { emit, props, hostRef, instance, get childWebview() {
         return childWebview;
       }, set childWebview(v) {
         childWebview = v;
@@ -13276,10 +16493,18 @@ ${infoText}`;
         return childWebviewId;
       }, set childWebviewId(v) {
         childWebviewId = v;
+      }, refreshBridgeName, recenterBridgeName, refreshEventName, recenterEventName, get hostWebviewId() {
+        return hostWebviewId;
+      }, set hostWebviewId(v) {
+        hostWebviewId = v;
       }, get syncTimer() {
         return syncTimer;
       }, set syncTimer(v) {
         syncTimer = v;
+      }, get stateSyncTimer() {
+        return stateSyncTimer;
+      }, set stateSyncTimer(v) {
+        stateSyncTimer = v;
       }, get initRetryTimer() {
         return initRetryTimer;
       }, set initRetryTimer(v) {
@@ -13288,10 +16513,22 @@ ${infoText}`;
         return initRetryCount;
       }, set initRetryCount(v) {
         initRetryCount = v;
-      }, MAX_INIT_RETRIES, logAppMap, initChildWebview, resolveLocalMapUrl, scheduleInitRetry, updateBounds, getRect, getCurrentInstanceProxy, syncMapState, extractTrackPoints, extractMarkerPoints, getCurrentInstance: vue.getCurrentInstance, nextTick: vue.nextTick, onBeforeUnmount: vue.onBeforeUnmount, onMounted: vue.onMounted, ref: vue.ref, watch: vue.watch, get AMAP_WEB_KEY() {
+      }, get hasSyncedAfterLoad() {
+        return hasSyncedAfterLoad;
+      }, set hasSyncedAfterLoad(v) {
+        hasSyncedAfterLoad = v;
+      }, get lastSyncedSnapshot() {
+        return lastSyncedSnapshot;
+      }, set lastSyncedSnapshot(v) {
+        lastSyncedSnapshot = v;
+      }, MAX_INIT_RETRIES, handleRefreshBridge, handleRecenterBridge, initChildWebview, resolveLocalMapUrl, scheduleInitRetry, resolveHostWebview, syncChildVisibility, updateBounds, getRect, getCurrentInstanceProxy, syncMapState, scheduleStateSync, syncMapStateInternal, buildSnapshot, shouldUpdateViewport, runChildCommand, extractTrackSegments, extractMarkerPoints, getCurrentInstance: vue.getCurrentInstance, nextTick: vue.nextTick, onBeforeUnmount: vue.onBeforeUnmount, onMounted: vue.onMounted, ref: vue.ref, watch: vue.watch, get AMAP_SECURITY_JS_CODE() {
+        return AMAP_SECURITY_JS_CODE;
+      }, get AMAP_WEB_KEY() {
         return AMAP_WEB_KEY;
       }, get hasAmapKey() {
         return hasAmapKey;
+      }, get hasAmapSecurityCode() {
+        return hasAmapSecurityCode;
       } };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
@@ -13330,6 +16567,14 @@ ${infoText}`;
       offlineHint: {
         type: String,
         default: ""
+      },
+      overlayActive: {
+        type: Boolean,
+        default: false
+      },
+      offlinePackId: {
+        type: String,
+        default: ""
       }
     },
     emits: ["refresh", "recenter", "toggle-track", "zoom-in", "zoom-out"],
@@ -13347,12 +16592,57 @@ ${infoText}`;
       const amapMapCenter = vue.computed(() => convertPointToAmap(storeMapCenter.value));
       const amapMapPolyline = vue.computed(() => convertPolylineToAmap(storeMapPolyline.value));
       const amapMapMarkers = vue.computed(() => convertMarkersToAmap(storeMapMarkers.value));
+      const onlineMapModeKey = vue.computed(() => "normal");
       const h5MapReady = vue.computed(() => storeHasMapLocation.value && hasAmapKey());
+      const offlinePackRecord = vue.computed(() => getOfflineTilePack(props.offlinePackId));
+      const offlinePackSummary = vue.computed(() => getOfflineTilePackSummary(props.offlinePackId));
+      const offlinePackReady = vue.computed(() => offlinePackSummary.value.ready);
+      const offlineMapModeKey = vue.computed(() => {
+        var _a;
+        const packMode = String(((_a = offlinePackRecord.value) == null ? void 0 : _a.mode) || "").toLowerCase();
+        if (packMode === "imagery") {
+          return "satellite";
+        }
+        if (packMode === "terrain") {
+          return "terrain";
+        }
+        if (packMode === "vector") {
+          return "normal";
+        }
+        return props.mapModeKey;
+      });
       const appOnlineMapReady = vue.computed(() => {
         return storeHasMapLocation.value && !props.isOffline && hasAmapKey() && hasAppMapSupport();
       });
-      const appOfflineMapReady = vue.computed(() => storeHasMapLocation.value && hasOfflineMapSupport());
+      const appOfflineMapReady = vue.computed(() => {
+        if (!storeHasMapLocation.value || !hasOfflineMapSupport()) {
+          return false;
+        }
+        if (!props.isOffline) {
+          return true;
+        }
+        return offlinePackReady.value;
+      });
       const showMapPlaceholder = vue.computed(() => !storeHasMapLocation.value || !hasRenderableMap());
+      const showOnlineRefresh = vue.computed(() => h5MapReady.value);
+      const mapPlaceholderTitle = vue.computed(() => {
+        if (!storeHasMapLocation.value) {
+          return "等待定位中";
+        }
+        if (props.isOffline && !offlinePackReady.value) {
+          return "离线底图未准备";
+        }
+        return "地图暂不可用";
+      });
+      const mapPlaceholderDesc = vue.computed(() => {
+        if (!storeHasMapLocation.value) {
+          return "已接入原生 GPS 定位与徒步地图桥接，获取到位置后会显示真实地图与轨迹。";
+        }
+        if (props.isOffline && !offlinePackReady.value) {
+          return props.offlineHint || "当前已经断网，但还没有下载离线底图，所以无法显示地图。请联网后先下载离线底图。";
+        }
+        return props.offlineHint || "当前地图暂时不可用，请稍后重试。";
+      });
       function hasAppMapSupport() {
         return typeof plus !== "undefined" && Boolean(plus.webview);
       }
@@ -13400,10 +16690,14 @@ ${infoText}`;
           } : null;
         }).filter(Boolean);
       }
-      const __returned__ = { props, hikingStore, storeIsTracking, storeHasMapLocation, storeMapCenter, storeMapPolyline, storeMapMarkers, amapMapCenter, amapMapPolyline, amapMapMarkers, h5MapReady, appOnlineMapReady, appOfflineMapReady, showMapPlaceholder, hasAppMapSupport, hasOfflineMapSupport, hasRenderableMap, convertPointToAmap, convertPolylineToAmap, convertMarkersToAmap, computed: vue.computed, AppAmapWebview, HikingTileMapCompat, get storeToRefs() {
+      const __returned__ = { props, hikingStore, storeIsTracking, storeHasMapLocation, storeMapCenter, storeMapPolyline, storeMapMarkers, amapMapCenter, amapMapPolyline, amapMapMarkers, onlineMapModeKey, h5MapReady, offlinePackRecord, offlinePackSummary, offlinePackReady, offlineMapModeKey, appOnlineMapReady, appOfflineMapReady, showMapPlaceholder, showOnlineRefresh, mapPlaceholderTitle, mapPlaceholderDesc, hasAppMapSupport, hasOfflineMapSupport, hasRenderableMap, convertPointToAmap, convertPolylineToAmap, convertMarkersToAmap, computed: vue.computed, AppAmapWebview, HikingTileMapCompat, get storeToRefs() {
         return storeToRefs;
       }, get wgs84ToGcj02() {
         return wgs84ToGcj02;
+      }, get getOfflineTilePack() {
+        return getOfflineTilePack;
+      }, get getOfflineTilePackSummary() {
+        return getOfflineTilePackSummary;
       }, get hasAmapKey() {
         return hasAmapKey;
       }, get useHikingStore() {
@@ -13422,57 +16716,81 @@ ${infoText}`;
         "map-scale": $props.mapScale,
         "map-polyline": $setup.amapMapPolyline,
         "map-markers": $setup.amapMapMarkers,
-        "map-mode-key": $props.mapModeKey
-      }, null, 8, ["map-center", "map-scale", "map-polyline", "map-markers", "map-mode-key"])) : $setup.appOfflineMapReady ? (vue.openBlock(), vue.createBlock($setup["HikingTileMapCompat"], {
+        "map-mode-key": $setup.onlineMapModeKey,
+        "overlay-active": $props.overlayActive,
+        onRefresh: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("refresh")),
+        onRecenter: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("recenter"))
+      }, null, 8, ["map-center", "map-scale", "map-polyline", "map-markers", "map-mode-key", "overlay-active"])) : $setup.appOfflineMapReady ? (vue.openBlock(), vue.createBlock($setup["HikingTileMapCompat"], {
         key: 1,
         class: "live-map",
         "map-center": $setup.storeMapCenter,
         "map-scale": $props.mapScale,
         "map-polyline": $setup.storeMapPolyline,
         "map-markers": $setup.storeMapMarkers,
-        "map-mode-key": $props.mapModeKey
-      }, null, 8, ["map-center", "map-scale", "map-polyline", "map-markers", "map-mode-key"])) : vue.createCommentVNode("v-if", true),
+        "map-mode-key": $setup.offlineMapModeKey,
+        "offline-pack-id": $props.offlinePackId
+      }, null, 8, ["map-center", "map-scale", "map-polyline", "map-markers", "map-mode-key", "offline-pack-id"])) : vue.createCommentVNode("v-if", true),
       $setup.showMapPlaceholder ? (vue.openBlock(), vue.createElementBlock("view", {
         key: 2,
         class: "map-placeholder"
       }, [
         vue.createElementVNode("view", { class: "map-fallback-copy" }, [
-          vue.createElementVNode("text", { class: "fallback-title" }, "等待定位中"),
-          vue.createElementVNode("text", { class: "fallback-desc" }, "已接入原生 GPS 定位与徒步地图桥接，获取到位置后会显示真实地图与轨迹。")
+          vue.createElementVNode(
+            "text",
+            { class: "fallback-title" },
+            vue.toDisplayString($setup.mapPlaceholderTitle),
+            1
+            /* TEXT */
+          ),
+          vue.createElementVNode(
+            "text",
+            { class: "fallback-desc" },
+            vue.toDisplayString($setup.mapPlaceholderDesc),
+            1
+            /* TEXT */
+          )
         ])
       ])) : vue.createCommentVNode("v-if", true),
-      vue.createElementVNode("view", { class: "map-tools" }, [
-        vue.createElementVNode("view", { class: "zoom-group" }, [
-          vue.createElementVNode("view", {
-            class: "zoom-btn",
-            onClick: _cache[0] || (_cache[0] = ($event) => _ctx.$emit("zoom-in"))
-          }, [
-            vue.createElementVNode("text", { class: "zoom-symbol" }, "+")
-          ]),
-          vue.createElementVNode("view", {
-            class: "zoom-btn",
-            onClick: _cache[1] || (_cache[1] = ($event) => _ctx.$emit("zoom-out"))
-          }, [
-            vue.createElementVNode("text", { class: "zoom-symbol" }, "-")
-          ])
+      vue.createElementVNode("view", { class: "zoom-group" }, [
+        vue.createElementVNode("view", {
+          class: "zoom-btn",
+          onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("zoom-in"))
+        }, [
+          vue.createElementVNode("text", { class: "zoom-symbol" }, "+")
         ]),
         vue.createElementVNode("view", {
+          class: "zoom-btn",
+          onClick: _cache[3] || (_cache[3] = ($event) => _ctx.$emit("zoom-out"))
+        }, [
+          vue.createElementVNode("text", { class: "zoom-symbol" }, "-")
+        ])
+      ]),
+      $setup.showOnlineRefresh ? (vue.openBlock(), vue.createElementBlock("view", {
+        key: 3,
+        class: "online-refresh-btn",
+        onClick: _cache[4] || (_cache[4] = ($event) => _ctx.$emit("refresh"))
+      }, [
+        vue.createElementVNode("text", { class: "online-refresh-icon" }, "刷"),
+        vue.createElementVNode("text", { class: "online-refresh-text" }, "刷新位置")
+      ])) : vue.createCommentVNode("v-if", true),
+      vue.createElementVNode("view", { class: "map-tools" }, [
+        vue.createElementVNode("view", {
           class: "tool-btn",
-          onClick: _cache[2] || (_cache[2] = ($event) => _ctx.$emit("refresh"))
+          onClick: _cache[5] || (_cache[5] = ($event) => _ctx.$emit("refresh"))
         }, [
           vue.createElementVNode("text", { class: "icon" }, "刷"),
           vue.createElementVNode("text", { class: "text" }, "定位刷新")
         ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
-          onClick: _cache[3] || (_cache[3] = ($event) => _ctx.$emit("recenter"))
+          onClick: _cache[6] || (_cache[6] = ($event) => _ctx.$emit("recenter"))
         }, [
           vue.createElementVNode("text", { class: "icon" }, "回"),
           vue.createElementVNode("text", { class: "text" }, "回到当前")
         ]),
         vue.createElementVNode("view", {
           class: "tool-btn",
-          onClick: _cache[4] || (_cache[4] = ($event) => _ctx.$emit("toggle-track"))
+          onClick: _cache[7] || (_cache[7] = ($event) => _ctx.$emit("toggle-track"))
         }, [
           vue.createElementVNode("text", { class: "icon" }, "记"),
           vue.createElementVNode(
@@ -13499,6 +16817,10 @@ ${infoText}`;
         type: Boolean,
         default: false
       },
+      hasTrackSession: {
+        type: Boolean,
+        default: false
+      },
       hasTrackPoints: {
         type: Boolean,
         default: false
@@ -13514,9 +16836,17 @@ ${infoText}`;
       emergencyContactPhones: {
         type: Array,
         default: () => []
+      },
+      offlinePackActionText: {
+        type: String,
+        default: "下载离线底图"
+      },
+      offlinePackBusy: {
+        type: Boolean,
+        default: false
       }
     },
-    emits: ["toggle-track", "toggle-guard", "sos-message", "finish-track", "clear-track"],
+    emits: ["toggle-track", "toggle-guard", "sos-message", "finish-track", "clear-track", "sos-visibility-change", "offline-pack-action"],
     setup(__props, { expose: __expose, emit: __emit }) {
       __expose();
       const props = __props;
@@ -13527,12 +16857,26 @@ ${infoText}`;
         const phones = props.emergencyContactPhones.join(" / ");
         return phones ? `${props.emergencyContactName} · ${phones}` : props.emergencyContactName;
       });
+      const primaryTrackActionText = vue.computed(() => {
+        if (props.isTracking) {
+          return "暂停";
+        }
+        return props.hasTrackSession ? "继续" : "开始";
+      });
+      const primaryTrackHintText = vue.computed(() => {
+        if (props.isTracking) {
+          return "点按暂停，长按结束保存";
+        }
+        return props.hasTrackSession ? "点按继续记录" : "点按开始记录";
+      });
       let sosLoopToken = 0;
       function toggleSosMenu() {
-        isSosMenuOpen.value = !isSosMenuOpen.value;
+        openNativeSosSheet();
+        return;
       }
       function closeSosMenu() {
         isSosMenuOpen.value = false;
+        emit("sos-visibility-change", false);
       }
       async function handleFlashlightAction() {
         await toggleSosFlash();
@@ -13542,17 +16886,41 @@ ${infoText}`;
         emit("sos-message");
         closeSosMenu();
       }
-      function handleFinishLongPress() {
-        if (!props.isTracking) {
+      function openNativeSosSheet() {
+        if (typeof plus === "undefined" || !plus.nativeUI || typeof plus.nativeUI.actionSheet !== "function") {
+          isSosMenuOpen.value = !isSosMenuOpen.value;
+          emit("sos-visibility-change", isSosMenuOpen.value);
           return;
         }
-        emit("finish-track");
+        plus.nativeUI.actionSheet({
+          title: "紧急呼救",
+          cancel: "取消",
+          buttons: [
+            { title: isSosFlashing.value ? "停止手电筒求救" : "手电筒求救" },
+            { title: "紧急短信" }
+          ]
+        }, async (event) => {
+          const index = Number((event == null ? void 0 : event.index) || 0);
+          if (index === 1) {
+            await handleFlashlightAction();
+            return;
+          }
+          if (index === 2) {
+            handleSmsAction();
+          }
+        });
       }
       function handleClearTrack() {
         if (!props.hasTrackPoints && !props.isTracking) {
           return;
         }
         emit("clear-track");
+      }
+      function handleFinishLongPress() {
+        if (!props.hasTrackSession) {
+          return;
+        }
+        emit("finish-track");
       }
       async function toggleSosFlash() {
         if (isSosFlashing.value) {
@@ -13579,7 +16947,7 @@ ${infoText}`;
           }
         } catch (error) {
           if ((error == null ? void 0 : error.message) !== "SOS stopped") {
-            formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:171", "[hiking-sos]", (error == null ? void 0 : error.message) || error);
+            formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:242", "[hiking-sos]", (error == null ? void 0 : error.message) || error);
           }
         } finally {
           if (token === sosLoopToken) {
@@ -13629,7 +16997,7 @@ ${infoText}`;
           }
           return true;
         } catch (error) {
-          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:226", "[hiking-sos] prepare torch failed", (error == null ? void 0 : error.message) || error);
+          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:297", "[hiking-sos] prepare torch failed", (error == null ? void 0 : error.message) || error);
           uni.showToast({
             title: "手电筒不可用，请检查权限或摄像头占用",
             icon: "none",
@@ -13667,7 +17035,7 @@ ${infoText}`;
           }
           cameraManager.setTorchMode(cameraId, Boolean(enabled));
         } catch (error) {
-          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:271", "[hiking-sos] set torch failed", (error == null ? void 0 : error.message) || error);
+          formatAppLog("warn", "at pages/hiking/components/HikingBottomControls.vue:342", "[hiking-sos] set torch failed", (error == null ? void 0 : error.message) || error);
         }
       }
       function getCameraManager() {
@@ -13691,11 +17059,11 @@ ${infoText}`;
         closeSosMenu();
         stopSosFlash();
       });
-      const __returned__ = { props, emit, SHORT_ON_MS, LONG_ON_MS, OFF_MS, LETTER_GAP_MS, CYCLE_GAP_MS, isSosFlashing, isSosMenuOpen, emergencySubtitle, get sosLoopToken() {
+      const __returned__ = { props, emit, SHORT_ON_MS, LONG_ON_MS, OFF_MS, LETTER_GAP_MS, CYCLE_GAP_MS, isSosFlashing, isSosMenuOpen, emergencySubtitle, primaryTrackActionText, primaryTrackHintText, get sosLoopToken() {
         return sosLoopToken;
       }, set sosLoopToken(v) {
         sosLoopToken = v;
-      }, toggleSosMenu, closeSosMenu, handleFlashlightAction, handleSmsAction, handleFinishLongPress, handleClearTrack, toggleSosFlash, runSosLoop, playLetter, flashPulse, stopSosFlash, prepareTorch, ensureActive, sleepIfActive, sleep, setTorchEnabled, getCameraManager, getPrimaryCameraId, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref };
+      }, toggleSosMenu, closeSosMenu, handleFlashlightAction, handleSmsAction, openNativeSosSheet, handleClearTrack, handleFinishLongPress, toggleSosFlash, runSosLoop, playLetter, flashPulse, stopSosFlash, prepareTorch, ensureActive, sleepIfActive, sleep, setTorchEnabled, getCameraManager, getPrimaryCameraId, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref };
       Object.defineProperty(__returned__, "__isScriptSetup", { enumerable: false, value: true });
       return __returned__;
     }
@@ -13787,7 +17155,7 @@ ${infoText}`;
               vue.createElementVNode(
                 "text",
                 { class: "btn-text" },
-                vue.toDisplayString($props.isTracking ? "暂停" : "开始"),
+                vue.toDisplayString($setup.primaryTrackActionText),
                 1
                 /* TEXT */
               )
@@ -13798,7 +17166,7 @@ ${infoText}`;
           vue.createElementVNode(
             "text",
             { class: "main-action-tip" },
-            vue.toDisplayString($props.isTracking ? "长按结束并保存" : "点击开始记录"),
+            vue.toDisplayString($setup.primaryTrackHintText),
             1
             /* TEXT */
           )
@@ -13820,16 +17188,28 @@ ${infoText}`;
         ])
       ]),
       vue.createElementVNode("view", { class: "secondary-actions" }, [
-        vue.createElementVNode(
-          "view",
-          {
-            class: vue.normalizeClass(["secondary-btn", { disabled: !$props.hasTrackPoints && !$props.isTracking }]),
-            onClick: $setup.handleClearTrack
-          },
-          " 清空当前轨迹 ",
-          2
-          /* CLASS */
-        )
+        vue.createElementVNode("view", { class: "secondary-actions-row" }, [
+          vue.createElementVNode(
+            "view",
+            {
+              class: vue.normalizeClass(["secondary-btn", { disabled: !$props.hasTrackPoints && !$props.isTracking }]),
+              onClick: $setup.handleClearTrack
+            },
+            " 清空当前轨迹 ",
+            2
+            /* CLASS */
+          ),
+          vue.createElementVNode(
+            "view",
+            {
+              class: vue.normalizeClass(["secondary-btn", { disabled: $props.offlinePackBusy }]),
+              onClick: _cache[2] || (_cache[2] = ($event) => $setup.emit("offline-pack-action"))
+            },
+            vue.toDisplayString($props.offlinePackActionText),
+            3
+            /* TEXT, CLASS */
+          )
+        ])
       ])
     ]);
   }
@@ -14094,6 +17474,140 @@ ${infoText}`;
     const day = String(date.getDate()).padStart(2, "0");
     return `${year}-${month}-${day}`;
   }
+  const listeners = /* @__PURE__ */ new Set();
+  let isListening = false;
+  let compassBound = false;
+  let lastHeading = null;
+  let stopFallbackWatch = null;
+  function startCompass() {
+    if (isListening) {
+      return Promise.resolve();
+    }
+    bindCompassListener();
+    return startUniCompass().then((started) => {
+      if (started) {
+        isListening = true;
+        return true;
+      }
+      const fallbackStarted = startPlusCompassFallback();
+      isListening = fallbackStarted;
+      return fallbackStarted;
+    });
+  }
+  function stopCompass() {
+    if (!isListening) {
+      return Promise.resolve();
+    }
+    isListening = false;
+    if (typeof stopFallbackWatch === "function") {
+      stopFallbackWatch();
+      stopFallbackWatch = null;
+    }
+    return new Promise((resolve) => {
+      if (typeof uni.stopCompass !== "function") {
+        resolve();
+        return;
+      }
+      uni.stopCompass({ complete: resolve });
+    });
+  }
+  function subscribeCompass(callback) {
+    if (typeof callback !== "function") {
+      return () => {
+      };
+    }
+    listeners.add(callback);
+    if (Number.isFinite(lastHeading)) {
+      callback({ heading: lastHeading, text: formatCompassHeading(lastHeading), source: "sensor" });
+    }
+    return () => {
+      listeners.delete(callback);
+    };
+  }
+  function formatCompassHeading(value) {
+    const heading = normalizeHeading(value);
+    if (!Number.isFinite(heading)) {
+      return "方向校准中";
+    }
+    const segments = ["北", "东北", "东", "东南", "南", "西南", "西", "西北"];
+    const index = Math.round(heading / 45) % segments.length;
+    return `${segments[index]} ${Math.round(heading)}°`;
+  }
+  function bindCompassListener() {
+    if (compassBound || typeof uni.onCompassChange !== "function") {
+      return;
+    }
+    uni.onCompassChange((event) => {
+      emitHeading(normalizeHeading(event == null ? void 0 : event.direction), "sensor");
+    });
+    compassBound = true;
+  }
+  function startUniCompass() {
+    return new Promise((resolve) => {
+      if (typeof uni.startCompass !== "function") {
+        resolve(false);
+        return;
+      }
+      uni.startCompass({
+        success: () => resolve(true),
+        fail: () => resolve(false)
+      });
+    });
+  }
+  function startPlusCompassFallback() {
+    if (typeof plus === "undefined" || !plus.orientation || typeof plus.orientation.watchOrientation !== "function") {
+      return false;
+    }
+    try {
+      const watchId = plus.orientation.watchOrientation((event) => {
+        const nextHeading = normalizeHeading(
+          (event == null ? void 0 : event.magneticHeading) ?? (event == null ? void 0 : event.trueHeading) ?? (event == null ? void 0 : event.heading) ?? (event == null ? void 0 : event.direction) ?? (event == null ? void 0 : event.alpha)
+        );
+        emitHeading(nextHeading, "plus.orientation");
+      }, () => {
+      }, {
+        frequency: 200
+      });
+      stopFallbackWatch = () => {
+        try {
+          plus.orientation.clearWatch(watchId);
+        } catch (error) {
+        }
+      };
+      return true;
+    } catch (error) {
+      stopFallbackWatch = null;
+      return false;
+    }
+    return false;
+  }
+  function emitHeading(nextHeading, source) {
+    if (!Number.isFinite(nextHeading)) {
+      return;
+    }
+    if (Number.isFinite(lastHeading) && getHeadingDelta(lastHeading, nextHeading) < 2) {
+      return;
+    }
+    lastHeading = nextHeading;
+    const payload = {
+      heading: nextHeading,
+      text: formatCompassHeading(nextHeading),
+      source
+    };
+    listeners.forEach((listener) => listener(payload));
+  }
+  function normalizeHeading(value) {
+    const numeric = Number(value);
+    if (!Number.isFinite(numeric)) {
+      return NaN;
+    }
+    const normalized = (numeric % 360 + 360) % 360;
+    return normalized;
+  }
+  function getHeadingDelta(previous, next) {
+    const direct = Math.abs(next - previous);
+    return Math.min(direct, 360 - direct);
+  }
   const MIN_MAP_SCALE = 12;
   const MAX_MAP_SCALE = 18;
   const RECENTER_MAP_SCALE = 16;
@@ -14102,16 +17616,20 @@ ${infoText}`;
     setup(__props, { expose: __expose }) {
       __expose();
       const MAP_MODES = [
-        { key: "satellite", label: "高德卫星图" }
+        { key: "normal", label: "高德标准图" }
       ];
       const hikingStore = useHikingStore();
       const {
         isTracking,
+        hasTrackInProgress,
         currentLocation,
         trackPoints,
-        locationError
+        locationError,
+        trackSyncText,
+        trackSyncTone
       } = storeToRefs(hikingStore);
       const isGuardMode = vue.ref(false);
+      const isSosMenuOpen = vue.ref(false);
       const mapScale = vue.ref(15);
       const currentMapMode = vue.ref(MAP_MODES[0].key);
       const networkOnline = vue.ref(true);
@@ -14122,7 +17640,13 @@ ${infoText}`;
       const lastSunsetWarningLevel = vue.ref(0);
       const lastSunsetWarningDate = vue.ref("");
       let sunsetTimer = null;
+      let removeCompassListener = null;
       let hasPromptedLocationSettings = false;
+      const offlinePackId = DEFAULT_HIKING_TILE_PACK_ID;
+      const compassHeading = vue.ref(NaN);
+      const offlinePackRecord = vue.ref(getOfflineTilePack(offlinePackId));
+      const offlinePackBusy = vue.ref(false);
+      const offlinePackProgress = vue.ref(0);
       const coordinateText = vue.computed(() => {
         if (!currentLocation.value) {
           return locationError.value || "等待定位";
@@ -14155,6 +17679,14 @@ ${infoText}`;
       });
       const isOffline = vue.computed(() => !networkOnline.value);
       const distanceText = vue.computed(() => sumTrackDistanceKm(trackPoints.value).toFixed(2));
+      const compassText = vue.computed(() => {
+        var _a;
+        if (Number.isFinite(compassHeading.value)) {
+          return formatCompassHeading(compassHeading.value);
+        }
+        const bearing = Number(((_a = currentLocation.value) == null ? void 0 : _a.bearing) || 0);
+        return bearing > 0 ? `${formatCompassHeading(bearing)} · 行进方向` : "方向校准中";
+      });
       const mapModeLabel = vue.computed(() => {
         var _a;
         return ((_a = MAP_MODES.find((item) => item.key === currentMapMode.value)) == null ? void 0 : _a.label) || "标准地图";
@@ -14229,13 +17761,36 @@ ${infoText}`;
         return [emergency.primaryPhone, emergency.backupPhone].filter(Boolean);
       });
       const offlineHint = vue.computed(() => {
+        var _a;
+        const packReady = ((_a = offlinePackRecord.value) == null ? void 0 : _a.status) === "ready";
         if (isOffline.value) {
-          return "离线时仍可继续使用 GPS 定位，但高德卫星图需要联网加载。";
+          return packReady ? "当前优先读取已下载的离线瓦片包，断网后仍可继续查看路线与当前位置。" : "离线时仍可继续使用 GPS 定位，但未下载离线瓦片包时底图可能无法显示。";
         }
-        return "当前使用高德卫星图显示徒步位置与轨迹。";
+        return packReady ? "当前使用高德标准地图；断网后可自动切换到本地离线瓦片包。" : "当前使用高德标准地图显示徒步位置与轨迹。";
       });
+      const offlinePackActionText = vue.computed(() => {
+        if (offlinePackBusy.value) {
+          const progress = Math.round(Number(offlinePackProgress.value || 0));
+          return progress > 0 ? `下载离线底图 ${progress}%` : "准备离线底图...";
+        }
+        const pack = offlinePackRecord.value;
+        return (pack == null ? void 0 : pack.status) === "ready" ? "管理离线底图" : "下载离线底图";
+      });
+      function resolveOfflineDownloadMode() {
+        if (currentMapMode.value === "terrain") {
+          return "terrain";
+        }
+        if (currentMapMode.value === "normal") {
+          return "vector";
+        }
+        return "imagery";
+      }
       onLoad(async () => {
         hikingStore.hydrate();
+        hikingStore.loadSavedTracks().catch(() => {
+        });
+        syncOfflinePackState();
+        bindCompassState();
         bindNetworkState();
         startSunsetTimer();
         if (!currentLocation.value) {
@@ -14321,7 +17876,7 @@ ${infoText}`;
       }
       async function refreshLocation() {
         try {
-          const location2 = await hikingStore.refreshLocation({
+          await hikingStore.refreshLocation({
             preferGpsWhenOffline: isOffline.value,
             appendWhenTracking: isTracking.value
           });
@@ -14335,14 +17890,15 @@ ${infoText}`;
           if (isTracking.value) {
             await hikingStore.stopTracking();
             uni.showToast({
-              title: "暂停追踪",
+              title: "已暂停记录",
               icon: "none"
             });
           } else {
+            const resumeTrack = hasTrackInProgress.value;
             await hikingStore.startTracking();
             await refreshLocation();
             uni.showToast({
-              title: "开始追踪",
+              title: resumeTrack ? "继续记录" : "开始记录",
               icon: "none"
             });
           }
@@ -14355,12 +17911,16 @@ ${infoText}`;
         }
       }
       async function handleFinishTrack() {
-        if (!isTracking.value) {
+        if (!hasTrackInProgress.value || trackPoints.value.length < 2) {
+          uni.showToast({
+            title: "至少记录两个有效点后再结束",
+            icon: "none"
+          });
           return;
         }
         uni.showModal({
           title: "结束并保存轨迹",
-          content: "长按后将结束本次徒步记录，并把轨迹保存到发布页可选列表。",
+          content: isTracking.value ? "结束后会停止本次记录，并把分段轨迹保存到发布页可选列表。" : "会把当前暂停中的分段轨迹保存到发布页可选列表。",
           confirmText: "结束保存",
           cancelText: "继续记录",
           success: async ({ confirm }) => {
@@ -14421,10 +17981,7 @@ ${infoText}`;
       }
       async function recenterMap() {
         mapScale.value = RECENTER_MAP_SCALE;
-        if (!currentLocation.value) {
-          await refreshLocation();
-          return;
-        }
+        await refreshLocation();
         uni.showToast({
           title: "已回到当前位置",
           icon: "none"
@@ -14506,6 +18063,9 @@ ${infoText}`;
           showCancel: false
         });
       }
+      function handleSosVisibilityChange(value) {
+        isSosMenuOpen.value = Boolean(value);
+      }
       function toggleGuard() {
         isGuardMode.value = !isGuardMode.value;
         if (isGuardMode.value) {
@@ -14521,6 +18081,128 @@ ${infoText}`;
           clearInterval(sunsetTimer);
           sunsetTimer = null;
         }
+        if (removeCompassListener) {
+          removeCompassListener();
+          removeCompassListener = null;
+        }
+        stopCompass().catch(() => {
+        });
+      }
+      function bindCompassState() {
+        if (!removeCompassListener) {
+          removeCompassListener = subscribeCompass((payload) => {
+            compassHeading.value = Number(payload == null ? void 0 : payload.heading);
+          });
+        }
+        startCompass().catch(() => {
+        });
+      }
+      function syncOfflinePackState() {
+        var _a;
+        offlinePackRecord.value = getOfflineTilePack(offlinePackId);
+        if (!offlinePackBusy.value) {
+          offlinePackProgress.value = Number(((_a = offlinePackRecord.value) == null ? void 0 : _a.progress) || 0);
+        }
+      }
+      async function handleOfflinePackAction() {
+        var _a;
+        if (offlinePackBusy.value) {
+          return;
+        }
+        syncOfflinePackState();
+        if (((_a = offlinePackRecord.value) == null ? void 0 : _a.status) === "ready") {
+          openOfflinePackManager();
+          return;
+        }
+        await startOfflinePackDownload();
+      }
+      function openOfflinePackManager() {
+        const pack = offlinePackRecord.value;
+        const sizeText = Number(pack == null ? void 0 : pack.sizeBytes) > 0 ? `，约 ${formatPackSize(pack.sizeBytes)}` : "";
+        uni.showActionSheet({
+          itemList: [`重新下载离线底图${sizeText}`, "删除离线底图"],
+          success: async ({ tapIndex }) => {
+            if (tapIndex === 0) {
+              await startOfflinePackDownload(true);
+            }
+            if (tapIndex === 1) {
+              await confirmDeleteOfflinePack();
+            }
+          }
+        });
+      }
+      async function startOfflinePackDownload(force = false) {
+        var _a;
+        if (!currentLocation.value && !trackPoints.value.length) {
+          uni.showToast({ title: "请先等待定位成功", icon: "none" });
+          return;
+        }
+        offlinePackBusy.value = true;
+        offlinePackProgress.value = 0;
+        try {
+          if (force && ((_a = offlinePackRecord.value) == null ? void 0 : _a.status) === "ready") {
+            await deleteOfflineTilePack(offlinePackId);
+          }
+          const plan = buildHikingTilePackPlan({
+            packId: offlinePackId,
+            name: "徒步当前区域离线底图",
+            points: trackPoints.value,
+            center: currentLocation.value,
+            minZoom: 12,
+            maxZoom: 16,
+            mode: resolveOfflineDownloadMode(),
+            paddingKm: 2.2
+          });
+          await downloadOfflineTilePack(plan, {
+            concurrency: 4,
+            onProgress: ({ progress }) => {
+              offlinePackProgress.value = progress;
+            }
+          });
+          syncOfflinePackState();
+          uni.showToast({ title: "离线底图已下载", icon: "none" });
+        } catch (error) {
+          syncOfflinePackState();
+          uni.showModal({
+            title: "下载失败",
+            content: (error == null ? void 0 : error.message) || "离线底图下载失败，请稍后重试。",
+            showCancel: false
+          });
+        } finally {
+          offlinePackBusy.value = false;
+        }
+      }
+      function confirmDeleteOfflinePack() {
+        uni.showModal({
+          title: "删除离线底图",
+          content: "确认删除当前徒步区域离线底图吗？删除后断网将无法显示本地瓦片。",
+          success: async ({ confirm }) => {
+            if (!confirm) {
+              return;
+            }
+            try {
+              await deleteOfflineTilePack(offlinePackId);
+              syncOfflinePackState();
+              uni.showToast({ title: "已删除离线底图", icon: "none" });
+            } catch (error) {
+              uni.showToast({
+                title: (error == null ? void 0 : error.message) || "删除失败",
+                icon: "none",
+                duration: 2500
+              });
+            }
+          }
+        });
+      }
+      function formatPackSize(bytes) {
+        const size = Number(bytes || 0);
+        if (size >= 1024 * 1024) {
+          return `${(size / (1024 * 1024)).toFixed(1)}MB`;
+        }
+        if (size >= 1024) {
+          return `${Math.round(size / 1024)}KB`;
+        }
+        return `${size}B`;
       }
       function startSunsetTimer() {
         nowTick.value = Date.now();
@@ -14626,15 +18308,19 @@ ${infoText}`;
           `高德链接：https://uri.amap.com/marker?position=${longitude},${latitude}&name=SOS位置`
         ].join("\n");
       }
-      const __returned__ = { MAP_MODES, MIN_MAP_SCALE, MAX_MAP_SCALE, RECENTER_MAP_SCALE, hikingStore, isTracking, currentLocation, trackPoints, locationError, isGuardMode, mapScale, currentMapMode, networkOnline, nowTick, lastGuardPromptAt, guardCooldownUntil, lastGuardSafeAt, lastSunsetWarningLevel, lastSunsetWarningDate, get sunsetTimer() {
+      const __returned__ = { MAP_MODES, MIN_MAP_SCALE, MAX_MAP_SCALE, RECENTER_MAP_SCALE, hikingStore, isTracking, hasTrackInProgress, currentLocation, trackPoints, locationError, trackSyncText, trackSyncTone, isGuardMode, isSosMenuOpen, mapScale, currentMapMode, networkOnline, nowTick, lastGuardPromptAt, guardCooldownUntil, lastGuardSafeAt, lastSunsetWarningLevel, lastSunsetWarningDate, get sunsetTimer() {
         return sunsetTimer;
       }, set sunsetTimer(v) {
         sunsetTimer = v;
+      }, get removeCompassListener() {
+        return removeCompassListener;
+      }, set removeCompassListener(v) {
+        removeCompassListener = v;
       }, get hasPromptedLocationSettings() {
         return hasPromptedLocationSettings;
       }, set hasPromptedLocationSettings(v) {
         hasPromptedLocationSettings = v;
-      }, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, mapModeLabel, headerModeText, sunsetInfo, sunsetCountdownText, sunsetTimeText, sunsetRiskLevel, stationaryRisk, guardStatusText, guardStatusLevel, emergencyContactName, emergencyContactPhones, offlineHint, bindNetworkState, refreshLocation, handleStart, handleFinishTrack, handleClearTrack, recenterMap, zoomInMap, zoomOutMap, clampMapScale, handleEmergencySms, toggleGuard, cleanup, startSunsetTimer, acknowledgeGuardSafe, maybePromptLocationSettings, getSunsetWarningLevel, showSunsetWarning, buildEmergencySmsBody, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, watch: vue.watch, get onLoad() {
+      }, offlinePackId, compassHeading, offlinePackRecord, offlinePackBusy, offlinePackProgress, coordinateText, gpsStatusText, altitudeText, accuracyText, isOffline, distanceText, compassText, mapModeLabel, headerModeText, sunsetInfo, sunsetCountdownText, sunsetTimeText, sunsetRiskLevel, stationaryRisk, guardStatusText, guardStatusLevel, emergencyContactName, emergencyContactPhones, offlineHint, offlinePackActionText, resolveOfflineDownloadMode, bindNetworkState, refreshLocation, handleStart, handleFinishTrack, handleClearTrack, recenterMap, zoomInMap, zoomOutMap, clampMapScale, handleEmergencySms, handleSosVisibilityChange, toggleGuard, cleanup, bindCompassState, syncOfflinePackState, handleOfflinePackAction, openOfflinePackManager, startOfflinePackDownload, confirmDeleteOfflinePack, formatPackSize, startSunsetTimer, acknowledgeGuardSafe, maybePromptLocationSettings, getSunsetWarningLevel, showSunsetWarning, buildEmergencySmsBody, computed: vue.computed, onBeforeUnmount: vue.onBeforeUnmount, ref: vue.ref, watch: vue.watch, get onLoad() {
         return onLoad;
       }, get onUnload() {
         return onUnload;
@@ -14650,6 +18336,16 @@ ${infoText}`;
         return formatSunsetTime;
       }, get getSunsetInfo() {
         return getSunsetInfo;
+      }, get buildHikingTilePackPlan() {
+        return buildHikingTilePackPlan;
+      }, get DEFAULT_HIKING_TILE_PACK_ID() {
+        return DEFAULT_HIKING_TILE_PACK_ID;
+      }, get deleteOfflineTilePack() {
+        return deleteOfflineTilePack;
+      }, get downloadOfflineTilePack() {
+        return downloadOfflineTilePack;
+      }, get getOfflineTilePack() {
+        return getOfflineTilePack;
       }, get formatCoordinate() {
         return formatCoordinate;
       }, get formatMetric() {
@@ -14658,6 +18354,14 @@ ${infoText}`;
         return sumTrackDistanceKm;
       }, get openAppPermissionSettings() {
         return openAppPermissionSettings;
+      }, get formatCompassHeading() {
+        return formatCompassHeading;
+      }, get startCompass() {
+        return startCompass;
+      }, get stopCompass() {
+        return stopCompass;
+      }, get subscribeCompass() {
+        return subscribeCompass;
       }, get useHikingStore() {
         return useHikingStore;
       } };
@@ -14674,37 +18378,47 @@ ${infoText}`;
         "altitude-text": $setup.altitudeText,
         "distance-text": $setup.distanceText,
         "accuracy-text": $setup.accuracyText,
+        "compass-text": $setup.compassText,
         "is-offline": $setup.isOffline,
         "mode-text": $setup.headerModeText,
         "sunset-countdown-text": $setup.sunsetCountdownText,
         "sunset-time-text": $setup.sunsetTimeText,
         "sunset-risk-level": $setup.sunsetRiskLevel,
         "guard-status-text": $setup.guardStatusText,
-        "guard-status-level": $setup.guardStatusLevel
-      }, null, 8, ["gps-status-text", "coordinate-text", "altitude-text", "distance-text", "accuracy-text", "is-offline", "mode-text", "sunset-countdown-text", "sunset-time-text", "sunset-risk-level", "guard-status-text", "guard-status-level"]),
+        "guard-status-level": $setup.guardStatusLevel,
+        "sync-status-text": $setup.trackSyncText,
+        "sync-status-tone": $setup.trackSyncTone
+      }, null, 8, ["gps-status-text", "coordinate-text", "altitude-text", "distance-text", "accuracy-text", "compass-text", "is-offline", "mode-text", "sunset-countdown-text", "sunset-time-text", "sunset-risk-level", "guard-status-text", "guard-status-level", "sync-status-text", "sync-status-tone"]),
       vue.createVNode($setup["HikingMapStage"], {
         "map-scale": $setup.mapScale,
         "map-mode-key": $setup.currentMapMode,
         "is-offline": $setup.isOffline,
         "offline-hint": $setup.offlineHint,
+        "overlay-active": $setup.isSosMenuOpen,
+        "offline-pack-id": $setup.offlinePackId,
         onRefresh: $setup.refreshLocation,
         onRecenter: $setup.recenterMap,
         onToggleTrack: $setup.handleStart,
         onZoomIn: $setup.zoomInMap,
         onZoomOut: $setup.zoomOutMap
-      }, null, 8, ["map-scale", "map-mode-key", "is-offline", "offline-hint"]),
+      }, null, 8, ["map-scale", "map-mode-key", "is-offline", "offline-hint", "overlay-active", "offline-pack-id"]),
       vue.createVNode($setup["HikingBottomControls"], {
         "is-tracking": $setup.isTracking,
+        "has-track-session": $setup.hasTrackInProgress,
         "has-track-points": Boolean($setup.trackPoints.length),
         "is-guard-mode": $setup.isGuardMode,
         "emergency-contact-name": $setup.emergencyContactName,
         "emergency-contact-phones": $setup.emergencyContactPhones,
+        "offline-pack-action-text": $setup.offlinePackActionText,
+        "offline-pack-busy": $setup.offlinePackBusy,
         onSosMessage: $setup.handleEmergencySms,
+        onSosVisibilityChange: $setup.handleSosVisibilityChange,
         onToggleTrack: $setup.handleStart,
         onFinishTrack: $setup.handleFinishTrack,
         onClearTrack: $setup.handleClearTrack,
-        onToggleGuard: $setup.toggleGuard
-      }, null, 8, ["is-tracking", "has-track-points", "is-guard-mode", "emergency-contact-name", "emergency-contact-phones"])
+        onToggleGuard: $setup.toggleGuard,
+        onOfflinePackAction: $setup.handleOfflinePackAction
+      }, null, 8, ["is-tracking", "has-track-session", "has-track-points", "is-guard-mode", "emergency-contact-name", "emergency-contact-phones", "offline-pack-action-text", "offline-pack-busy"])
     ]);
   }
   const PagesHikingIndex = /* @__PURE__ */ _export_sfc(_sfc_main$2, [["render", _sfc_render$1], ["__scopeId", "data-v-1a159d43"], ["__file", "F:/AI编程/遇见新疆_uniapp/pages/hiking/index.vue"]]);
@@ -14757,25 +18471,32 @@ ${infoText}`;
         editModalVisible.value = true;
       }
       async function saveProfile() {
-        var _a, _b, _c, _d, _e, _f, _g, _h;
+        var _a, _b, _c, _d, _e, _f, _g, _h, _i;
         const nickname = editNickname.value.trim();
-        if (!nickname || nickname === ((_a = currentUser.value) == null ? void 0 : _a.nickname)) {
+        formatAppLog("log", "at pages/settings/index.vue:132", "[settings-profile] save start", {
+          nickname,
+          currentNickname: ((_a = currentUser.value) == null ? void 0 : _a.nickname) || "",
+          hasToken: Boolean(authToken.value)
+        });
+        if (!nickname || nickname === ((_b = currentUser.value) == null ? void 0 : _b.nickname)) {
           editModalVisible.value = false;
           return;
         }
         try {
           const res = await updateUserProfile(authToken.value, { nickname });
+          formatAppLog("log", "at pages/settings/index.vue:143", "[settings-profile] save success", res);
           const merged = {
             ...currentUser.value,
             ...res.user,
-            avatar_url: ((_b = res.user) == null ? void 0 : _b.avatar_url) || ((_c = currentUser.value) == null ? void 0 : _c.avatar_url) || ((_d = currentUser.value) == null ? void 0 : _d.avatar) || "",
-            avatar: ((_e = res.user) == null ? void 0 : _e.avatar) || ((_f = res.user) == null ? void 0 : _f.avatar_url) || ((_g = currentUser.value) == null ? void 0 : _g.avatar) || ((_h = currentUser.value) == null ? void 0 : _h.avatar_url) || ""
+            avatar_url: ((_c = res.user) == null ? void 0 : _c.avatar_url) || ((_d = currentUser.value) == null ? void 0 : _d.avatar_url) || ((_e = currentUser.value) == null ? void 0 : _e.avatar) || "",
+            avatar: ((_f = res.user) == null ? void 0 : _f.avatar) || ((_g = res.user) == null ? void 0 : _g.avatar_url) || ((_h = currentUser.value) == null ? void 0 : _h.avatar) || ((_i = currentUser.value) == null ? void 0 : _i.avatar_url) || ""
           };
           saveAuthSession({ token: authToken.value, user: merged });
           currentUser.value = merged;
           editModalVisible.value = false;
           uni.showToast({ title: "昵称已更新", icon: "success" });
         } catch (e) {
+          formatAppLog("error", "at pages/settings/index.vue:155", "[settings-profile] save fail", e);
           uni.showToast({ title: e.message || "更新失败", icon: "none" });
         }
       }
@@ -14962,6 +18683,7 @@ ${infoText}`;
   __definePage("pages/destinations/index", PagesDestinationsIndex);
   __definePage("pages/guides/index", PagesGuidesIndex);
   __definePage("pages/guide-detail/index", PagesGuideDetailIndex);
+  __definePage("pages/track-preview/index", PagesTrackPreviewIndex);
   __definePage("pages/guide-publish/index", PagesGuidePublishIndex);
   __definePage("pages/ai-assistant/index", PagesAiAssistantIndex);
   __definePage("pages/account/index", PagesAccountIndex);
