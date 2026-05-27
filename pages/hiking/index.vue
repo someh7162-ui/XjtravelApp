@@ -16,6 +16,8 @@
       :sunset-risk-level="sunsetRiskLevel"
       :guard-status-text="guardStatusText"
       :guard-status-level="guardStatusLevel"
+      :check-in-status-text="safetyPlanStatus.statusText"
+      :check-in-status-level="safetyPlanStatus.level"
       :sync-status-text="trackSyncText"
       :sync-status-tone="trackSyncTone"
     />
@@ -43,6 +45,7 @@
       :emergency-contact-phones="emergencyContactPhones"
       :offline-pack-action-text="offlinePackActionText"
       :offline-pack-busy="offlinePackBusy"
+      :safety-plan-action-text="safetyPlanActionText"
       @sos-message="handleEmergencySms"
       @sos-visibility-change="handleSosVisibilityChange"
       @toggle-track="handleStart"
@@ -50,19 +53,37 @@
       @clear-track="handleClearTrack"
       @toggle-guard="toggleGuard"
       @offline-pack-action="handleOfflinePackAction"
+      @open-safety-plan="openSafetyPlan"
+    />
+
+    <HikingSafetyPlanSheet
+      :visible="safetyPlanVisible"
+      :plan="safetyPlan"
+      :status="safetyPlanStatus"
+      @close="safetyPlanVisible = false"
+      @save="handleSaveSafetyPlan"
+      @complete="handleCompleteSafetyPlan"
     />
   </view>
 </template>
 
 <script setup>
 import { computed, onBeforeUnmount, ref, watch } from 'vue'
-import { onLoad, onUnload } from '@dcloudio/uni-app'
+import { onLoad, onShow, onUnload } from '@dcloudio/uni-app'
 import { storeToRefs } from 'pinia'
 import HikingHeaderPanel from './components/HikingHeaderPanel.vue'
 import HikingMapStage from './components/HikingMapStage.vue'
 import HikingBottomControls from './components/HikingBottomControls.vue'
+import HikingSafetyPlanSheet from './components/HikingSafetyPlanSheet.vue'
 import { evaluateStationaryRisk, formatStationaryStatus } from '../../common/hiking-guard'
 import { hikingModeMock } from '../../common/hiking-mode'
+import {
+  activateHikingSafetyPlan,
+  completeHikingSafetyPlan,
+  evaluateHikingSafetyPlan,
+  formatSafetyPlanTime,
+  getHikingSafetyPlan,
+} from '../../common/hiking-safety-plan'
 import { formatSunsetTime, getSunsetInfo } from '../../common/sun-times'
 import {
   buildHikingTilePackPlan,
@@ -109,6 +130,9 @@ const guardCooldownUntil = ref(0)
 const lastGuardSafeAt = ref(0)
 const lastSunsetWarningLevel = ref(0)
 const lastSunsetWarningDate = ref('')
+const safetyPlan = ref(getHikingSafetyPlan())
+const safetyPlanVisible = ref(false)
+const lastSafetyPlanPromptAt = ref(0)
 let sunsetTimer = null
 let removeCompassListener = null
 let hasPromptedLocationSettings = false
@@ -205,10 +229,11 @@ const guardStatusLevel = computed(() => {
   }
   return 'safe'
 })
-const emergencyContactName = computed(() => hikingModeMock.emergency?.primaryName || '紧急联系人')
+const safetyPlanStatus = computed(() => evaluateHikingSafetyPlan(safetyPlan.value, nowTick.value))
+const safetyPlanActionText = computed(() => (safetyPlanStatus.value.active ? '查看安全报备' : '安全报备'))
+const emergencyContactName = computed(() => safetyPlan.value.contactName || '未配置紧急联系人')
 const emergencyContactPhones = computed(() => {
-  const emergency = hikingModeMock.emergency || {}
-  return [emergency.primaryPhone, emergency.backupPhone].filter(Boolean)
+  return [safetyPlan.value.primaryPhone, safetyPlan.value.backupPhone].filter(Boolean)
 })
 const offlineHint = computed(() => {
   const packReady = offlinePackRecord.value?.status === 'ready'
@@ -244,6 +269,9 @@ function resolveOfflineDownloadMode() {
 onLoad(async () => {
   hikingStore.hydrate()
   hikingStore.loadSavedTracks().catch(() => {})
+  hikingStore.ensureLiveLocation().catch((error) => {
+    locationError.value = error?.message || '定位监听启动失败'
+  })
   syncOfflinePackState()
   bindCompassState()
   bindNetworkState()
@@ -251,6 +279,10 @@ onLoad(async () => {
   if (!currentLocation.value) {
     await refreshLocation()
   }
+})
+
+onShow(() => {
+  safetyPlan.value = getHikingSafetyPlan()
 })
 
 watch(
@@ -310,6 +342,36 @@ watch(
       },
       fail: () => {
         guardCooldownUntil.value = Date.now() + 10 * 60000
+      },
+    })
+  }
+)
+
+watch(
+  () => [safetyPlanStatus.value.level, safetyPlanStatus.value.overdueMinutes, safetyPlan.value.expectedReturnAt],
+  ([level, overdueMinutes]) => {
+    if (level !== 'danger') {
+      return
+    }
+
+    const currentTime = nowTick.value
+    if (currentTime - Number(lastSafetyPlanPromptAt.value || 0) < 10 * 60000) {
+      return
+    }
+
+    lastSafetyPlanPromptAt.value = currentTime
+    uni.showModal({
+      title: '安全报备已逾期',
+      content: `你已超过预计返程时间约 ${overdueMinutes} 分钟。确认安全可结束报备；如需协助，请立即打开 SOS 短信。`,
+      confirmText: '发送 SOS',
+      cancelText: '我已安全',
+      success: ({ confirm }) => {
+        if (confirm) {
+          handleEmergencySms()
+          return
+        }
+
+        handleCompleteSafetyPlan()
       },
     })
   }
@@ -499,14 +561,20 @@ function clampMapScale(value) {
 function handleEmergencySms() {
   const phones = emergencyContactPhones.value
   if (!phones.length) {
-    uni.showToast({
+    uni.showModal({
       title: '未配置紧急联系人',
-      icon: 'none',
+      content: '请先在安全报备中填写联系人电话，SOS 短信才能发送到正确的人。',
+      confirmText: '去配置',
+      success: ({ confirm }) => {
+        if (confirm) {
+          openSafetyPlan()
+        }
+      },
     })
     return
   }
 
-  if (!currentLocation.value) {
+  if (!currentLocation.value && !safetyPlan.value.active) {
     uni.showToast({
       title: '请先等待定位成功',
       icon: 'none',
@@ -557,6 +625,41 @@ function handleSosVisibilityChange(value) {
   isSosMenuOpen.value = Boolean(value)
 }
 
+function openSafetyPlan() {
+  safetyPlan.value = getHikingSafetyPlan()
+  safetyPlanVisible.value = true
+}
+
+function handleSaveSafetyPlan(payload) {
+  try {
+    safetyPlan.value = activateHikingSafetyPlan(payload)
+    safetyPlanVisible.value = false
+    if (!isGuardMode.value) {
+      isGuardMode.value = true
+      acknowledgeGuardSafe(5)
+    }
+    uni.showToast({
+      title: '安全报备已启用',
+      icon: 'none',
+    })
+  } catch (error) {
+    uni.showToast({
+      title: error?.message || '安全报备保存失败',
+      icon: 'none',
+      duration: 2500,
+    })
+  }
+}
+
+function handleCompleteSafetyPlan() {
+  safetyPlan.value = completeHikingSafetyPlan(safetyPlan.value)
+  safetyPlanVisible.value = false
+  uni.showToast({
+    title: '已记录安全返程',
+    icon: 'none',
+  })
+}
+
 function toggleGuard() {
   isGuardMode.value = !isGuardMode.value
   if (isGuardMode.value) {
@@ -569,6 +672,7 @@ function toggleGuard() {
 }
 
 function cleanup() {
+  hikingStore.releaseLiveLocation().catch(() => {})
   if (sunsetTimer) {
     clearInterval(sunsetTimer)
     sunsetTimer = null
@@ -803,6 +907,7 @@ function showSunsetWarning(level, minutes) {
 function buildEmergencySmsBody(location) {
   const latitude = Number(location?.latitude)
   const longitude = Number(location?.longitude)
+  const hasCoordinates = Number.isFinite(latitude) && Number.isFinite(longitude)
   const altitude = Number(location?.altitude)
   const accuracy = Number(location?.accuracy)
   const provider = location?.provider || 'unknown'
@@ -810,15 +915,29 @@ function buildEmergencySmsBody(location) {
   const altitudeValue = Number.isFinite(altitude) && altitude > 0 ? `${Math.round(altitude)}m` : '未知'
   const accuracyValue = Number.isFinite(accuracy) && accuracy > 0 ? `${Math.round(accuracy)}m` : '未知'
   const emergencyText = hikingModeMock.emergency?.smsText || '我正在徒步中，可能遇到危险，请尽快联系我。'
+  const activePlan = safetyPlan.value.active ? safetyPlan.value : null
+  const planLines = activePlan
+    ? [
+        activePlan.routeNote ? `报备路线：${activePlan.routeNote}` : '',
+        `预计返程：${formatSafetyPlanTime(activePlan.expectedReturnAt)}`,
+        safetyPlanStatus.value.level === 'danger' ? `报备状态：已逾期 ${safetyPlanStatus.value.overdueMinutes} 分钟` : '',
+      ].filter(Boolean)
+    : []
+  const locationLines = hasCoordinates
+    ? [
+        `坐标：${coordText}`,
+        `海拔：${altitudeValue}`,
+        `精度：${accuracyValue}`,
+        `定位来源：${provider}`,
+        `高德链接：https://uri.amap.com/marker?position=${longitude},${latitude}&name=SOS位置`,
+      ]
+    : ['定位：暂未获取，请依据报备路线和预计返程信息尽快联系我。']
 
   return [
     '【丝路疆寻 徒步 SOS】',
     emergencyText,
-    `坐标：${coordText}`,
-    `海拔：${altitudeValue}`,
-    `精度：${accuracyValue}`,
-    `定位来源：${provider}`,
-    `高德链接：https://uri.amap.com/marker?position=${longitude},${latitude}&name=SOS位置`,
+    ...planLines,
+    ...locationLines,
   ].join('\n')
 }
 </script>

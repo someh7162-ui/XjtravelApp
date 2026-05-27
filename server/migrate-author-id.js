@@ -1,12 +1,7 @@
 const { Pool } = require('pg')
+const { db } = require('./config')
 
-const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: '123456',
-  database: 'mydb',
-})
+const pool = new Pool(db)
 
 async function run() {
   await pool.query(`

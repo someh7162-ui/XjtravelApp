@@ -32,6 +32,14 @@
             {{ followButtonText }}
           </view>
           <view v-else class="follow-btn muted-btn">{{ followButtonText }}</view>
+          <view
+            v-if="isOwnAuthor"
+            class="topbar-text-btn delete-guide-btn"
+            :class="{ disabled: guideDeleting }"
+            @tap="removeGuide"
+          >
+            {{ guideDeleting ? '删除中' : '删除' }}
+          </view>
           <view class="icon-btn share-btn">↗</view>
         </view>
       </view>
@@ -49,7 +57,12 @@
         >
           <swiper-item v-for="(item, index) in guideImages" :key="`${item}-${index}`">
             <view class="media-slide" @tap="previewImage(index)">
-              <CachedImage :src="item" image-class="cover-image" />
+              <CachedImage
+                :src="item"
+                image-class="cover-image"
+                @load="handleGuideImageLoad(index, $event)"
+                @error="handleGuideImageError(index, $event)"
+              />
             </view>
           </swiper-item>
         </swiper>
@@ -97,10 +110,6 @@
           <view class="track-stat-card">
             <text class="track-stat-value">{{ guideTrackDurationText }}</text>
             <text class="track-stat-label">记录时长</text>
-          </view>
-          <view class="track-stat-card">
-            <text class="track-stat-value">{{ guideTrackAscentText }}</text>
-            <text class="track-stat-label">累计爬升</text>
           </view>
         </view>
 
@@ -234,10 +243,11 @@
 </template>
 
 <script setup>
-import { computed, ref } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import CachedImage from '../../components/CachedImage.vue'
 import { clearAuthSession, getStoredAuthToken, getStoredAuthUser, saveAuthSession } from '../../common/auth-storage'
+import { downloadRemoteFile } from '../../common/app-http'
 import { formatTrackDuration } from '../../common/guide-track'
 import { saveGuideTrackPreview } from '../../common/guide-track-preview'
 import { buildTrackPolyline, formatCoordinate } from '../../common/hiking-metrics'
@@ -245,6 +255,7 @@ import HikingTileMapCompat from '../hiking/components/HikingTileMapCompat.vue'
 import { followUser, getMyProfile, unfollowUser } from '../../services/auth'
 import {
   deleteGuideComment,
+  deleteGuide,
   getGuideComments,
   getGuideDetail,
   likeGuide,
@@ -272,6 +283,9 @@ const commentsLoading = ref(false)
 const commentError = ref('')
 const commentDeletingId = ref('')
 const trackPreviewOpening = ref(false)
+const resolvedGuideImages = ref([])
+const previewImagePreparing = ref(false)
+const guideDeleting = ref(false)
 
 const systemInfo = typeof uni.getSystemInfoSync === 'function' ? uni.getSystemInfoSync() : {}
 const statusBarHeight = systemInfo.statusBarHeight || 20
@@ -284,6 +298,16 @@ const guideImages = computed(() => {
   }
 
   return guide.value?.image ? [guide.value.image] : []
+})
+const previewGuideImages = computed(() => {
+  const rawImages = guideImages.value
+  if (!rawImages.length) {
+    return []
+  }
+
+  return rawImages
+    .map((item, index) => resolvedGuideImages.value[index] || item)
+    .filter(Boolean)
 })
 const hasVideo = computed(() => Boolean(guide.value?.video))
 const currentUser = computed(() => getStoredAuthUser() || null)
@@ -375,10 +399,6 @@ const guideTrackDistanceText = computed(() => {
   return distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : '--'
 })
 const guideTrackDurationText = computed(() => formatTrackDuration(guideTrack.value?.durationMs || 0))
-const guideTrackAscentText = computed(() => {
-  const ascent = Number(guideTrack.value?.altitudeGain || 0)
-  return ascent > 0 ? `${Math.round(ascent)} m` : '--'
-})
 const guideTrackCoordinateText = computed(() => {
   const point = guideTrackCenter.value
   if (!point) {
@@ -393,12 +413,31 @@ const searchHint = computed(() => {
   return `${primary} 路线位置`
 })
 
+watch(
+  guideImages,
+  (images) => {
+    resolvedGuideImages.value = Array.isArray(images) ? images.map(() => '') : []
+    console.log('[guide-detail:image] reset image sources', {
+      guideId: guide.value?.id || '',
+      rawImages: Array.isArray(images) ? images : [],
+    })
+  },
+  { immediate: true }
+)
+
 onLoad(async (options) => {
   const id = options?.id || ''
   detailLoading.value = true
+  console.log('[guide-detail:image] onLoad start', { id })
   try {
     await refreshCurrentUser()
     guide.value = await getGuideDetail(id)
+    console.log('[guide-detail:image] guide loaded', {
+      id: guide.value?.id || '',
+      title: guide.value?.title || '',
+      image: guide.value?.image || '',
+      images: Array.isArray(guide.value?.images) ? guide.value.images : [],
+    })
     likeCount.value = Number(guide.value?.likesCount) || 0
     saveCount.value = Number(guide.value?.saveCount) || 0
     isLiked.value = Boolean(guide.value?.isLiked)
@@ -639,6 +678,41 @@ function removeComment(comment) {
   })
 }
 
+function removeGuide() {
+  if (!guide.value?.id || !isOwnAuthor.value || guideDeleting.value) {
+    return
+  }
+
+  uni.showModal({
+    title: '删除攻略',
+    content: '删除后内容、评论和收藏记录都将移除，确认继续吗？',
+    success: async ({ confirm }) => {
+      if (!confirm) {
+        return
+      }
+
+      const token = getStoredAuthToken()
+      if (!token) {
+        uni.showToast({ title: '请先登录', icon: 'none' })
+        return
+      }
+
+      guideDeleting.value = true
+      try {
+        await deleteGuide(guide.value.id, token)
+        uni.showToast({ title: '攻略已删除', icon: 'success' })
+        setTimeout(() => {
+          uni.reLaunch({ url: '/pages/account/index' })
+        }, 300)
+      } catch (error) {
+        uni.showToast({ title: error.message || '删除失败', icon: 'none' })
+      } finally {
+        guideDeleting.value = false
+      }
+    },
+  })
+}
+
 function goBack() {
   if (getCurrentPages().length > 1) {
     uni.navigateBack()
@@ -652,14 +726,164 @@ function handleSwiperChange(event) {
   activeImageIndex.value = event?.detail?.current || 0
 }
 
-function previewImage(index) {
-  if (!guideImages.value.length) {
+function handleGuideImageLoad(index, resolvedSrc) {
+  if (index < 0) {
     return
   }
 
+  const next = Array.isArray(resolvedGuideImages.value)
+    ? resolvedGuideImages.value.slice()
+    : []
+
+  next[index] = String(resolvedSrc || guideImages.value[index] || '').trim()
+  resolvedGuideImages.value = next
+
+  console.log('[guide-detail:image] cached image loaded', {
+    index,
+    rawSrc: guideImages.value[index] || '',
+    resolvedSrc: next[index],
+    resolvedGuideImages: next,
+  })
+}
+
+function handleGuideImageError(index, failedSrc) {
+  console.warn('[guide-detail:image] cached image error', {
+    index,
+    rawSrc: guideImages.value[index] || '',
+    failedSrc: String(failedSrc || '').trim(),
+    resolvedGuideImages: resolvedGuideImages.value,
+  })
+}
+
+function toPreviewDisplayPath(filePath) {
+  const raw = String(filePath || '').trim()
+  if (!raw) {
+    return ''
+  }
+
+  if (/^(https?:|file:|content:|blob:|data:)/i.test(raw)) {
+    return raw
+  }
+
+  if (raw.startsWith('/static/') || raw.startsWith('static/')) {
+    return raw.startsWith('/') ? raw : `/${raw}`
+  }
+
+  if (typeof plus !== 'undefined' && plus.io && typeof plus.io.convertLocalFileSystemURL === 'function') {
+    const absolutePath = plus.io.convertLocalFileSystemURL(raw)
+    if (absolutePath) {
+      return absolutePath.startsWith('file://') ? absolutePath : `file://${absolutePath}`
+    }
+  }
+
+  return raw
+}
+
+async function ensurePreviewImagePath(url, index) {
+  const normalizedUrl = String(url || '').trim()
+  if (!normalizedUrl) {
+    return ''
+  }
+
+  if (!/^https?:\/\//i.test(normalizedUrl)) {
+    return toPreviewDisplayPath(normalizedUrl)
+  }
+
+  const resolvedPath = String(resolvedGuideImages.value[index] || '').trim()
+  if (resolvedPath && !/^https?:\/\//i.test(resolvedPath)) {
+    return toPreviewDisplayPath(resolvedPath)
+  }
+
+  try {
+    const downloadRes = await downloadRemoteFile(normalizedUrl)
+    const localPath = String(downloadRes?.tempFilePath || '').trim()
+    if (localPath) {
+      const displayPath = toPreviewDisplayPath(localPath)
+      const next = resolvedGuideImages.value.slice()
+      next[index] = displayPath
+      resolvedGuideImages.value = next
+      console.log('[guide-detail:image] preview image cached locally', {
+        index,
+        rawSrc: normalizedUrl,
+        localPath,
+        displayPath,
+      })
+      return displayPath
+    }
+  } catch (error) {
+    console.error('[guide-detail:image] preview image cache failed', {
+      index,
+      rawSrc: normalizedUrl,
+      error,
+    })
+  }
+
+  return normalizedUrl
+}
+
+async function previewImage(index) {
+  if (!previewGuideImages.value.length) {
+    console.warn('[guide-detail:image] preview skipped: no preview images', {
+      rawImages: guideImages.value,
+      resolvedGuideImages: resolvedGuideImages.value,
+    })
+    return
+  }
+
+  const safeIndex = Math.max(0, Math.min(Number(index) || 0, previewGuideImages.value.length - 1))
+  if (previewImagePreparing.value) {
+    return
+  }
+
+  previewImagePreparing.value = true
+
+  const previewUrls = []
+  for (let i = 0; i < guideImages.value.length; i += 1) {
+    previewUrls.push(await ensurePreviewImagePath(guideImages.value[i], i))
+  }
+
+  const normalizedPreviewUrls = previewUrls.filter(Boolean)
+  const current = normalizedPreviewUrls[safeIndex] || normalizedPreviewUrls[0]
+  if (!current) {
+    console.warn('[guide-detail:image] preview skipped: empty current image', {
+      index,
+      safeIndex,
+      rawImages: guideImages.value,
+      resolvedGuideImages: resolvedGuideImages.value,
+      previewGuideImages: normalizedPreviewUrls,
+    })
+    previewImagePreparing.value = false
+    return
+  }
+
+  console.log('[guide-detail:image] preview start', {
+    index,
+    safeIndex,
+    current,
+    rawImages: guideImages.value,
+    resolvedGuideImages: resolvedGuideImages.value,
+    previewGuideImages: normalizedPreviewUrls,
+  })
+
   uni.previewImage({
-    current: guideImages.value[index] || guideImages.value[0],
-    urls: guideImages.value,
+    current,
+    urls: normalizedPreviewUrls,
+    success: (res) => {
+      previewImagePreparing.value = false
+      console.log('[guide-detail:image] preview success', {
+        current,
+        count: normalizedPreviewUrls.length,
+        res,
+      })
+    },
+    fail: (error) => {
+      previewImagePreparing.value = false
+      console.error('[guide-detail:image] preview fail', {
+        current,
+        urls: normalizedPreviewUrls,
+        error,
+      })
+    },
   })
 }
 
@@ -933,6 +1157,26 @@ function formatCommentTime(value) {
 .muted-btn {
   border-color: rgba(15, 23, 42, 0.1);
   color: $theme-muted;
+}
+
+.topbar-text-btn {
+  height: 68rpx;
+  padding: 0 24rpx;
+  border-radius: 999rpx;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24rpx;
+  font-weight: 600;
+}
+
+.delete-guide-btn {
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+}
+
+.delete-guide-btn.disabled {
+  opacity: 0.55;
 }
 
 .media-shell {

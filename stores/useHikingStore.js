@@ -27,10 +27,13 @@ const MAX_ACCEPTABLE_ACCURACY = 120
 const MIN_MOVEMENT_METERS = 2
 const MAX_HIKING_SPEED_MPS = 5.5
 const MAX_WALKING_JUMP_METERS = 120
+const MAX_SUSPECT_JUMP_METERS = 180
+const MAX_SUSPECT_WALKING_SPEED_MPS = 4.2
 
 let listenerBound = false
 let locationUpdating = false
 let trackingPollTimer = null
+let liveLocationWatchCount = 0
 
 export const useHikingStore = defineStore('hiking', () => {
   const isTracking = ref(false)
@@ -233,12 +236,28 @@ export const useHikingStore = defineStore('hiking', () => {
       })
 
       if (isTracking.value) {
-        appendTrackPoint(nextLocation)
-      } else {
-        currentLocation.value = nextLocation
-        locationError.value = ''
-        persistSession()
+        if (shouldAppendLiveTrackPoint(nextLocation)) {
+          appendTrackPoint(nextLocation)
+        } else {
+          console.warn('[hiking-track] skip live append, wait for polled refresh', {
+            latitude: nextLocation.latitude,
+            longitude: nextLocation.longitude,
+            provider: nextLocation.provider,
+            source: nextLocation.source,
+            coordinateSystem: nextLocation.coordinateSystem,
+          })
+          if (!currentLocation.value || shouldReplaceCurrentLocation(currentLocation.value, nextLocation)) {
+            currentLocation.value = nextLocation
+            locationError.value = ''
+            persistSession()
+          }
+        }
+        return
       }
+
+      currentLocation.value = nextLocation
+      locationError.value = ''
+      persistSession()
     })
 
     listenerBound = true
@@ -255,6 +274,35 @@ export const useHikingStore = defineStore('hiking', () => {
       uni.startLocationUpdate({
         success: resolve,
         fail: reject,
+      })
+    })
+  }
+
+  async function ensureLiveLocation() {
+    hydrate()
+    ensureLocationListener()
+    liveLocationWatchCount += 1
+
+    try {
+      await startLocationUpdates()
+    } catch (error) {
+      liveLocationWatchCount = Math.max(0, liveLocationWatchCount - 1)
+      throw error
+    }
+  }
+
+  async function releaseLiveLocation() {
+    liveLocationWatchCount = Math.max(0, liveLocationWatchCount - 1)
+    if (liveLocationWatchCount > 0 || isTracking.value || typeof uni.stopLocationUpdate !== 'function') {
+      return
+    }
+
+    await new Promise((resolve) => {
+      uni.stopLocationUpdate({
+        complete: () => {
+          locationUpdating = false
+          resolve()
+        },
       })
     })
   }
@@ -772,26 +820,65 @@ export const useHikingStore = defineStore('hiking', () => {
       return null
     }
 
-    if (shouldConvertGcjToWgs84(normalized)) {
+    const coordinateSystem = detectCoordinateSystem(normalized)
+    normalized.coordinateSystem = coordinateSystem
+
+    if (coordinateSystem === 'gcj02') {
       const converted = gcj02ToWgs84(normalized.longitude, normalized.latitude)
       if (converted) {
         normalized.longitude = converted.longitude
         normalized.latitude = converted.latitude
         normalized.coordinateSystem = 'wgs84'
       }
+    } else if (!coordinateSystem) {
+      console.warn('[hiking-track] ambiguous coordinate system, keep raw point', {
+        provider: normalized.provider,
+        source: normalized.source,
+        latitude: normalized.latitude,
+        longitude: normalized.longitude,
+      })
     }
 
     return normalized
   }
 
-  function shouldConvertGcjToWgs84(location) {
+  function detectCoordinateSystem(location) {
     if (!isAppRuntime()) {
-      return false
+      const raw = String(location.coordinateSystem || '').toLowerCase()
+      if (raw.includes('gcj')) {
+        return 'gcj02'
+      }
+      if (raw.includes('wgs')) {
+        return 'wgs84'
+      }
+      return raw || ''
     }
 
     const coordinateSystem = String(location.coordinateSystem || '').toLowerCase()
+    if (coordinateSystem.includes('gcj')) {
+      return 'gcj02'
+    }
+    if (coordinateSystem.includes('wgs')) {
+      return 'wgs84'
+    }
+
+    const provider = String(location.provider || '').toLowerCase()
     const source = String(location.source || '').toLowerCase()
-    return coordinateSystem.includes('gcj') || source.includes('onlocationchange') || source.includes('plus.geolocation')
+
+    if (provider.includes('uni-gcj02')) {
+      return 'gcj02'
+    }
+    if (provider.includes('uni-wgs84')) {
+      return 'wgs84'
+    }
+    if (source.includes('plus.geolocation')) {
+      return 'gcj02'
+    }
+    if (source.includes('android-') || provider === 'gps' || provider === 'network') {
+      return 'wgs84'
+    }
+
+    return ''
   }
 
   function shouldSkipTrackPoint(nextPoint, lastPoint) {
@@ -820,7 +907,29 @@ export const useHikingStore = defineStore('hiking', () => {
       return true
     }
 
+    if (distanceMeters > MAX_SUSPECT_JUMP_METERS && inferredSpeed > MAX_SUSPECT_WALKING_SPEED_MPS && accuracy > 12) {
+      return true
+    }
+
     return false
+  }
+
+  function shouldAppendLiveTrackPoint(location) {
+    if (!isAppRuntime()) {
+      return true
+    }
+
+    const source = String(location?.source || '').toLowerCase()
+    if (!source.includes('uni.onlocationchange')) {
+      return true
+    }
+
+    const coordinateSystem = String(location?.coordinateSystem || '').toLowerCase()
+    if (!coordinateSystem) {
+      return false
+    }
+
+    return coordinateSystem === 'wgs84'
   }
 
   function shouldReplaceCurrentLocation(previous, nextPoint) {
@@ -929,6 +1038,8 @@ export const useHikingStore = defineStore('hiking', () => {
     mapMarkers,
     hydrate,
     loadSavedTracks,
+    ensureLiveLocation,
+    releaseLiveLocation,
     refreshLocation,
     startTracking,
     stopTracking,

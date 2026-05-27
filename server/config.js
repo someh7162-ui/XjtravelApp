@@ -1,14 +1,27 @@
+function getRequiredEnv(name) {
+  const value = String(process.env[name] || '').trim()
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`)
+  }
+  return value
+}
+
+function getNumberEnv(name, fallback) {
+  const value = Number(process.env[name])
+  return Number.isFinite(value) ? value : fallback
+}
+
 module.exports = {
-  port: 3000,
-  jwtSecret: 'meet-xinjiang-api-dev-secret',
+  port: getNumberEnv('PORT', 3000),
+  jwtSecret: getRequiredEnv('JWT_SECRET'),
   db: {
-    host: '111.20.31.227',
-    port: 28856,
-    user: 'postgres',
-    password: '123456',
-    database: 'mydb',
-    max: 10,
-    idleTimeoutMillis: 30000,
-    connectionTimeoutMillis: 10000,
+    host: process.env.DB_HOST || 'localhost',
+    port: getNumberEnv('DB_PORT', 5432),
+    user: process.env.DB_USER || 'postgres',
+    password: getRequiredEnv('DB_PASSWORD'),
+    database: process.env.DB_NAME || 'mydb',
+    max: getNumberEnv('DB_MAX', 10),
+    idleTimeoutMillis: getNumberEnv('DB_IDLE_TIMEOUT_MS', 30000),
+    connectionTimeoutMillis: getNumberEnv('DB_CONNECTION_TIMEOUT_MS', 10000),
   },
 }

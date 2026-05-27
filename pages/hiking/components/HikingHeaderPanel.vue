@@ -22,6 +22,11 @@
       <text class="guard-text">{{ guardStatusText }}</text>
     </view>
 
+    <view v-if="checkInStatusText" class="checkin-banner" :class="`checkin-${checkInStatusLevel}`">
+      <text class="checkin-title">安全报备</text>
+      <text class="checkin-text">{{ checkInStatusText }}</text>
+    </view>
+
     <view v-if="syncStatusText" class="sync-banner" :class="`sync-${syncStatusTone}`">
       <text class="sync-title">轨迹同步</text>
       <text class="sync-text">{{ syncStatusText }}</text>
@@ -99,6 +104,14 @@ defineProps({
     default: '',
   },
   guardStatusLevel: {
+    type: String,
+    default: 'safe',
+  },
+  checkInStatusText: {
+    type: String,
+    default: '',
+  },
+  checkInStatusLevel: {
     type: String,
     default: 'safe',
   },
@@ -222,6 +235,49 @@ defineProps({
   flex: 1;
   font-size: 18rpx;
   color: rgba(255, 255, 255, 0.84);
+}
+
+.checkin-banner {
+  margin-bottom: 12rpx;
+  padding: 10rpx 14rpx;
+  border-radius: 14rpx;
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: rgba(10, 132, 255, 0.12);
+  border: 1px solid rgba(10, 132, 255, 0.24);
+}
+
+.checkin-banner.checkin-warning {
+  background: rgba(255, 149, 0, 0.12);
+  border-color: rgba(255, 149, 0, 0.28);
+}
+
+.checkin-banner.checkin-danger {
+  background: rgba(255, 69, 58, 0.14);
+  border-color: rgba(255, 69, 58, 0.3);
+}
+
+.checkin-title,
+.checkin-text {
+  display: block;
+}
+
+.checkin-title {
+  flex-shrink: 0;
+  font-size: 18rpx;
+  color: rgba(185, 218, 255, 0.9);
+}
+
+.checkin-banner.checkin-warning .checkin-title,
+.checkin-banner.checkin-danger .checkin-title {
+  color: rgba(255, 216, 160, 0.96);
+}
+
+.checkin-text {
+  flex: 1;
+  font-size: 18rpx;
+  color: rgba(255, 255, 255, 0.88);
 }
 
 .sync-banner {

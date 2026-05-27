@@ -3,8 +3,9 @@ const http = require('http')
 const fs = require('fs')
 const path = require('path')
 const { Pool } = require('pg')
+const { db } = require('./config')
 
-const pool = new Pool({ host: 'localhost', port: 5432, user: 'postgres', password: '123456', database: 'mydb' })
+const pool = new Pool(db)
 
 const images = [
   { slug: 'first-time-xinjiang',  url: 'https://picsum.photos/seed/xinjiang1/800/500', file: 'first-time-xinjiang.jpg' },

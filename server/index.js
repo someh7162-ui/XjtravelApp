@@ -1257,6 +1257,42 @@ app.post('/api/guides', authMiddleware, asyncRoute(async (req, res) => {
   res.status(201).json({ data: guide })
 }))
 
+app.delete('/api/guides/:slug', authMiddleware, asyncRoute(async (req, res) => {
+  const guideResult = await db.query(
+    `SELECT id, author_id FROM guides WHERE slug = $1 LIMIT 1`,
+    [req.params.slug]
+  )
+
+  const targetGuide = guideResult.rows[0]
+  if (!targetGuide) {
+    res.status(404).json({ message: '攻略不存在。' })
+    return
+  }
+
+  if (!targetGuide.author_id || String(targetGuide.author_id) !== String(req.user.sub)) {
+    res.status(403).json({ message: '你没有权限删除这篇攻略。' })
+    return
+  }
+
+  const client = await db.pool.connect()
+  try {
+    await client.query('BEGIN')
+    await client.query(`DELETE FROM user_favorites WHERE target_type = 'guide' AND target_id = $1`, [String(targetGuide.id)])
+    await client.query(`DELETE FROM guide_likes WHERE guide_id = $1`, [targetGuide.id])
+    await client.query(`DELETE FROM guide_comments WHERE guide_id = $1`, [targetGuide.id])
+    await client.query(`DELETE FROM guide_sections WHERE guide_id = $1`, [targetGuide.id])
+    await client.query(`DELETE FROM guides WHERE id = $1`, [targetGuide.id])
+    await client.query('COMMIT')
+  } catch (error) {
+    await client.query('ROLLBACK')
+    throw error
+  } finally {
+    client.release()
+  }
+
+  res.json({ ok: true })
+}))
+
 app.get('/api/guides/:slug', optionalAuthMiddleware, asyncRoute(async (req, res) => {
   const guide = await fetchGuideBySlug(req, req.params.slug)
   if (!guide) {

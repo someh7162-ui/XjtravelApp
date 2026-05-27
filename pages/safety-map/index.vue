@@ -2,9 +2,9 @@
   <view class="page-shell safety-page">
     <view v-if="destination" class="page-scroll">
       <view class="hero-gradient safety-hero section">
-        <text class="safety-kicker">Scenic Guide Map</text>
+        <text class="safety-kicker">Safety &amp; Rescue</text>
         <text class="safety-title">{{ guidePageTitle }}</text>
-        <text class="safety-subtitle">当前页面已改为景区导览攻略图，优先展示导览大图，并补充游览顺序、补给点和出行提醒。</text>
+        <text class="safety-subtitle">出发前确认风险、服务点和紧急联系方式；进入景区后，可同时对照导览图与官方现场指引。</text>
       </view>
 
       <view class="section safety-shell">
@@ -106,6 +106,27 @@
       </view>
 
       <view class="section section-block">
+        <view class="section-head-inline">
+          <text class="section-title">紧急联络</text>
+          <view class="risk-level">风险等级 {{ safetyMap.emergencyLevel }}</view>
+        </view>
+        <view class="contact-card card emergency-card">
+          <text class="contact-copy">遇到受伤、迷路、极端天气或通信中断风险时，优先联系景区服务人员；需要紧急救援时直接拨打公共救援电话。</text>
+          <view class="emergency-list">
+            <view v-for="item in emergencyContacts" :key="item.label" class="emergency-row">
+              <text class="emergency-name">{{ item.label }}</text>
+              <view v-if="item.phone" class="call-link" @tap="callPhone(item.phone)">拨打 {{ item.phone }}</view>
+            </view>
+          </view>
+          <view class="rescue-actions">
+            <view class="rescue-btn danger" @tap="callPhone('110')">报警 110</view>
+            <view class="rescue-btn medical" @tap="callPhone('120')">急救 120</view>
+            <view class="rescue-btn plan" @tap="openHikingSafety">徒步守护</view>
+          </view>
+        </view>
+      </view>
+
+      <view class="section section-block">
         <text class="section-title">推荐游览顺序</text>
         <view class="route-list">
           <view v-for="(item, index) in safetyMap.safeRoute" :key="item" class="card route-item">
@@ -126,7 +147,7 @@
       </view>
 
       <view class="section section-block">
-        <text class="section-title">攻略补充说明</text>
+        <text class="section-title">出发前提醒</text>
         <view class="contact-card card">
           <text class="contact-copy">{{ guideHighlightsText }}</text>
           <text class="contact-note muted-text">{{ safetyMap.note }}</text>
@@ -184,7 +205,7 @@ const safetyMap = computed(() => {
 })
 
 const guidePageTitle = computed(() => {
-  return destination.value ? `${destination.value.name}导览攻略图` : '景区导览攻略图'
+  return destination.value ? `${destination.value.name}安全与救援` : '景区安全与救援'
 })
 
 const guideModeTag = computed(() => {
@@ -202,6 +223,14 @@ const guideHighlightsText = computed(() => {
   }
 
   return '当前页面以景区导览图和游览顺序建议为主，适合出发前快速做路线规划。'
+})
+
+const emergencyContacts = computed(() => {
+  const contacts = Array.isArray(safetyMap.value.emergencyContacts) ? safetyMap.value.emergencyContacts : []
+  return contacts.map((label) => ({
+    label,
+    phone: extractPhone(label),
+  }))
 })
 
 const mapCenter = computed(() => {
@@ -395,6 +424,33 @@ function openGuideSource() {
   }
 }
 
+function extractPhone(value) {
+  const matched = String(value || '').match(/(?:1\d{10}|110|120|(?:0\d{2,3}[-\s]?)?\d{7,8})/)
+  return matched ? matched[0].replace(/\s/g, '') : ''
+}
+
+function callPhone(phone) {
+  if (!phone || typeof uni.makePhoneCall !== 'function') {
+    return
+  }
+
+  uni.makePhoneCall({
+    phoneNumber: phone,
+    fail: () => {
+      uni.setClipboardData({
+        data: phone,
+        success: () => {
+          uni.showToast({ title: `已复制电话 ${phone}`, icon: 'none' })
+        },
+      })
+    },
+  })
+}
+
+function openHikingSafety() {
+  uni.navigateTo({ url: '/pages/hiking/index' })
+}
+
 </script>
 
 <style scoped lang="scss">
@@ -473,6 +529,15 @@ function openGuideSource() {
 }
 
 .map-level {
+  padding: 10rpx 18rpx;
+  border-radius: 999rpx;
+  background: rgba(196, 69, 54, 0.12);
+  color: $theme-color;
+  font-size: 22rpx;
+  font-weight: 700;
+}
+
+.risk-level {
   padding: 10rpx 18rpx;
   border-radius: 999rpx;
   background: rgba(196, 69, 54, 0.12);
@@ -651,6 +716,72 @@ function openGuideSource() {
 
 .section-block {
   margin-top: 38rpx;
+}
+
+.emergency-card {
+  margin-top: 22rpx;
+}
+
+.emergency-list {
+  margin-top: 22rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 14rpx;
+}
+
+.emergency-row {
+  min-height: 62rpx;
+  padding: 12rpx 16rpx;
+  border-radius: 18rpx;
+  background: rgba(232, 168, 124, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16rpx;
+}
+
+.emergency-name {
+  flex: 1;
+  font-size: 24rpx;
+  line-height: 1.5;
+  color: $theme-text;
+}
+
+.call-link {
+  flex-shrink: 0;
+  color: $theme-color;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.rescue-actions {
+  margin-top: 22rpx;
+  display: flex;
+  gap: 12rpx;
+}
+
+.rescue-btn {
+  flex: 1;
+  padding: 18rpx 8rpx;
+  border-radius: 18rpx;
+  text-align: center;
+  font-size: 23rpx;
+  font-weight: 700;
+}
+
+.rescue-btn.danger {
+  background: $theme-color;
+  color: #ffffff;
+}
+
+.rescue-btn.medical {
+  background: rgba(196, 69, 54, 0.12);
+  color: $theme-color;
+}
+
+.rescue-btn.plan {
+  background: rgba(30, 108, 168, 0.1);
+  color: #1e6ca8;
 }
 
 .route-list,

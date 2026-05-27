@@ -48,15 +48,20 @@
           <text class="muted-text">还没有发布过攻略</text>
         </view>
         <view v-else class="guide-list">
-          <view v-for="g in myGuides" :key="g.id" class="card guide-item" @tap="goGuide(g.id)">
-            <CachedImage v-if="g.image" :src="g.image" container-class="guide-thumb" image-class="guide-thumb" />
-            <view class="guide-info">
-              <text class="guide-title">{{ g.title }}</text>
-              <text class="guide-meta muted-text">{{ g.category }} · {{ g.publishDate }}</text>
+            <view v-for="g in myGuides" :key="g.id" class="card guide-item" @tap="goGuide(g.id)">
+              <CachedImage v-if="g.image" :src="g.image" container-class="guide-thumb" image-class="guide-thumb" />
+              <view class="guide-info">
+                <text class="guide-title">{{ g.title }}</text>
+                <text class="guide-meta muted-text">{{ g.category }} · {{ g.publishDate }}</text>
+              </view>
+              <view class="guide-actions" @tap.stop>
+                <view class="guide-delete-btn" :class="{ disabled: deletingGuideId === g.id }" @tap="confirmDeleteGuide(g)">
+                  {{ deletingGuideId === g.id ? '删除中' : '删除' }}
+                </view>
+                <text class="saved-arrow">></text>
+              </view>
             </view>
-            <text class="saved-arrow">></text>
           </view>
-        </view>
       </view>
 
       <view v-if="isLoggedIn" class="section section-block">
@@ -126,6 +131,7 @@ import CachedImage from '../../components/CachedImage.vue'
 import { clearAuthSession, getStoredAuthToken, getStoredAuthUser, saveAuthSession } from '../../common/auth-storage'
 import { getMyFavoriteGuides, getMyGuides, getMyProfile, getMyStats, updateUserProfile, uploadAvatar } from '../../services/auth'
 import { normalizeApiAssetUrl } from '../../config/api'
+import { deleteGuide } from '../../services/guides'
 
 const currentUser = ref(null)
 const authToken = ref('')
@@ -141,6 +147,7 @@ const accountStats = ref({
 })
 const editModalVisible = ref(false)
 const editNickname = ref('')
+const deletingGuideId = ref('')
 
 const isLoggedIn = computed(() => Boolean(authToken.value && currentUser.value))
 const profileName = computed(() => currentUser.value?.nickname || '新疆漫游者')
@@ -329,6 +336,40 @@ async function saveProfile() {
 
 function goGuide(slug) {
   uni.navigateTo({ url: `/pages/guide-detail/index?id=${slug}` })
+}
+
+function confirmDeleteGuide(guideItem) {
+  if (!guideItem?.id || deletingGuideId.value) {
+    return
+  }
+
+  uni.showModal({
+    title: '删除攻略',
+    content: '删除后无法恢复，确认删除这篇攻略吗？',
+    success: async ({ confirm }) => {
+      if (!confirm) {
+        return
+      }
+
+      deletingGuideId.value = guideItem.id
+      try {
+        await deleteGuide(guideItem.id, authToken.value)
+        myGuides.value = myGuides.value.filter((item) => item.id !== guideItem.id)
+        favoriteGuides.value = favoriteGuides.value.filter((item) => item.id !== guideItem.id)
+        accountStats.value = {
+          ...accountStats.value,
+          guideCount: myGuides.value.length,
+          favoriteCount: favoriteGuides.value.length,
+          interactionCount: myGuides.value.length + favoriteGuides.value.length,
+        }
+        uni.showToast({ title: '攻略已删除', icon: 'success' })
+      } catch (error) {
+        uni.showToast({ title: error.message || '删除失败', icon: 'none' })
+      } finally {
+        deletingGuideId.value = ''
+      }
+    },
+  })
 }
 
 function goAuth(mode = 'login') {
@@ -590,6 +631,30 @@ function goSettings() {
 .saved-arrow {
   color: $theme-muted;
   font-size: 30rpx;
+}
+
+.guide-actions {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.guide-delete-btn {
+  min-width: 92rpx;
+  height: 54rpx;
+  padding: 0 18rpx;
+  border-radius: 999rpx;
+  background: rgba(220, 38, 38, 0.08);
+  color: #dc2626;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.guide-delete-btn.disabled {
+  opacity: 0.55;
 }
 
 .menu-card {

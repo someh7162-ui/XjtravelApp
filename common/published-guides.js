@@ -42,6 +42,7 @@ function normalizeGuide(item = {}, index = 0) {
 
   return {
     id: item.id,
+    authorId: item.authorId || '',
     destinationId: item.destinationId ? Number(item.destinationId) : null,
     title: item.title,
     category: item.category || '旅行分享',
@@ -147,6 +148,7 @@ export function addPublishedGuide(payload, user = {}) {
     {
       ...payload,
       id: payload.id || `published-${Date.now()}`,
+      authorId: user.id || payload.authorId || '',
       author: user.nickname || payload.author,
       nickname: user.nickname || payload.nickname || '新疆旅行者',
       authorAvatar: user.avatar_url || payload.authorAvatar || defaultAvatar,
@@ -170,6 +172,18 @@ export function addPublishedGuide(payload, user = {}) {
   const next = [guide, ...current]
   savePublishedGuides(next)
   return guide
+}
+
+export function removePublishedGuide(id) {
+  const current = getPublishedGuides()
+  const next = current.filter((item) => item.id !== id)
+
+  if (next.length === current.length) {
+    return false
+  }
+
+  savePublishedGuides(next)
+  return true
 }
 
 export { defaultCoverOptions, PUBLISHED_GUIDES_STORAGE }

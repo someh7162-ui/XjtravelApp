@@ -1,14 +1,9 @@
 const { Pool } = require('pg')
 const fs = require('fs')
 const path = require('path')
+const { db } = require('./config')
 
-const pool = new Pool({
-  host: 'localhost',
-  port: 5432,
-  user: 'postgres',
-  password: '123456',
-  database: 'mydb',
-})
+const pool = new Pool(db)
 
 async function run() {
   const schema = fs.readFileSync(path.join(__dirname, '../docs/postgresql-app-schema.sql'), 'utf8')

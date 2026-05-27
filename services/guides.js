@@ -1,6 +1,13 @@
 import { normalizeGuideTrack } from '../common/guide-track'
 import { requestJson } from '../common/app-http'
-import { addPublishedGuide, getPublishedGuideById, getPublishedGuides, persistGuideImages, persistLocalFile } from '../common/published-guides'
+import {
+  addPublishedGuide,
+  getPublishedGuideById,
+  getPublishedGuides,
+  persistGuideImages,
+  persistLocalFile,
+  removePublishedGuide,
+} from '../common/published-guides'
 import { getStoredAuthToken, getStoredAuthUser } from '../common/auth-storage'
 import { API_BASE_URL, hasApiBaseUrl, normalizeApiAssetUrl } from '../config/api'
 
@@ -208,6 +215,15 @@ export async function getGuideDetail(id) {
 
   const data = await request('GET', `/guides/${encodeURIComponent(id)}`)
   return normalizeGuideEntity(data?.data || null)
+}
+
+export async function deleteGuide(id, token = getStoredAuthToken()) {
+  if (hasGuideApi()) {
+    const data = await request('DELETE', `/guides/${encodeURIComponent(id)}`, undefined, token)
+    return Boolean(data?.ok)
+  }
+
+  return removePublishedGuide(id)
 }
 
 export async function getGuideComments(slug) {

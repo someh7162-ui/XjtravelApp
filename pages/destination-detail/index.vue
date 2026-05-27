@@ -179,7 +179,7 @@
           </view>
 
           <view class="map-actions">
-            <view class="primary-btn" @tap="openScenicLocation">地图导航</view>
+            <view class="primary-btn" :class="{ disabled: openingNavigation }" @tap="openScenicLocation">{{ navigationButtonText }}</view>
             <view class="secondary-btn" @tap="refreshLocationAndWeather">刷新路线</view>
           </view>
 
@@ -199,9 +199,9 @@
           <view class="safety-head">
             <view>
               <text class="map-title">景区导览攻略图</text>
-              <text class="map-subtitle muted-text">详情页直接看导览图，点图可放大，完整信息放到展开区和导览页里。</text>
+              <text class="map-subtitle muted-text">详情页直接看导览图，点图可放大，导览资源随安装包内置，不再单独离线下载。</text>
             </view>
-            <view class="offline-status" :class="{ ready: hasOfflineMap }">{{ offlineMapStatusText }}</view>
+            <view class="offline-status ready">{{ guideMapStatusText }}</view>
           </view>
 
           <view class="offline-meta-grid">
@@ -214,12 +214,12 @@
               <text class="travel-meta-value">{{ destinationSafetyMap.emergencyLevel }}</text>
             </view>
             <view class="travel-meta-item">
-              <text class="travel-meta-label">本地状态</text>
-              <text class="travel-meta-value">{{ offlineMapLocalStatusShort }}</text>
+              <text class="travel-meta-label">资源形式</text>
+              <text class="travel-meta-value">{{ guideMapPackagingText }}</text>
             </view>
             <view class="travel-meta-item">
-              <text class="travel-meta-label">离线资源</text>
-              <text class="travel-meta-value">{{ offlineMapSupportShort }}</text>
+              <text class="travel-meta-label">导览图片</text>
+              <text class="travel-meta-value">{{ guideMapImageStateText }}</text>
             </view>
           </view>
 
@@ -236,7 +236,7 @@
           </view>
           <view v-else class="map-fallback">
             <text class="map-fallback-title">暂无景区导览图</text>
-            <text class="map-fallback-desc muted-text">请把对应景区导览图放进 `static/guide-maps`，页面会自动尝试同名不同后缀并优先读取本地离线图。</text>
+            <text class="map-fallback-desc muted-text">请把对应景区导览图放进 `static/guide-maps`，页面会自动尝试同名不同后缀并读取内置资源。</text>
           </view>
 
           <view v-if="guideExpanded" class="safety-legend card-lite">
@@ -246,12 +246,12 @@
 
           <view v-if="guideExpanded" class="offline-meta-grid compact-grid guide-detail-grid">
             <view class="travel-meta-item">
-              <text class="travel-meta-label">离线资源</text>
-              <text class="travel-meta-value">{{ offlineMapSupportText }}</text>
+              <text class="travel-meta-label">资源说明</text>
+              <text class="travel-meta-value">{{ guideMapSupportText }}</text>
             </view>
             <view class="travel-meta-item">
-              <text class="travel-meta-label">本地状态</text>
-              <text class="travel-meta-value">{{ offlineMapLocalText }}</text>
+              <text class="travel-meta-label">显示状态</text>
+              <text class="travel-meta-value">{{ guideMapDisplayStatusText }}</text>
             </view>
           </view>
 
@@ -267,13 +267,8 @@
           </view>
 
           <view class="map-actions guide-actions">
-             <view class="primary-btn" @tap="openSafetyMapPage">完整导览页</view>
-             <view class="primary-btn" :class="{ disabled: offlineMapBusy || !offlineMapAvailable }" @tap="handleOfflineMapDownload">
-                {{ offlineMapButtonText }}
-              </view>
-             <view v-if="guideExpanded" class="secondary-btn" :class="{ disabled: !hasOfflineMap }" @tap="openOfflineMap">打开离线图</view>
-             <view v-if="guideExpanded" class="secondary-btn" :class="{ disabled: !hasOfflineMap }" @tap="deleteOfflineMapWithConfirm">删除离线图</view>
-            </view>
+            <view class="primary-btn" @tap="openSafetyMapPage">完整导览页</view>
+          </view>
          </view>
       </view>
 
@@ -358,7 +353,6 @@ import { computed, ref } from 'vue'
 import { onLoad, onShow } from '@dcloudio/uni-app'
 import CachedImage from '../../components/CachedImage.vue'
 import { getDestinationById, getDestinationCulture, getDestinationSafetyMap, getDestinationTravelMeta, getDestinationVisitMeta, getDouyinAppSearchUrls, getDouyinSearchUrl } from '../../common/destination-data'
-import { deleteOfflineMap, downloadOfflineMap, getOfflineMapRecord } from '../../common/offline-map'
 import { getCurrentLocation, getDrivingRoute, getLiveWeather, getStaticMapUrl, getWalkingRoute, resolveNavigationPoint, reverseGeocode } from '../../services/amap'
 import { getRelatedGuidesForDestination } from '../../services/guides'
 import { hasAmapKey } from '../../config/amap'
@@ -406,8 +400,6 @@ const routeMode = ref('driving')
 const routeData = ref(null)
 const liveWeatherData = ref(null)
 const weatherError = ref('')
-const offlineMapRecord = ref(null)
-const offlineMapBusy = ref(false)
 const relatedGuides = ref([])
 const relatedGuidesLoading = ref(false)
 const relatedGuidesError = ref('')
@@ -418,6 +410,7 @@ const showAllRelatedGuides = ref(false)
 const guideExpanded = ref(false)
 const guideImageCandidateIndex = ref(0)
 const guideImageUnavailable = ref(false)
+const openingNavigation = ref(false)
 
 const relatedGuidesVisible = computed(() => relatedGuidesLoading.value || relatedGuides.value.length > 0 || Boolean(relatedGuidesError.value))
 const hasExtendedCulture = computed(() => Boolean(destinationCulture.value?.history || destinationCulture.value?.highlights))
@@ -478,6 +471,8 @@ const taxiCostText = computed(() => {
   return hasAmapKey() ? '定位后自动估算' : '待填写高德 Key 后可估算'
 })
 
+const navigationButtonText = computed(() => openingNavigation.value ? '打开地图中...' : '地图导航')
+
 const mapImageUrl = computed(() => {
   const coords = destination.value?.coordinates
   if (!coords) {
@@ -526,81 +521,21 @@ const displayGuideImageUrl = computed(() => {
     return ''
   }
 
-  if (hasOfflineMap.value && offlineMapRecord.value?.savedFilePath) {
-    return toDisplayPath(offlineMapRecord.value.savedFilePath)
-  }
-
   const previewUrl = guidePreviewCandidates.value[guideImageCandidateIndex.value] || ''
   return previewUrl ? toDisplayPath(previewUrl) : ''
 })
 
-const offlineMapVersion = computed(() => `guide-${currentId.value || 'default'}-v3`)
+const guideMapAvailable = computed(() => Boolean(safetyGuidePreviewUrl.value))
 
-const offlineMapAvailable = computed(() => Boolean(safetyGuidePreviewUrl.value))
+const guideMapStatusText = computed(() => guideMapAvailable.value ? '安装包内置' : '暂未提供')
 
-const hasOfflineMap = computed(() => Boolean(offlineMapRecord.value?.savedFilePath))
+const guideMapPackagingText = computed(() => guideMapAvailable.value ? '随应用内置' : '当前未内置')
 
-const hasOfflineMapUpdate = computed(() => {
-  if (!hasOfflineMap.value || !offlineMapAvailable.value) {
-    return false
-  }
+const guideMapImageStateText = computed(() => displayGuideImageUrl.value ? '可直接查看' : '暂未显示')
 
-  return offlineMapRecord.value?.sourceUrl !== safetyGuidePreviewUrl.value || offlineMapRecord.value?.version !== offlineMapVersion.value
-})
+const guideMapSupportText = computed(() => guideMapAvailable.value ? '导览图随安装包一起提供，进入页面即可直接查看。' : '当前景区暂未提供内置导览图资源。')
 
-const offlineMapStatusText = computed(() => {
-  if (offlineMapBusy.value) {
-    return '保存中'
-  }
-
-  if (hasOfflineMapUpdate.value) {
-    return '可更新'
-  }
-
-  if (hasOfflineMap.value) {
-    return '已保存'
-  }
-
-  return offlineMapAvailable.value ? '未保存' : '暂未提供'
-})
-
-const offlineMapSupportText = computed(() => {
-  return offlineMapAvailable.value ? '支持保存景区导览图到本地' : '当前景区暂未提供离线导览图'
-})
-
-const offlineMapLocalText = computed(() => {
-  if (!hasOfflineMap.value) {
-    return '本地暂无离线文件'
-  }
-
-  const timeText = formatDateTime(offlineMapRecord.value?.downloadedAt)
-  return timeText ? `已保存，处理于 ${timeText}` : '已保存到本地'
-})
-
-const offlineMapSupportShort = computed(() => offlineMapAvailable.value ? '支持离线' : '暂无离线')
-
-const offlineMapLocalStatusShort = computed(() => {
-  if (hasOfflineMap.value) {
-    return hasOfflineMapUpdate.value ? '已保存，可更新' : '已保存'
-  }
-  return offlineMapAvailable.value ? '未保存' : '暂未提供'
-})
-
-const offlineMapButtonText = computed(() => {
-  if (offlineMapBusy.value) {
-    return '保存中...'
-  }
-
-  if (hasOfflineMapUpdate.value) {
-    return '更新离线导览图'
-  }
-
-  if (hasOfflineMap.value) {
-    return '重新保存离线导览图'
-  }
-
-  return '保存离线导览图'
-})
+const guideMapDisplayStatusText = computed(() => displayGuideImageUrl.value ? '当前页可直接放大查看' : '请补充对应导览图片资源')
 
 const visibleRelatedGuides = computed(() => {
   if (showAllRelatedGuides.value) {
@@ -624,8 +559,8 @@ const safetyTips = computed(() => {
 
   const tips = [
     {
-      title: '弱网先备份',
-      desc: `出发前先保存 ${destination.value.name} 的离线导览图，弱网时直接看整张景区图，不依赖错误点位。`,
+      title: '导览图已内置',
+      desc: `${destination.value.name} 的导览图已随安装包内置，进入详情页或完整导览页都能直接查看。`,
     },
     {
       title: '地形风险',
@@ -660,7 +595,6 @@ onLoad(async (options) => {
   currentId.value = options?.id || ''
   guideImageCandidateIndex.value = 0
   guideImageUnavailable.value = false
-  syncOfflineMapState()
   await Promise.all([
     refreshLocationAndWeather(),
     loadRelatedGuides(),
@@ -670,7 +604,6 @@ onLoad(async (options) => {
 onShow(() => {
   guideImageCandidateIndex.value = 0
   guideImageUnavailable.value = false
-  syncOfflineMapState()
   loadRelatedGuides()
 })
 
@@ -822,15 +755,6 @@ function openRelatedGuide(id) {
   })
 }
 
-function syncOfflineMapState() {
-  if (!currentId.value) {
-    offlineMapRecord.value = null
-    return
-  }
-
-  offlineMapRecord.value = getOfflineMapRecord(currentId.value)
-}
-
 function toDisplayPath(filePath) {
   const raw = String(filePath || '').trim()
   if (!raw) {
@@ -867,11 +791,6 @@ function previewGuideImage() {
 }
 
 function handleGuideImageError() {
-  if (hasOfflineMap.value && offlineMapRecord.value?.savedFilePath) {
-    guideImageUnavailable.value = true
-    return
-  }
-
   if (guidePreviewCandidates.value.length && guideImageCandidateIndex.value < guidePreviewCandidates.value.length - 1) {
     guideImageCandidateIndex.value += 1
     return
@@ -884,49 +803,6 @@ function handleGuideImageLoad() {
   guideImageUnavailable.value = false
 }
 
-async function handleOfflineMapDownload() {
-  if (offlineMapBusy.value || !destination.value || !offlineMapAvailable.value) {
-    return
-  }
-
-  offlineMapBusy.value = true
-
-  try {
-    await downloadOfflineMap({
-      destinationId: currentId.value,
-      scenicName: destination.value.name,
-      mapUrl: safetyGuidePreviewUrl.value,
-      version: offlineMapVersion.value,
-      metadata: destinationSafetyMap.value,
-    })
-
-    syncOfflineMapState()
-
-    uni.showToast({
-      title: '离线导览图已保存',
-      icon: 'none',
-    })
-  } catch (error) {
-    uni.showModal({
-      title: '保存失败',
-      content: error.message || '离线导览图保存失败，请稍后再试。',
-      showCancel: false,
-    })
-  } finally {
-    offlineMapBusy.value = false
-  }
-}
-
-function openOfflineMap() {
-  if (!hasOfflineMap.value) {
-    return
-  }
-
-  uni.navigateTo({
-    url: `/pages/safety-map/index?id=${encodeURIComponent(currentId.value)}&offline=1`,
-  })
-}
-
 function openSafetyMapPage() {
   if (!destination.value) {
     return
@@ -934,29 +810,6 @@ function openSafetyMapPage() {
 
   uni.navigateTo({
     url: `/pages/safety-map/index?id=${encodeURIComponent(currentId.value)}`,
-  })
-}
-
-function deleteOfflineMapWithConfirm() {
-  if (!hasOfflineMap.value) {
-    return
-  }
-
-  uni.showModal({
-    title: '删除离线导览图',
-    content: '确认删除当前景区已保存的离线导览图吗？删除后需要重新保存。',
-    success: async ({ confirm }) => {
-      if (!confirm) {
-        return
-      }
-
-      await deleteOfflineMap(currentId.value)
-      syncOfflineMapState()
-      uni.showToast({
-        title: '已删除离线导览图',
-        icon: 'none',
-      })
-    },
   })
 }
 
@@ -1021,10 +874,20 @@ function copyKeyword() {
 }
 
 async function openScenicLocation() {
+  if (openingNavigation.value) {
+    uni.showToast({
+      title: '地图正在打开，请稍候',
+      icon: 'none',
+    })
+    return
+  }
+
   const coords = destination.value?.coordinates
   if (!coords) {
     return
   }
+
+  openingNavigation.value = true
 
   const navigationName = destination.value.navigationName || destination.value.name
   const navigationAddress = destination.value.navigationAddress || destination.value.location
@@ -1056,26 +919,37 @@ async function openScenicLocation() {
     console.warn('[destination-detail] resolve navigation point failed', error)
   }
 
-  const amapUrl = `amapuri://navi?sourceApplication=${encodeURIComponent('丝路疆寻')}&lat=${targetPoint.latitude}&lon=${targetPoint.longitude}&dev=0&style=2&poiname=${encodeURIComponent(targetPoint.name)}`
+  const routePlanUrl = `amapuri://route/plan/?sourceApplication=${encodeURIComponent('丝路疆寻')}&dlat=${targetPoint.latitude}&dlon=${targetPoint.longitude}&dname=${encodeURIComponent(targetPoint.name)}&dev=0&t=0`
 
-  if (typeof plus !== 'undefined' && plus.runtime && plus.runtime.openURL) {
-    plus.runtime.openURL(amapUrl, () => {
+  uni.showToast({
+    title: '正在打开地图，请选择路线',
+    icon: 'none',
+    duration: 1800,
+  })
+
+  try {
+    if (typeof plus !== 'undefined' && plus.runtime && plus.runtime.openURL) {
+      plus.runtime.openURL(routePlanUrl, () => {
+        uni.openLocation({
+          longitude: targetPoint.longitude,
+          latitude: targetPoint.latitude,
+          name: targetPoint.name,
+          address: targetPoint.address,
+        })
+      })
+    } else {
       uni.openLocation({
         longitude: targetPoint.longitude,
         latitude: targetPoint.latitude,
         name: targetPoint.name,
         address: targetPoint.address,
       })
-    })
-    return
+    }
+  } finally {
+    setTimeout(() => {
+      openingNavigation.value = false
+    }, 1800)
   }
-
-  uni.openLocation({
-    longitude: targetPoint.longitude,
-    latitude: targetPoint.latitude,
-    name: targetPoint.name,
-    address: targetPoint.address,
-  })
 }
 
 function openAiAssistantForScenic() {
@@ -1131,24 +1005,6 @@ function buildAiAssistantParams(item, prompt, autoAsk) {
     .join('&')
 }
 
-function formatDateTime(timestamp) {
-  if (!timestamp) {
-    return ''
-  }
-
-  const date = new Date(timestamp)
-  if (Number.isNaN(date.getTime())) {
-    return ''
-  }
-
-  const year = date.getFullYear()
-  const month = String(date.getMonth() + 1).padStart(2, '0')
-  const day = String(date.getDate()).padStart(2, '0')
-  const hours = String(date.getHours()).padStart(2, '0')
-  const minutes = String(date.getMinutes()).padStart(2, '0')
-
-  return `${year}-${month}-${day} ${hours}:${minutes}`
-}
 </script>
 
 <style scoped lang="scss">

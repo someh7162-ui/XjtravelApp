@@ -20,10 +20,6 @@
           <text class="stat-value">{{ durationText }}</text>
           <text class="stat-label">记录时长</text>
         </view>
-        <view class="stat-card">
-          <text class="stat-value">{{ ascentText }}</text>
-          <text class="stat-label">累计爬升</text>
-        </view>
       </view>
 
       <view class="safe-card">
@@ -111,10 +107,6 @@ const distanceText = computed(() => {
   return distanceKm > 0 ? `${distanceKm.toFixed(2)} km` : '--'
 })
 const durationText = computed(() => formatTrackDuration(track.value?.durationMs || 0))
-const ascentText = computed(() => {
-  const ascent = Number(track.value?.altitudeGain || 0)
-  return ascent > 0 ? `${Math.round(ascent)} m` : '--'
-})
 const pointCountText = computed(() => `${Number(track.value?.pointCount || track.value?.points?.length || 0)} 点`)
 const previewPoints = computed(() => Array.isArray(track.value?.points) ? track.value.points.slice(0, 6) : [])
 const coordinateText = computed(() => {

@@ -72,6 +72,9 @@
         >
           {{ offlinePackActionText }}
         </view>
+        <view class="secondary-btn safety-plan-btn" @tap="emit('open-safety-plan')">
+          {{ safetyPlanActionText }}
+        </view>
       </view>
     </view>
   </view>
@@ -113,9 +116,13 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  safetyPlanActionText: {
+    type: String,
+    default: '安全报备',
+  },
 })
 
-const emit = defineEmits(['toggle-track', 'toggle-guard', 'sos-message', 'finish-track', 'clear-track', 'sos-visibility-change', 'offline-pack-action'])
+const emit = defineEmits(['toggle-track', 'toggle-guard', 'sos-message', 'finish-track', 'clear-track', 'sos-visibility-change', 'offline-pack-action', 'open-safety-plan'])
 
 const SHORT_ON_MS = 250
 const LONG_ON_MS = 750
@@ -532,6 +539,12 @@ onBeforeUnmount(() => {
 
 .secondary-btn.disabled {
   opacity: 0.42;
+}
+
+.secondary-btn.safety-plan-btn {
+  color: #d2e8ff;
+  border-color: rgba(10, 132, 255, 0.3);
+  background: rgba(10, 132, 255, 0.14);
 }
 
 .main-action {
